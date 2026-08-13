@@ -44,7 +44,14 @@ public sealed class Error : IEquatable<Error>
 
     public override bool Equals(object? obj) => Equals(obj as Error);
 
-    public override int GetHashCode() => HashCode.Combine(Code, Kind, Field);
+    public override int GetHashCode()
+    {
+        var hash = HashCode.Combine(Code, Kind, Field);
+        var argumentsHash = 0;
+        foreach (var pair in Arguments)
+            argumentsHash ^= HashCode.Combine(pair.Key, pair.Value);
+        return HashCode.Combine(hash, argumentsHash);
+    }
 
     private static bool ArgumentsEqual(
         IReadOnlyDictionary<string, object?> left,

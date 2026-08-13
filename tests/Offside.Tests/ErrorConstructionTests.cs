@@ -22,4 +22,21 @@ public sealed class ErrorConstructionTests
 
         Assert.Equal(left, right);
     }
+
+    [Fact]
+    public void Custom_snapshots_arguments_as_read_only()
+    {
+        var original = new Dictionary<string, object?> { ["orderId"] = "123" };
+
+        var error = Error.Custom("order.already_shipped", ErrorKind.Conflict, original);
+
+        original["orderId"] = "mutated";
+        original["extra"] = "new";
+
+        Assert.Equal("123", error.Arguments["orderId"]);
+        Assert.False(error.Arguments.ContainsKey("extra"));
+
+        var mutable = Assert.IsAssignableFrom<IDictionary<string, object?>>(error.Arguments);
+        Assert.Throws<NotSupportedException>(() => mutable["orderId"] = "via-cast");
+    }
 }
