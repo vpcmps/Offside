@@ -53,6 +53,10 @@ public sealed class Error : IEquatable<Error>
         return HashCode.Combine(hash, argumentsHash);
     }
 
+    public static bool operator ==(Error? left, Error? right) => object.Equals(left, right);
+
+    public static bool operator !=(Error? left, Error? right) => !object.Equals(left, right);
+
     private static bool ArgumentsEqual(
         IReadOnlyDictionary<string, object?> left,
         IReadOnlyDictionary<string, object?> right)

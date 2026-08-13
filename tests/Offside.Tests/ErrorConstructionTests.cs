@@ -39,4 +39,92 @@ public sealed class ErrorConstructionTests
         var mutable = Assert.IsAssignableFrom<IDictionary<string, object?>>(error.Arguments);
         Assert.Throws<NotSupportedException>(() => mutable["orderId"] = "via-cast");
     }
+
+    [Fact]
+    public void Custom_trims_code()
+    {
+        var error = Error.Custom("  order.x  ", ErrorKind.Conflict);
+
+        Assert.Equal("order.x", error.Code);
+    }
+
+    [Fact]
+    public void Errors_with_same_arguments_and_field_are_equal()
+    {
+        var arguments = new Dictionary<string, object?> { ["orderId"] = "123" };
+        var left = Error.Custom("order.already_shipped", ErrorKind.Conflict, arguments, "shipping");
+        var right = Error.Custom("order.already_shipped", ErrorKind.Conflict, arguments, "shipping");
+
+        Assert.Equal(left, right);
+        Assert.True(left == right);
+        Assert.False(left != right);
+    }
+
+    [Fact]
+    public void Errors_with_different_arguments_are_not_equal()
+    {
+        var left = Error.Custom(
+            "order.already_shipped",
+            ErrorKind.Conflict,
+            new Dictionary<string, object?> { ["orderId"] = "123" });
+        var right = Error.Custom(
+            "order.already_shipped",
+            ErrorKind.Conflict,
+            new Dictionary<string, object?> { ["orderId"] = "456" });
+
+        Assert.NotEqual(left, right);
+        Assert.False(left == right);
+        Assert.True(left != right);
+    }
+
+    [Fact]
+    public void Errors_with_different_field_are_not_equal()
+    {
+        var left = Error.Custom("validation", ErrorKind.Validation, field: "email");
+        var right = Error.Custom("validation", ErrorKind.Validation, field: "name");
+
+        Assert.NotEqual(left, right);
+    }
+
+    [Fact]
+    public void Errors_with_different_kind_are_not_equal()
+    {
+        var left = Error.Custom("order.already_shipped", ErrorKind.Conflict);
+        var right = Error.Custom("order.already_shipped", ErrorKind.Gone);
+
+        Assert.NotEqual(left, right);
+    }
+
+    [Fact]
+    public void Errors_with_different_code_are_not_equal()
+    {
+        var left = Error.Custom("order.already_shipped", ErrorKind.Conflict);
+        var right = Error.Custom("order.cancelled", ErrorKind.Conflict);
+
+        Assert.NotEqual(left, right);
+    }
+
+    [Fact]
+    public void Equal_errors_with_arguments_have_the_same_hash_code()
+    {
+        var arguments = new Dictionary<string, object?> { ["orderId"] = "123" };
+        var left = Error.Custom("order.already_shipped", ErrorKind.Conflict, arguments, "shipping");
+        var right = Error.Custom("order.already_shipped", ErrorKind.Conflict, arguments, "shipping");
+
+        Assert.Equal(left, right);
+        Assert.Equal(left.GetHashCode(), right.GetHashCode());
+    }
+
+    [Fact]
+    public void Equality_operators_are_null_safe()
+    {
+        var error = Error.Custom("order.x", ErrorKind.Conflict);
+
+        Assert.False(error == null);
+        Assert.False(null == error);
+        Assert.True(error != null);
+        Assert.True(null != error);
+        Assert.True((Error?)null == (Error?)null);
+        Assert.False((Error?)null != (Error?)null);
+    }
 }
