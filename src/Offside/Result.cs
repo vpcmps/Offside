@@ -27,6 +27,28 @@ public readonly struct Result
     public static Result Failure(IEnumerable<Error> errors) =>
         new Result(true, SnapshotErrors(errors));
 
+    public static Result Combine(params Result[] results)
+    {
+        var errors = new List<Error>();
+        foreach (var result in results)
+        {
+            if (result.IsFailure)
+                errors.AddRange(result.Errors);
+        }
+        return errors.Count == 0 ? Success() : Failure(errors);
+    }
+
+    public static Result Combine<T>(params Result<T>[] results)
+    {
+        var errors = new List<Error>();
+        foreach (var result in results)
+        {
+            if (result.IsFailure)
+                errors.AddRange(result.Errors);
+        }
+        return errors.Count == 0 ? Success() : Failure(errors);
+    }
+
     internal static IReadOnlyList<Error> SnapshotErrors(IEnumerable<Error> errors)
     {
         var copy = errors.ToArray();

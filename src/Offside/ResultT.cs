@@ -35,6 +35,12 @@ public readonly struct Result<T>
     public TOut Match<TOut>(Func<T, TOut> onSuccess, Func<IReadOnlyList<Error>, TOut> onFailure) =>
         !_failed ? onSuccess(_value) : onFailure(Errors);
 
+    public Result<TOut> Map<TOut>(Func<T, TOut> map) =>
+        !_failed ? Result<TOut>.Success(map(Value)) : Result<TOut>.Failure(Errors);
+
+    public Result<TOut> Bind<TOut>(Func<T, Result<TOut>> bind) =>
+        !_failed ? bind(Value) : Result<TOut>.Failure(Errors);
+
     public static Result<T> Success(T value) => new Result<T>(false, value, Array.Empty<Error>());
 
     public static Result<T> Failure(params Error[] errors) => Failure((IEnumerable<Error>)errors);
