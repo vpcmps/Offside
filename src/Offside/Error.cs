@@ -19,6 +19,46 @@ public sealed class Error : IEquatable<Error>
         Field = field;
     }
 
+    public static Error NotFound(string resource, object? id = null) =>
+        Create("not_found", ErrorKind.NotFound, new { resource, id });
+
+    public static Error Gone(string resource, object? id = null) =>
+        Create("gone", ErrorKind.Gone, new { resource, id });
+
+    public static Error Conflict(string resource, string? reason = null) =>
+        Create("conflict", ErrorKind.Conflict, new { resource, reason });
+
+    public static Error Validation(string field, string? code = null, object? attemptedValue = null)
+    {
+        var resolvedCode = string.IsNullOrWhiteSpace(code) ? "validation" : code!.Trim();
+        return new Error(
+            resolvedCode,
+            ErrorKind.Validation,
+            ErrorArgumentConverter.ToDictionary(new { field, attemptedValue }),
+            field);
+    }
+
+    public static Error BadRequest(string? reason = null) =>
+        Create("bad_request", ErrorKind.BadRequest, new { reason });
+
+    public static Error Unauthorized(string? reason = null) =>
+        Create("unauthorized", ErrorKind.Unauthorized, new { reason });
+
+    public static Error Forbidden(string? reason = null) =>
+        Create("forbidden", ErrorKind.Forbidden, new { reason });
+
+    public static Error PreconditionFailed(string? reason = null) =>
+        Create("precondition_failed", ErrorKind.PreconditionFailed, new { reason });
+
+    public static Error Unprocessable(string? reason = null) =>
+        Create("unprocessable", ErrorKind.Unprocessable, new { reason });
+
+    public static Error TooManyRequests(string? reason = null) =>
+        Create("too_many_requests", ErrorKind.TooManyRequests, new { reason });
+
+    public static Error Unexpected(string? detail = null) =>
+        Create("unexpected", ErrorKind.Unexpected, new { detail });
+
     public static Error Custom(
         string code,
         ErrorKind kind,
@@ -34,6 +74,9 @@ public sealed class Error : IEquatable<Error>
             ErrorArgumentConverter.ToDictionary(arguments),
             field);
     }
+
+    private static Error Create(string code, ErrorKind kind, object arguments) =>
+        new Error(code, kind, ErrorArgumentConverter.ToDictionary(arguments), field: null);
 
     public bool Equals(Error? other) =>
         other is not null

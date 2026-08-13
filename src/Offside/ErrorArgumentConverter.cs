@@ -19,7 +19,20 @@ internal static class ErrorArgumentConverter
         if (arguments is IReadOnlyDictionary<string, object?> readOnly)
             return Snapshot(readOnly);
 
-        return Empty;
+        return Snapshot(FromAnonymous(arguments));
+    }
+
+    private static IEnumerable<KeyValuePair<string, object?>> FromAnonymous(object arguments)
+    {
+        foreach (var property in arguments.GetType().GetProperties())
+        {
+            if (property.GetIndexParameters().Length > 0)
+                continue;
+
+            yield return new KeyValuePair<string, object?>(
+                property.Name,
+                property.GetValue(arguments));
+        }
     }
 
     private static IReadOnlyDictionary<string, object?> Snapshot(
