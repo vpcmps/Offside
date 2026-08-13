@@ -16,6 +16,17 @@ public static class ResultHttpExtensions
     public static IResult ToHttpResult(
         this Result result,
         IErrorMessageResolver resolver,
+        bool exposeExceptionDetails = false)
+    {
+        if (result.IsSuccess)
+            return Results.NoContent();
+
+        return new OffsideProblemResult(result.Errors, resolver, culture: null, exposeExceptionDetails);
+    }
+
+    public static IResult ToHttpResult(
+        this Result result,
+        IErrorMessageResolver resolver,
         CultureInfo culture,
         bool exposeExceptionDetails = false)
     {
@@ -23,6 +34,17 @@ public static class ResultHttpExtensions
             return Results.NoContent();
 
         return new OffsideProblemResult(result.Errors, resolver, culture, exposeExceptionDetails);
+    }
+
+    public static IResult ToHttpResult<T>(
+        this Result<T> result,
+        IErrorMessageResolver resolver,
+        bool exposeExceptionDetails = false)
+    {
+        if (result.IsSuccess)
+            return Results.Ok(result.Value);
+
+        return new OffsideProblemResult(result.Errors, resolver, culture: null, exposeExceptionDetails);
     }
 
     public static IResult ToHttpResult<T>(
@@ -53,13 +75,13 @@ public static class ResultHttpExtensions
     {
         private readonly IReadOnlyList<Error> _errors;
         private readonly IErrorMessageResolver _resolver;
-        private readonly CultureInfo _culture;
+        private readonly CultureInfo? _culture;
         private readonly bool _exposeExceptionDetails;
 
         public OffsideProblemResult(
             IReadOnlyList<Error> errors,
             IErrorMessageResolver resolver,
-            CultureInfo culture,
+            CultureInfo? culture,
             bool exposeExceptionDetails)
         {
             _errors = errors;
@@ -73,17 +95,31 @@ public static class ResultHttpExtensions
 
         public async Task ExecuteAsync(HttpContext httpContext)
         {
+            var culture = _culture ?? ResolveRequestCulture(httpContext);
             var traceId = Activity.Current?.Id ?? httpContext.TraceIdentifier;
             var problem = OffsideProblem.Create(
                 _errors,
                 _resolver,
-                _culture,
+                culture,
                 traceId,
                 _exposeExceptionDetails);
 
             httpContext.Response.StatusCode = problem.Status;
             httpContext.Response.ContentType = "application/problem+json";
             await JsonSerializer.SerializeAsync(httpContext.Response.Body, problem, SerializerOptions);
+        }
+
+        private static CultureInfo ResolveRequestCulture(HttpContext httpContext)
+        {
+            var header = httpContext.Request.Headers.AcceptLanguage.ToString();
+            if (header.Length == 0)
+                return CultureInfo.CurrentUICulture;
+
+            var firstRange = header.Split(',', 2)[0].Split(';', 2)[0].Trim();
+            if (firstRange.Length == 0)
+                return CultureInfo.CurrentUICulture;
+
+            return CultureInfo.GetCultureInfo(firstRange);
         }
     }
 }
