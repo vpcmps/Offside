@@ -64,4 +64,29 @@ public sealed class ProblemDetailsTests
 
         Assert.Contains("application/problem+json", httpContext.Response.ContentType);
     }
+
+    [Fact]
+    public async Task ToActionResultT_writes_problem_json_on_failure()
+    {
+        var result = Result<int>.Failure(Error.NotFound("order", 1));
+        var action = result.ToActionResult(ProblemHttpHarness.Resolver, CultureInfo.InvariantCulture);
+
+        var httpContext = new DefaultHttpContext();
+        httpContext.Response.Body = new MemoryStream();
+        var actionContext = new ActionContext(httpContext, new RouteData(), new ActionDescriptor());
+        await action.ExecuteResultAsync(actionContext);
+
+        Assert.Equal(404, httpContext.Response.StatusCode);
+        Assert.Contains("application/problem+json", httpContext.Response.ContentType);
+    }
+
+    [Fact]
+    public void ToActionResultT_returns_Ok_on_success()
+    {
+        var result = Result<int>.Success(42);
+        var action = result.ToActionResult(ProblemHttpHarness.Resolver, CultureInfo.InvariantCulture);
+
+        var ok = Assert.IsType<OkObjectResult>(action);
+        Assert.Equal(42, ok.Value);
+    }
 }

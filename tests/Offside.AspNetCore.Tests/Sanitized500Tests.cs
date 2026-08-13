@@ -36,6 +36,18 @@ public sealed class Sanitized500Tests
         Assert.Equal("secret-stack", payload.Debug);
     }
 
+    [Fact]
+    public async Task ToHttpResult_uses_options_ExposeExceptionDetails()
+    {
+        var result = Result.Failure(Error.Unexpected("secret-stack"));
+        var options = new OffsideAspNetCoreOptions { ExposeExceptionDetails = true };
+        var payload = await ProblemHttpHarness.Execute(result, options);
+
+        Assert.Equal(500, payload.Status);
+        Assert.DoesNotContain("secret-stack", payload.Detail);
+        Assert.Equal("secret-stack", payload.Debug);
+    }
+
     private static Task<ProblemPayload> Execute(Result result, bool expose) =>
         ProblemHttpHarness.Execute(result, expose);
 }

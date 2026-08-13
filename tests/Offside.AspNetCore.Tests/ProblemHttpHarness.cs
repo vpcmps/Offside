@@ -16,17 +16,22 @@ internal static class ProblemHttpHarness
         PropertyNameCaseInsensitive = true
     };
 
-    internal static async Task<ProblemPayload> Execute(Result result, bool expose = false)
+    internal static Task<ProblemPayload> Execute(Result result, bool expose = false) =>
+        Execute(result.ToHttpResult(Resolver, CultureInfo.InvariantCulture, exposeExceptionDetails: expose));
+
+    internal static Task<ProblemPayload> Execute(Result result, OffsideAspNetCoreOptions options) =>
+        Execute(result.ToHttpResult(Resolver, CultureInfo.InvariantCulture, options));
+
+    private static async Task<ProblemPayload> Execute(IResult httpResult)
     {
         var httpContext = new DefaultHttpContext();
         httpContext.Response.Body = new MemoryStream();
-
-        var httpResult = result.ToHttpResult(
-            Resolver,
-            CultureInfo.InvariantCulture,
-            exposeExceptionDetails: expose);
         await httpResult.ExecuteAsync(httpContext);
+        return await ReadPayload(httpContext);
+    }
 
+    private static async Task<ProblemPayload> ReadPayload(HttpContext httpContext)
+    {
         httpContext.Response.Body.Seek(0, SeekOrigin.Begin);
         var payload = await JsonSerializer.DeserializeAsync<ProblemPayload>(
             httpContext.Response.Body,

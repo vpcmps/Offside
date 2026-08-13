@@ -18,6 +18,19 @@ public sealed class RequestCultureTests
         Assert.Equal("sem order", payload.Detail);
     }
 
+    [Theory]
+    [InlineData("*")]
+    [InlineData("not-a-culture")]
+    public async Task Invalid_or_wildcard_AcceptLanguage_returns_problem_details(
+        string acceptLanguage)
+    {
+        var result = Result.Failure(Error.NotFound("order", 1));
+        var payload = await Execute(result, acceptLanguage);
+
+        Assert.Equal(404, payload.Status);
+        Assert.Equal("missing order", payload.Detail);
+    }
+
     private static async Task<ProblemPayload> Execute(Result result, string acceptLanguage)
     {
         var previous = CultureInfo.CurrentUICulture;
