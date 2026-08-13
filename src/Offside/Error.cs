@@ -78,6 +78,9 @@ public sealed class Error : IEquatable<Error>
     private static Error Create(string code, ErrorKind kind, object arguments) =>
         new Error(code, kind, ErrorArgumentConverter.ToDictionary(arguments), field: null);
 
+    public DomainException ToException() =>
+        new DomainException(new[] { this });
+
     public bool Equals(Error? other) =>
         other is not null
         && Code == other.Code
