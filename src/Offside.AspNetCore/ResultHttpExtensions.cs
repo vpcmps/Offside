@@ -16,34 +16,37 @@ public static class ResultHttpExtensions
     public static IResult ToHttpResult(
         this Result result,
         IErrorMessageResolver resolver,
-        CultureInfo culture)
+        CultureInfo culture,
+        bool exposeExceptionDetails = false)
     {
         if (result.IsSuccess)
             return Results.NoContent();
 
-        return new OffsideProblemResult(result.Errors, resolver, culture);
+        return new OffsideProblemResult(result.Errors, resolver, culture, exposeExceptionDetails);
     }
 
     public static IResult ToHttpResult<T>(
         this Result<T> result,
         IErrorMessageResolver resolver,
-        CultureInfo culture)
+        CultureInfo culture,
+        bool exposeExceptionDetails = false)
     {
         if (result.IsSuccess)
             return Results.Ok(result.Value);
 
-        return new OffsideProblemResult(result.Errors, resolver, culture);
+        return new OffsideProblemResult(result.Errors, resolver, culture, exposeExceptionDetails);
     }
 
     public static IActionResult ToActionResult(
         this Result result,
         IErrorMessageResolver resolver,
-        CultureInfo culture)
+        CultureInfo culture,
+        bool exposeExceptionDetails = false)
     {
         if (result.IsSuccess)
             return new NoContentResult();
 
-        return new OffsideProblemResult(result.Errors, resolver, culture);
+        return new OffsideProblemResult(result.Errors, resolver, culture, exposeExceptionDetails);
     }
 
     private sealed class OffsideProblemResult : IResult, IActionResult
@@ -51,15 +54,18 @@ public static class ResultHttpExtensions
         private readonly IReadOnlyList<Error> _errors;
         private readonly IErrorMessageResolver _resolver;
         private readonly CultureInfo _culture;
+        private readonly bool _exposeExceptionDetails;
 
         public OffsideProblemResult(
             IReadOnlyList<Error> errors,
             IErrorMessageResolver resolver,
-            CultureInfo culture)
+            CultureInfo culture,
+            bool exposeExceptionDetails)
         {
             _errors = errors;
             _resolver = resolver;
             _culture = culture;
+            _exposeExceptionDetails = exposeExceptionDetails;
         }
 
         public Task ExecuteResultAsync(ActionContext context) =>
@@ -68,7 +74,12 @@ public static class ResultHttpExtensions
         public async Task ExecuteAsync(HttpContext httpContext)
         {
             var traceId = Activity.Current?.Id ?? httpContext.TraceIdentifier;
-            var problem = OffsideProblem.Create(_errors, _resolver, _culture, traceId);
+            var problem = OffsideProblem.Create(
+                _errors,
+                _resolver,
+                _culture,
+                traceId,
+                _exposeExceptionDetails);
 
             httpContext.Response.StatusCode = problem.Status;
             httpContext.Response.ContentType = "application/problem+json";
