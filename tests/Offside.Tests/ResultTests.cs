@@ -13,6 +13,39 @@ public sealed class ResultTests
     }
 
     [Fact]
+    public void Failure_snapshots_errors()
+    {
+        var errors = new List<Error> { Error.NotFound("order", 1) };
+
+        var result = Result.Failure(errors);
+        var resultT = Result<int>.Failure(errors);
+        errors.Clear();
+
+        Assert.Equal(Error.NotFound("order", 1), Assert.Single(result.Errors));
+        Assert.Equal(Error.NotFound("order", 1), Assert.Single(resultT.Errors));
+    }
+
+    [Fact]
+    public void Default_result_is_success()
+    {
+        var result = default(Result);
+
+        Assert.True(result.IsSuccess);
+        Assert.Empty(result.Errors);
+    }
+
+    [Fact]
+    public void Default_result_t_is_success()
+    {
+        var result = default(Result<int>);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(0, result.Value);
+        Assert.True(result.TryGetValue(out var value));
+        Assert.Equal(0, value);
+    }
+
+    [Fact]
     public void Value_on_failure_throws()
     {
         var result = Result<int>.Failure(Error.NotFound("order", 1));
@@ -49,6 +82,16 @@ public sealed class ResultTests
         var fail = Result<int>.Failure(Error.BadRequest()).Match(v => v, _ => -1);
 
         Assert.Equal(6, ok);
+        Assert.Equal(-1, fail);
+    }
+
+    [Fact]
+    public void Non_generic_match_branches()
+    {
+        var ok = Result.Success().Match(() => 1, _ => -1);
+        var fail = Result.Failure(Error.BadRequest()).Match(() => 1, _ => -1);
+
+        Assert.Equal(1, ok);
         Assert.Equal(-1, fail);
     }
 }
