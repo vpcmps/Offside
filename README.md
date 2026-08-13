@@ -58,6 +58,24 @@ dotnet pack -c Release -o artifacts
 
 Produces `Offside`, `Offside.AspNetCore`, and `Offside.Tool` nupkgs (plus snupkgs).
 
+## CI and publish
+
+CI builds, tests (net8 + net10), and packs on `master` and pull requests.
+
+To publish to nuget.org, add a [Trusted Publishing](https://www.nuget.org/account/trustedpublishing) policy:
+
+- Repository Owner: `vpcmps`
+- Repository: `Offside`
+- Workflow File: `release.yml`
+- Environment: leave blank
+
+Then push a version tag (the tag is the package version):
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
 ## Spec
 
 See [docs/superpowers/specs/2026-08-12-domain-errors-design.md](docs/superpowers/specs/2026-08-12-domain-errors-design.md).
