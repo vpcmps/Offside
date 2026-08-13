@@ -8,47 +8,55 @@ Domain errors as `Result`, not exceptions. The domain returns `Error`; ASP.NET C
 
 ```bash
 dotnet add package Offside
-dotnet add package Offside.AspNetCore
+dotnet add package Offside.AspNetCore   # ASP.NET hosts only
 ```
+
+Agent skills + catalog templates:
+
+```bash
+dotnet tool install -g Offside.Tool
+offside init
+```
+
+`offside init` copies skills into `.cursor/skills`, `.agents/skills`, and `.claude/skills`, and writes `errors/errors.json` plus `errors/errors.pt-BR.json`. Use `--dir <path>` and `--force` as needed.
 
 ## Packages
 
 | Package | Role |
 |---|---|
-| `Offside` | `Error`, `ErrorKind`, `Result` / `Result<T>`, JSON message resolver, `AddOffside` |
-| `Offside.AspNetCore` | `ToHttpResult` / `ToActionResult`, Problem Details |
+| `Offside` | `Error`, `ErrorKind`, `Result` / `Result<T>`, JSON resolver, `AddOffside` |
+| `Offside.AspNetCore` | `ToHttpResult` / `ToActionResult`, Problem Details, `AddOffsideAspNetCore` |
+| `Offside.Tool` | `offside init` — skills and catalog templates |
 
 The Core package has no ASP.NET dependency.
 
 ## Example
 
 ```csharp
+using System.Globalization;
 using Offside;
 using Offside.AspNetCore;
 
-Result GetOrder(string id)
-{
-    // domain / application — no HTTP here
-    return Result.Failure(Error.NotFound("Order", id));
-}
-
-app.MapGet("/orders/{id}", (string id, IErrorMessageResolver resolver) =>
-    GetOrder(id).ToHttpResult(resolver));
-```
-
-## JSON catalogs
-
-`src/Offside/errors.json` is a reference catalog (English, built-in codes). Copy it into your host and register it — it is **not** embedded in the package.
-
-```csharp
 builder.Services.AddOffside(options =>
 {
-    options.AddJson(CultureInfo.InvariantCulture, File.ReadAllText("errors.json"));
-    options.AddJson(new CultureInfo("pt-BR"), File.ReadAllText("errors.pt-BR.json"));
+    options.AddJson(CultureInfo.InvariantCulture, File.ReadAllText("errors/errors.json"));
 });
+builder.Services.AddOffsideAspNetCore();
+
+Result GetOrder(string id) =>
+    Result.Failure(Error.NotFound("Order", id));
+
+app.MapGet("/orders/{id}", (string id, HttpContext http) =>
+    GetOrder(id).ToHttpResult(http));
 ```
 
-`AddOffside` requires a default catalog (`CultureInfo.InvariantCulture`). Missing keys fall back to the error `Code`. Extra cultures are optional (`errors.pt-BR.json`, `errors.en.json`, …).
+## Pack locally
+
+```bash
+dotnet pack -c Release -o artifacts
+```
+
+Produces `Offside`, `Offside.AspNetCore`, and `Offside.Tool` nupkgs (plus snupkgs).
 
 ## Spec
 

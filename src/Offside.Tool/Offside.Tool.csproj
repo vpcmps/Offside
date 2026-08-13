@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>offside</ToolCommandName>
+    <PackageId>Offside.Tool</PackageId>
+    <AssemblyName>Offside.Tool</AssemblyName>
+    <RootNamespace>Offside.Tool</RootNamespace>
+    <Description>dotnet tool: offside init installs Offside agent skills and error catalog templates into a project.</Description>
+    <IsPackable>true</IsPackable>
+    <RollForward>Major</RollForward>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="..\..\skills\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <Link>skills\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <Pack>false</Pack>
+    </None>
+  </ItemGroup>
+</Project>

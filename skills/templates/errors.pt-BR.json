@@ -1,0 +1,13 @@
+{
+  "not_found": "{resource} '{id}' não foi encontrado.",
+  "gone": "{resource} '{id}' já não existe.",
+  "conflict": "Conflito em {resource}.",
+  "validation": "{field} é inválido.",
+  "bad_request": "Pedido inválido.",
+  "unauthorized": "Não autenticado.",
+  "forbidden": "Sem permissão.",
+  "precondition_failed": "Pré-condição falhou.",
+  "unprocessable": "Não foi possível processar o pedido.",
+  "too_many_requests": "Demasiados pedidos.",
+  "unexpected": "Ocorreu um erro inesperado."
+}
