@@ -1,0 +1,13 @@
+{
+  "not_found": "{resource} '{id}' was not found.",
+  "gone": "{resource} '{id}' is gone.",
+  "conflict": "Conflict on {resource}.",
+  "validation": "{field} is invalid.",
+  "bad_request": "Bad request.",
+  "unauthorized": "Unauthorized.",
+  "forbidden": "Forbidden.",
+  "precondition_failed": "Precondition failed.",
+  "unprocessable": "Unable to process the request.",
+  "too_many_requests": "Too many requests.",
+  "unexpected": "An unexpected error occurred."
+}
