@@ -20,6 +20,12 @@ offside init
 
 `offside init` copies skills into `.cursor/skills`, `.agents/skills`, and `.claude/skills`, and writes `errors/errors.json` plus `errors/errors.pt-BR.json`. Use `--dir <path>` and `--force` as needed.
 
+## Compatibility and status
+
+`Offside` supports `netstandard2.0`, `net8.0`, and `net10.0`. `Offside.AspNetCore` supports `net8.0` and `net10.0`; `Offside.Tool` runs on `net8.0`.
+
+The project is pre-1.0. Minor releases may include breaking changes. Releases follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html), and notable changes are recorded in [CHANGELOG.md](CHANGELOG.md).
+
 ## Packages
 
 | Package | Role |
@@ -78,4 +84,8 @@ git push origin v0.1.0
 
 ## Spec
 
-See [docs/superpowers/specs/2026-08-12-domain-errors-design.md](docs/superpowers/specs/2026-08-12-domain-errors-design.md).
+See the [design specification](https://github.com/vpcmps/Offside/blob/master/docs/superpowers/specs/2026-08-12-domain-errors-design.md).
+
+## Community and security
+
+Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request. For help, see [SUPPORT.md](SUPPORT.md). Report vulnerabilities privately according to [SECURITY.md](SECURITY.md).

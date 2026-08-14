@@ -25,12 +25,13 @@ jobs:
 
       - uses: actions/setup-dotnet@v6
         with:
+          global-json-file: global.json
           dotnet-version: |
             8.0.x
             10.0.x
 
       - name: Restore
-        run: dotnet restore Offside.sln
+        run: dotnet restore Offside.sln --locked-mode
 
       - name: Build
         run: dotnet build Offside.sln -c Release --no-restore
@@ -40,6 +41,23 @@ jobs:
 
       - name: Pack
         run: dotnet pack Offside.sln -c Release --no-build --no-restore -o artifacts
+
+      - name: Validate package contents
+        shell: pwsh
+        run: |
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          Get-ChildItem artifacts -Filter *.nupkg | ForEach-Object {
+            $package = [System.IO.Compression.ZipFile]::OpenRead($_.FullName)
+            try {
+              $entries = $package.Entries.FullName
+              foreach ($required in 'README.md', 'LICENSE') {
+                if ($entries -notcontains $required) { throw "$($_.Name) is missing $required" }
+              }
+              if (-not ($entries | Where-Object { $_ -like 'lib/*/*.xml' -or $_ -like 'tools/*/*.xml' })) {
+                throw "$($_.Name) is missing XML documentation"
+              }
+            } finally { $package.Dispose() }
+          }
 
       - uses: actions/upload-artifact@v7
         with:
