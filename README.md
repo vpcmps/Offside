@@ -4,6 +4,8 @@
 
 Domain errors as `Result`, not exceptions. The domain returns `Error`; ASP.NET Core maps that to Problem Details (RFC 7807). Messages live in JSON catalogs, not in C#.
 
+**[Documentation](https://github.com/vpcmps/Offside/blob/master/docs/README.md)** · [Português](https://github.com/vpcmps/Offside/blob/master/docs/pt-BR/README.md)
+
 ## Install
 
 ```bash
@@ -56,6 +58,32 @@ app.MapGet("/orders/{id}", (string id, HttpContext http) =>
     GetOrder(id).ToHttpResult(http));
 ```
 
+A failure becomes `application/problem+json`, with the status taken from the most severe error present:
+
+```json
+{
+  "type": "https://httpstatuses.io/404",
+  "title": "NotFound",
+  "status": 404,
+  "detail": "Order '42' was not found.",
+  "traceId": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+  "errors": [
+    { "code": "not_found", "kind": "NotFound", "detail": "Order '42' was not found.", "field": null }
+  ]
+}
+```
+
+| ErrorKind | Status | | ErrorKind | Status |
+|---|---|---|---|---|
+| `Unexpected` | 500 | | `Gone` | 410 |
+| `Unauthorized` | 401 | | `Unprocessable` | 422 |
+| `Forbidden` | 403 | | `NotFound` | 404 |
+| `TooManyRequests` | 429 | | `Validation` | 400 |
+| `Conflict` | 409 | | `BadRequest` | 400 |
+| `PreconditionFailed` | 412 | | | |
+
+Full guides: [getting started](https://github.com/vpcmps/Offside/blob/master/docs/getting-started.md) · [concepts](https://github.com/vpcmps/Offside/blob/master/docs/concepts.md) · [domain](https://github.com/vpcmps/Offside/blob/master/docs/domain-guide.md) · [ASP.NET Core](https://github.com/vpcmps/Offside/blob/master/docs/aspnet-guide.md) · [messages](https://github.com/vpcmps/Offside/blob/master/docs/messages.md) · [API reference](https://github.com/vpcmps/Offside/blob/master/docs/api-reference.md)
+
 ## Pack locally
 
 ```bash
@@ -84,7 +112,7 @@ git push origin v0.1.0
 
 ## Spec
 
-See the [design specification](https://github.com/vpcmps/Offside/blob/master/docs/superpowers/specs/2026-08-12-domain-errors-design.md).
+The internal [design specification](https://github.com/vpcmps/Offside/blob/master/docs/superpowers/specs/2026-08-12-domain-errors-design.md) records the original decisions (in Portuguese). For usage, prefer the [documentation](https://github.com/vpcmps/Offside/blob/master/docs/README.md).
 
 ## Community and security
 
