@@ -55,6 +55,7 @@ app.MapGet("/orders/{id}", (string id, HttpContext http) => _orders.Get(id).ToHt
 |---|---|---|
 | `Offside` | `netstandard2.0`, `net8.0`, `net10.0` | `Error`, `ErrorKind`, `Result` / `Result<T>`, JSON resolver, `AddOffside` |
 | `Offside.AspNetCore` | `net8.0`, `net10.0` | `ToHttpResult` / `ToActionResult`, Problem Details, `AddOffsideAspNetCore` |
+| `Offside.AzureAppConfiguration` | `netstandard2.0`, `net8.0`, `net10.0` | Dynamic resolver for catalogs loaded by Azure App Configuration |
 | `Offside.Tool` | `net8.0` | `offside init` — agent skills and catalog templates |
 
 The core package has no ASP.NET dependency, so domain projects can reference it freely.

@@ -10,7 +10,8 @@ Domain errors as `Result`, not exceptions. The domain returns `Error`; ASP.NET C
 
 ```bash
 dotnet add package Offside
-dotnet add package Offside.AspNetCore   # ASP.NET hosts only
+dotnet add package Offside.AspNetCore               # ASP.NET hosts only
+dotnet add package Offside.AzureAppConfiguration    # Azure App Configuration catalogs
 ```
 
 Agent skills + catalog templates:
@@ -24,7 +25,7 @@ offside init
 
 ## Compatibility and status
 
-`Offside` supports `netstandard2.0`, `net8.0`, and `net10.0`. `Offside.AspNetCore` supports `net8.0` and `net10.0`; `Offside.Tool` runs on `net8.0`.
+`Offside` and `Offside.AzureAppConfiguration` support `netstandard2.0`, `net8.0`, and `net10.0`. `Offside.AspNetCore` supports `net8.0` and `net10.0`; `Offside.Tool` runs on `net8.0`.
 
 The project is pre-1.0. Minor releases may include breaking changes. Releases follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html), and notable changes are recorded in [CHANGELOG.md](CHANGELOG.md).
 
@@ -34,6 +35,7 @@ The project is pre-1.0. Minor releases may include breaking changes. Releases fo
 |---|---|
 | `Offside` | `Error`, `ErrorKind`, `Result` / `Result<T>`, JSON resolver, `AddOffside` |
 | `Offside.AspNetCore` | `ToHttpResult` / `ToActionResult`, Problem Details, `AddOffsideAspNetCore` |
+| `Offside.AzureAppConfiguration` | Dynamic resolver for catalogs loaded by Azure App Configuration |
 | `Offside.Tool` | `offside init` — skills and catalog templates |
 
 The Core package has no ASP.NET dependency.
@@ -90,7 +92,7 @@ Full guides: [getting started](https://github.com/vpcmps/Offside/blob/master/doc
 dotnet pack -c Release -o artifacts
 ```
 
-Produces `Offside`, `Offside.AspNetCore`, and `Offside.Tool` nupkgs (plus snupkgs).
+Produces `Offside`, `Offside.AspNetCore`, `Offside.AzureAppConfiguration`, and `Offside.Tool` nupkgs (plus snupkgs).
 
 ## CI and publish
 

@@ -49,7 +49,7 @@ public sealed class JsonErrorMessageResolver : IErrorMessageResolver
     public string GetMessage(Error error, CultureInfo culture)
     {
         if (TryFindTemplate(error.Code, culture, out var template))
-            return Interpolate(template, error.Arguments);
+            return ErrorMessageTemplate.Interpolate(template, error.Arguments);
 
         return error.Code;
     }
@@ -70,18 +70,4 @@ public sealed class JsonErrorMessageResolver : IErrorMessageResolver
             && messages.TryGetValue(code, out template!);
     }
 
-    private static string Interpolate(string template, IReadOnlyDictionary<string, object?> arguments)
-    {
-        foreach (var pair in arguments)
-        {
-            if (pair.Value is null)
-                continue;
-
-            var token = "{" + pair.Key + "}";
-            var value = Convert.ToString(pair.Value, CultureInfo.InvariantCulture) ?? string.Empty;
-            template = template.Replace(token, value);
-        }
-
-        return template;
-    }
 }
