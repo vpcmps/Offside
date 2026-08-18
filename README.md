@@ -11,6 +11,8 @@ Domain errors as `Result`, not exceptions. The domain returns `Error`; ASP.NET C
 ```bash
 dotnet add package Offside
 dotnet add package Offside.AspNetCore               # ASP.NET hosts only
+dotnet add package Offside.FluentValidation         # FluentValidation → Error
+dotnet add package Offside.FastEndpoint             # FastEndpoints hosts only
 dotnet add package Offside.AzureAppConfiguration    # Azure App Configuration catalogs
 ```
 
@@ -25,7 +27,7 @@ offside init
 
 ## Compatibility and status
 
-`Offside` and `Offside.AzureAppConfiguration` support `netstandard2.0`, `net8.0`, and `net10.0`. `Offside.AspNetCore` supports `net8.0` and `net10.0`; `Offside.Tool` runs on `net8.0`.
+`Offside`, `Offside.FluentValidation`, and `Offside.AzureAppConfiguration` support `netstandard2.0`, `net8.0`, and `net10.0`. `Offside.AspNetCore` and `Offside.FastEndpoint` support `net8.0` and `net10.0`; `Offside.Tool` runs on `net8.0`.
 
 The project is pre-1.0. Minor releases may include breaking changes. Releases follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html), and notable changes are recorded in [CHANGELOG.md](CHANGELOG.md).
 
@@ -35,6 +37,8 @@ The project is pre-1.0. Minor releases may include breaking changes. Releases fo
 |---|---|
 | `Offside` | `Error`, `ErrorKind`, `Result` / `Result<T>`, JSON resolver, `AddOffside` |
 | `Offside.AspNetCore` | `ToHttpResult` / `ToActionResult`, Problem Details, `AddOffsideAspNetCore` |
+| `Offside.FluentValidation` | FluentValidation failures → `Error` / `Result` |
+| `Offside.FastEndpoint` | `UseOffside`, `SendOffsideAsync`, OpenAPI expected errors |
 | `Offside.AzureAppConfiguration` | Dynamic resolver for catalogs loaded by Azure App Configuration |
 | `Offside.Tool` | `offside init` — skills and catalog templates |
 
@@ -68,9 +72,10 @@ A failure becomes `application/problem+json`, with the status taken from the mos
   "title": "NotFound",
   "status": 404,
   "detail": "Order '42' was not found.",
+  "errorCode": "NOT_FOUND",
   "traceId": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
   "errors": [
-    { "code": "not_found", "kind": "NotFound", "detail": "Order '42' was not found.", "field": null }
+    { "code": "not_found", "errorCode": "NOT_FOUND", "kind": "NotFound", "detail": "Order '42' was not found.", "field": null }
   ]
 }
 ```
@@ -84,7 +89,7 @@ A failure becomes `application/problem+json`, with the status taken from the mos
 | `Conflict` | 409 | | `BadRequest` | 400 |
 | `PreconditionFailed` | 412 | | | |
 
-Full guides: [getting started](https://github.com/vpcmps/Offside/blob/master/docs/getting-started.md) · [concepts](https://github.com/vpcmps/Offside/blob/master/docs/concepts.md) · [domain](https://github.com/vpcmps/Offside/blob/master/docs/domain-guide.md) · [ASP.NET Core](https://github.com/vpcmps/Offside/blob/master/docs/aspnet-guide.md) · [messages](https://github.com/vpcmps/Offside/blob/master/docs/messages.md) · [API reference](https://github.com/vpcmps/Offside/blob/master/docs/api-reference.md)
+Full guides: [getting started](https://github.com/vpcmps/Offside/blob/master/docs/getting-started.md) · [concepts](https://github.com/vpcmps/Offside/blob/master/docs/concepts.md) · [domain](https://github.com/vpcmps/Offside/blob/master/docs/domain-guide.md) · [ASP.NET Core](https://github.com/vpcmps/Offside/blob/master/docs/aspnet-guide.md) · [FluentValidation](https://github.com/vpcmps/Offside/blob/master/docs/fluentvalidation.md) · [FastEndpoints](https://github.com/vpcmps/Offside/blob/master/docs/fastendpoints.md) · [messages](https://github.com/vpcmps/Offside/blob/master/docs/messages.md) · [API reference](https://github.com/vpcmps/Offside/blob/master/docs/api-reference.md)
 
 ## Pack locally
 
@@ -92,7 +97,7 @@ Full guides: [getting started](https://github.com/vpcmps/Offside/blob/master/doc
 dotnet pack -c Release -o artifacts
 ```
 
-Produces `Offside`, `Offside.AspNetCore`, `Offside.AzureAppConfiguration`, and `Offside.Tool` nupkgs (plus snupkgs).
+Produces `Offside`, `Offside.AspNetCore`, `Offside.FluentValidation`, `Offside.FastEndpoint`, `Offside.AzureAppConfiguration`, and `Offside.Tool` nupkgs (plus snupkgs).
 
 ## CI and publish
 

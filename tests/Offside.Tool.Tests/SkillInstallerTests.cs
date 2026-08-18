@@ -17,6 +17,8 @@ public sealed class SkillInstallerTests
         Assert.True(File.Exists(Path.Combine(dest, ".cursor", "skills", "offside-setup", "SKILL.md")));
         Assert.True(File.Exists(Path.Combine(dest, ".agents", "skills", "offside-domain", "SKILL.md")));
         Assert.True(File.Exists(Path.Combine(dest, ".claude", "skills", "offside-aspnet", "SKILL.md")));
+        Assert.True(File.Exists(Path.Combine(dest, ".cursor", "skills", "offside-fluentvalidation", "SKILL.md")));
+        Assert.True(File.Exists(Path.Combine(dest, ".agents", "skills", "offside-fastendpoint", "SKILL.md")));
         Assert.True(File.Exists(Path.Combine(dest, "errors", "errors.json")));
         Assert.True(File.Exists(Path.Combine(dest, "errors", "errors.pt-BR.json")));
     }
@@ -70,6 +72,8 @@ public sealed class SkillInstallerTests
         WriteSkill(root, "offside-setup");
         WriteSkill(root, "offside-domain");
         WriteSkill(root, "offside-aspnet");
+        WriteSkill(root, "offside-fluentvalidation");
+        WriteSkill(root, "offside-fastendpoint");
         var templates = Path.Combine(root, "templates");
         Directory.CreateDirectory(templates);
         File.WriteAllText(Path.Combine(templates, "errors.json"), "{ }");

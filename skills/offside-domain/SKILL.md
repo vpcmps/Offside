@@ -35,12 +35,14 @@ public Result<Order> Get(string id)
 | `Error.Unprocessable(reason?)` | Unprocessable | `unprocessable` |
 | `Error.TooManyRequests(reason?)` | TooManyRequests | `too_many_requests` |
 | `Error.Unexpected(detail?)` | Unexpected | `unexpected` (`detail` is for logs, not HTTP) |
-| `Error.Custom(code, kind, args?, field?)` | caller Kind | caller code |
+| `Error.Custom(code, kind, args?, field?, errorCode?)` | caller Kind | caller code |
+
+`errorCode` is the screen identifier (`NOT_FOUND`, `ORDER_ALREADY_SHIPPED`). Omit it to use the Kind default. `code` remains the catalog key.
 
 Business rule:
 
 ```csharp
-Error.Custom("order.already_shipped", ErrorKind.Conflict, new { orderId });
+Error.Custom("order.already_shipped", ErrorKind.Conflict, new { orderId }, errorCode: "ORDER_ALREADY_SHIPPED");
 ```
 
 Add the same `code` key to `errors.json` / `errors.pt-BR.json`.

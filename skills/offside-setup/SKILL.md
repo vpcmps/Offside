@@ -27,6 +27,18 @@ If the project is ASP.NET Core (Web SDK, `Microsoft.AspNetCore.App`, Minimal API
 dotnet add package Offside.AspNetCore
 ```
 
+If the project uses FluentValidation (not via FastEndpoints):
+
+```bash
+dotnet add package Offside.FluentValidation
+```
+
+If the project is FastEndpoints:
+
+```bash
+dotnet add package Offside.FastEndpoint
+```
+
 Prefer the latest stable from nuget.org. For a local build, `dotnet add package Offside --source <artifacts-dir>`.
 
 ## Catalogs
@@ -79,4 +91,4 @@ Domain/application projects reference **only** `Offside`. They never reference `
 
 ## After setup
 
-Point the user at `offside-domain` (Error/Result) and `offside-aspnet` (Problem Details).
+Point the user at `offside-domain` (Error/Result), `offside-aspnet` (Problem Details), `offside-fluentvalidation` when they use FluentValidation, and `offside-fastendpoint` when the host is FastEndpoints.

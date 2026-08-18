@@ -18,6 +18,15 @@ dotnet add package Offside.AspNetCore
 
 `Offside` tem como alvo `netstandard2.0`, `net8.0` e `net10.0`. `Offside.AspNetCore` tem como alvo `net8.0` e `net10.0`.
 
+Hosts FluentValidation ou FastEndpoints podem adicionar:
+
+```bash
+dotnet add package Offside.FluentValidation
+dotnet add package Offside.FastEndpoint
+```
+
+Veja [FluentValidation](fluentvalidation.md) e [FastEndpoints](fastendpoints.md).
+
 Opcionalmente, instale o CLI para gerar catálogos e skills de agente — veja a [página do CLI](cli.md):
 
 ```bash
@@ -120,9 +129,10 @@ Content-Type: application/problem+json
   "title": "NotFound",
   "status": 404,
   "detail": "order '42' não foi encontrado.",
+  "errorCode": "NOT_FOUND",
   "traceId": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
   "errors": [
-    { "code": "not_found", "kind": "NotFound", "detail": "order '42' não foi encontrado.", "field": null }
+    { "code": "not_found", "errorCode": "NOT_FOUND", "kind": "NotFound", "detail": "order '42' não foi encontrado.", "field": null }
   ]
 }
 ```
@@ -141,3 +151,5 @@ Host web             ──►  Offside + Offside.AspNetCore
 - [Conceitos](concepts.md) — o vocabulário, em uma página curta
 - [Guia de domínio](domain-guide.md) — todas as factories e combinadores
 - [Guia ASP.NET Core](aspnet-guide.md) — escolha do status, 500, culturas
+- [FluentValidation](fluentvalidation.md) — mapear falhas de validator para `Error`
+- [FastEndpoints](fastendpoints.md) — `UseOffside` e `SendOffsideAsync`

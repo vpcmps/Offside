@@ -27,19 +27,23 @@ offside init [--dir <caminho>] [--force]
 
 ## O que ele escreve
 
-Três skills, em cada um dos três diretórios de agente:
+Cinco skills, em cada um dos três diretórios de agente:
 
 ```
-.cursor/skills/offside-setup/    .agents/skills/offside-setup/    .claude/skills/offside-setup/
-.cursor/skills/offside-domain/   .agents/skills/offside-domain/   .claude/skills/offside-domain/
-.cursor/skills/offside-aspnet/   .agents/skills/offside-aspnet/   .claude/skills/offside-aspnet/
+.cursor/skills/offside-setup/              .agents/skills/offside-setup/              .claude/skills/offside-setup/
+.cursor/skills/offside-domain/             .agents/skills/offside-domain/             .claude/skills/offside-domain/
+.cursor/skills/offside-aspnet/             .agents/skills/offside-aspnet/             .claude/skills/offside-aspnet/
+.cursor/skills/offside-fluentvalidation/   .agents/skills/offside-fluentvalidation/   .claude/skills/offside-fluentvalidation/
+.cursor/skills/offside-fastendpoint/       .agents/skills/offside-fastendpoint/       .claude/skills/offside-fastendpoint/
 ```
 
 | Skill | Cobre |
 |---|---|
 | `offside-setup` | Integrar o Offside a um projeto existente: pacotes, catálogos, DI, camadas |
-| `offside-domain` | Factories, `Custom`, regras de `Result`, escape hatch |
+| `offside-domain` | Factories, `Custom`, `ErrorCode`, regras de `Result`, escape hatch |
 | `offside-aspnet` | Mapeamento de endpoints, formato da resposta, severidade, sanitização de 500 |
+| `offside-fluentvalidation` | Falhas FluentValidation → `Error` / `Result` |
+| `offside-fastendpoint` | `UseOffside`, `SendOffsideAsync`, `DontProduceOffside` |
 
 Mais dois templates de catálogo:
 
