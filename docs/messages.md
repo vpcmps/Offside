@@ -95,6 +95,49 @@ A translated catalog does not have to be complete. Anything it omits falls back 
 
 `offside init` writes an English and a Brazilian Portuguese catalog to start from — see the [CLI page](cli.md).
 
+## Azure App Configuration
+
+Install the optional integration when Azure App Configuration is your catalog source:
+
+```bash
+dotnet add package Offside.AzureAppConfiguration
+dotnet add package Microsoft.Extensions.Configuration.AzureAppConfiguration
+dotnet add package Microsoft.Azure.AppConfiguration.AspNetCore # ASP.NET Core refresh
+```
+
+The package reads a section from the host's `IConfiguration`; it does not connect to Azure or choose labels. The default section is `Errors`, followed by a culture and message code:
+
+```text
+Errors:default:not_found = missing {resource}
+Errors:pt-BR:not_found   = nao encontrado {resource}
+```
+
+`default` is required and is the final fallback. You can instead store a culture catalog under `Errors:pt-BR` with content type `application/json`; Azure flattens it into the same hierarchy:
+
+```json
+{ "not_found": "nao encontrado {resource}" }
+```
+
+Configure Azure in the host, select `Errors:*` and enable refresh. Register this resolver **instead of** `AddOffside`:
+
+```csharp
+using Azure.Identity;
+using Offside.AzureAppConfiguration;
+
+builder.Configuration.AddAzureAppConfiguration(options => options
+    .Connect(new Uri(builder.Configuration["AppConfig:Endpoint"]!), new DefaultAzureCredential())
+    .Select("Errors:*")
+    .ConfigureRefresh(refresh => refresh.RegisterAll()));
+
+builder.Services.AddAzureAppConfiguration();
+builder.Services.AddOffsideAzureAppConfiguration(builder.Configuration);
+
+var app = builder.Build();
+app.UseAzureAppConfiguration();
+```
+
+The resolver reads configuration for every lookup, so a completed refresh affects the next response without a restart. Workers must trigger the refresher themselves; labels, credentials, selectors, and refresh intervals remain host concerns. To use another root, pass `options => options.SectionName = "MyErrors"`.
+
 ## Custom resolvers
 
 `AddOffside` registers a `JsonErrorMessageResolver` as the singleton `IErrorMessageResolver`. To source messages from somewhere else — a database, satellite resource assemblies, a translation service — implement the interface and register it instead:

@@ -95,6 +95,49 @@ Um catálogo traduzido não precisa estar completo. O que ele omitir cai para a 
 
 `offside init` escreve um catálogo em inglês e um em português do Brasil como ponto de partida — veja a [página do CLI](cli.md).
 
+## Azure App Configuration
+
+Instale a integração opcional quando o Azure App Configuration for a fonte dos catálogos:
+
+```bash
+dotnet add package Offside.AzureAppConfiguration
+dotnet add package Microsoft.Extensions.Configuration.AzureAppConfiguration
+dotnet add package Microsoft.Azure.AppConfiguration.AspNetCore # refresh no ASP.NET Core
+```
+
+O pacote lê uma seção do `IConfiguration` já montado pelo host; ele não conecta ao Azure nem escolhe labels. A seção padrão é `Errors`, seguida da cultura e do código da mensagem:
+
+```text
+Errors:default:not_found = missing {resource}
+Errors:pt-BR:not_found   = nao encontrado {resource}
+```
+
+`default` é obrigatório e o fallback final. Também é possível armazenar um catálogo em `Errors:pt-BR` com content type `application/json`; o Azure o achata para a mesma hierarquia:
+
+```json
+{ "not_found": "nao encontrado {resource}" }
+```
+
+Configure o Azure no host, selecione `Errors:*` e habilite o refresh. Registre este resolver **em vez de** `AddOffside`:
+
+```csharp
+using Azure.Identity;
+using Offside.AzureAppConfiguration;
+
+builder.Configuration.AddAzureAppConfiguration(options => options
+    .Connect(new Uri(builder.Configuration["AppConfig:Endpoint"]!), new DefaultAzureCredential())
+    .Select("Errors:*")
+    .ConfigureRefresh(refresh => refresh.RegisterAll()));
+
+builder.Services.AddAzureAppConfiguration();
+builder.Services.AddOffsideAzureAppConfiguration(builder.Configuration);
+
+var app = builder.Build();
+app.UseAzureAppConfiguration();
+```
+
+O resolver lê a configuração a cada busca, então um refresh concluído afeta a próxima resposta sem reiniciar a aplicação. Em workers, o host deve disparar o refresher; labels, credenciais, seletores e intervalo de refresh continuam sendo responsabilidade do host. Para outra raiz, passe `options => options.SectionName = "MyErrors"`.
+
 ## Resolvers customizados
 
 `AddOffside` registra um `JsonErrorMessageResolver` como o singleton `IErrorMessageResolver`. Para buscar mensagens de outro lugar — um banco, assemblies satélite de recursos, um serviço de tradução — implemente a interface e registre-a no lugar:

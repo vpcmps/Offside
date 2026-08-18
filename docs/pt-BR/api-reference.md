@@ -112,6 +112,17 @@ public interface IErrorMessageResolver
 
 Implemente para buscar mensagens fora do JSON. Por convenção, devolva `error.Code` quando nenhuma mensagem for encontrada.
 
+### ErrorMessageTemplate
+
+```csharp
+public static class ErrorMessageTemplate
+{
+    public static string Interpolate(string template, IReadOnlyDictionary<string, object?> arguments);
+}
+```
+
+Interpolação compartilhada pelos resolvers nativos. Argumentos nulos e tokens sem correspondência permanecem literais.
+
 ### JsonErrorCatalog
 
 ```csharp
@@ -156,6 +167,30 @@ public static IServiceCollection AddOffside(this IServiceCollection services, Ac
 ```
 
 Constrói um `JsonErrorMessageResolver` de forma ansiosa e o registra como o singleton `IErrorMessageResolver`.
+
+## Offside.AzureAppConfiguration
+
+Namespace `Offside.AzureAppConfiguration`.
+
+```csharp
+public sealed class AzureAppConfigurationOptions
+{
+    public string SectionName { get; set; } = "Errors";
+}
+
+public sealed class ConfigurationErrorMessageResolver : IErrorMessageResolver
+{
+    public ConfigurationErrorMessageResolver(IConfiguration configuration);
+    public ConfigurationErrorMessageResolver(IConfiguration configuration, string sectionName);
+}
+
+public static IServiceCollection AddOffsideAzureAppConfiguration(
+    this IServiceCollection services,
+    IConfiguration configuration,
+    Action<AzureAppConfigurationOptions>? configure = null);
+```
+
+Lê dinamicamente `Errors:<cultura>:<código>`, com fallback cultura exata → pai → `default`. O catálogo padrão é obrigatório. Conexão com Azure, labels e refresh são configurados pelo host; não chame também `AddOffside`.
 
 ## Offside.AspNetCore
 
