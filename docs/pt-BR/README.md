@@ -1,6 +1,14 @@
+![offside](../../assets/offside-lockup.png)
+
 # Documentação do Offside
 
-*[English](../README.md)*
+*catch it before the whistle · [English](../README.md)*
+
+[![NuGet](https://img.shields.io/nuget/v/Offside?logo=nuget&label=NuGet)](https://www.nuget.org/packages/Offside)
+[![Downloads](https://img.shields.io/nuget/dt/Offside?label=downloads)](https://www.nuget.org/packages/Offside)
+[![CI](https://img.shields.io/github/actions/workflow/status/vpcmps/Offside/ci.yml?branch=master&label=CI)](https://github.com/vpcmps/Offside/actions/workflows/ci.yml)
+[![License](https://img.shields.io/badge/license-MIT-blue)](https://github.com/vpcmps/Offside/blob/master/LICENSE)
+![Frameworks](https://img.shields.io/badge/net-standard2.0%20%7C%208.0%20%7C%2010.0-512BD4)
 
 Erros de domínio como `Result`, não como exceções. O domínio devolve um `Error`; o ASP.NET Core mapeia isso para Problem Details (RFC 7807). As mensagens ficam em catálogos JSON, não em C#.
 
@@ -54,14 +62,14 @@ app.MapGet("/orders/{id}", (string id, HttpContext http) => _orders.Get(id).ToHt
 
 ## Pacotes
 
-| Pacote | Target frameworks | Papel |
-|---|---|---|
-| `Offside` | `netstandard2.0`, `net8.0`, `net10.0` | `Error`, `ErrorKind`, `Result` / `Result<T>`, resolver JSON, `AddOffside` |
-| `Offside.AspNetCore` | `net8.0`, `net10.0` | `ToHttpResult` / `ToActionResult`, Problem Details, `AddOffsideAspNetCore` |
-| `Offside.FluentValidation` | `netstandard2.0`, `net8.0`, `net10.0` | Falhas FluentValidation → `Error` / `Result` |
-| `Offside.FastEndpoint` | `net8.0`, `net10.0` | `UseOffside`, `SendOffsideAsync`, erros esperados no OpenAPI |
-| `Offside.AzureAppConfiguration` | `netstandard2.0`, `net8.0`, `net10.0` | Resolver dinâmico para catálogos carregados pelo Azure App Configuration |
-| `Offside.Tool` | `net8.0` | `offside init` — skills de agente e templates de catálogo |
+| Pacote | Versão | Target frameworks | Papel |
+|---|---|---|---|
+| `Offside` | [![NuGet](https://img.shields.io/nuget/v/Offside?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside) | `netstandard2.0`, `net8.0`, `net10.0` | `Error`, `ErrorKind`, `Result` / `Result<T>`, resolver JSON, `AddOffside` |
+| `Offside.AspNetCore` | [![NuGet](https://img.shields.io/nuget/v/Offside.AspNetCore?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside.AspNetCore) | `net8.0`, `net10.0` | `ToHttpResult` / `ToActionResult`, Problem Details, `AddOffsideAspNetCore` |
+| `Offside.FluentValidation` | [![NuGet](https://img.shields.io/nuget/v/Offside.FluentValidation?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside.FluentValidation) | `netstandard2.0`, `net8.0`, `net10.0` | Falhas FluentValidation → `Error` / `Result` |
+| `Offside.FastEndpoint` | [![NuGet](https://img.shields.io/nuget/v/Offside.FastEndpoint?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside.FastEndpoint) | `net8.0`, `net10.0` | `UseOffside`, `SendOffsideAsync`, erros esperados no OpenAPI |
+| `Offside.AzureAppConfiguration` | [![NuGet](https://img.shields.io/nuget/v/Offside.AzureAppConfiguration?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside.AzureAppConfiguration) | `netstandard2.0`, `net8.0`, `net10.0` | Resolver dinâmico para catálogos carregados pelo Azure App Configuration |
+| `Offside.Tool` | [![NuGet](https://img.shields.io/nuget/v/Offside.Tool?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside.Tool) | `net8.0` | `offside init` — skills de agente e templates de catálogo |
 
 O pacote core não tem dependência de ASP.NET, então projetos de domínio podem referenciá-lo livremente.
 

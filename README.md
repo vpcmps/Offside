@@ -1,6 +1,14 @@
+![offside — catch it before the whistle](https://raw.githubusercontent.com/vpcmps/Offside/master/assets/offside-lockup.png)
+
 # Offside
 
-*the domain called offside*
+*catch it before the whistle*
+
+[![NuGet](https://img.shields.io/nuget/v/Offside?logo=nuget&label=NuGet)](https://www.nuget.org/packages/Offside)
+[![Downloads](https://img.shields.io/nuget/dt/Offside?label=downloads)](https://www.nuget.org/packages/Offside)
+[![CI](https://img.shields.io/github/actions/workflow/status/vpcmps/Offside/ci.yml?branch=master&label=CI)](https://github.com/vpcmps/Offside/actions/workflows/ci.yml)
+[![License](https://img.shields.io/badge/license-MIT-blue)](https://github.com/vpcmps/Offside/blob/master/LICENSE)
+![Frameworks](https://img.shields.io/badge/net-standard2.0%20%7C%208.0%20%7C%2010.0-512BD4)
 
 Domain errors as `Result`, not exceptions. The domain returns `Error`; ASP.NET Core maps that to Problem Details (RFC 7807). Messages live in JSON catalogs, not in C#.
 
@@ -33,14 +41,14 @@ The project is pre-1.0. Minor releases may include breaking changes. Releases fo
 
 ## Packages
 
-| Package | Role |
-|---|---|
-| `Offside` | `Error`, `ErrorKind`, `Result` / `Result<T>`, JSON resolver, `AddOffside` |
-| `Offside.AspNetCore` | `ToHttpResult` / `ToActionResult`, Problem Details, `AddOffsideAspNetCore` |
-| `Offside.FluentValidation` | FluentValidation failures → `Error` / `Result` |
-| `Offside.FastEndpoint` | `UseOffside`, `SendOffsideAsync`, OpenAPI expected errors |
-| `Offside.AzureAppConfiguration` | Dynamic resolver for catalogs loaded by Azure App Configuration |
-| `Offside.Tool` | `offside init` — skills and catalog templates |
+| Package | Version | Role |
+|---|---|---|
+| `Offside` | [![NuGet](https://img.shields.io/nuget/v/Offside?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside) | `Error`, `ErrorKind`, `Result` / `Result<T>`, JSON resolver, `AddOffside` |
+| `Offside.AspNetCore` | [![NuGet](https://img.shields.io/nuget/v/Offside.AspNetCore?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside.AspNetCore) | `ToHttpResult` / `ToActionResult`, Problem Details, `AddOffsideAspNetCore` |
+| `Offside.FluentValidation` | [![NuGet](https://img.shields.io/nuget/v/Offside.FluentValidation?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside.FluentValidation) | FluentValidation failures → `Error` / `Result` |
+| `Offside.FastEndpoint` | [![NuGet](https://img.shields.io/nuget/v/Offside.FastEndpoint?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside.FastEndpoint) | `UseOffside`, `SendOffsideAsync`, OpenAPI expected errors |
+| `Offside.AzureAppConfiguration` | [![NuGet](https://img.shields.io/nuget/v/Offside.AzureAppConfiguration?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside.AzureAppConfiguration) | Dynamic resolver for catalogs loaded by Azure App Configuration |
+| `Offside.Tool` | [![NuGet](https://img.shields.io/nuget/v/Offside.Tool?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside.Tool) | `offside init` — skills and catalog templates |
 
 The Core package has no ASP.NET dependency.
 
