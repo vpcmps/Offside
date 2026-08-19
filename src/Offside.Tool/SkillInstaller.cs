@@ -21,7 +21,10 @@ public sealed class SkillInstaller
         "offside-domain",
         "offside-aspnet",
         "offside-fluentvalidation",
-        "offside-fastendpoint"
+        "offside-fastendpoint",
+        "offside-implementation",
+        "offside-refactoring",
+        "offside-azure-app-configuration"
     ];
 
     private static readonly string[] AgentRoots =

@@ -27,7 +27,7 @@ offside init [--dir <path>] [--force]
 
 ## What it writes
 
-Five skills, into each of the three agent directories:
+Eight skills, into each of the three agent directories:
 
 ```
 .cursor/skills/offside-setup/              .agents/skills/offside-setup/              .claude/skills/offside-setup/
@@ -35,6 +35,9 @@ Five skills, into each of the three agent directories:
 .cursor/skills/offside-aspnet/             .agents/skills/offside-aspnet/             .claude/skills/offside-aspnet/
 .cursor/skills/offside-fluentvalidation/   .agents/skills/offside-fluentvalidation/   .claude/skills/offside-fluentvalidation/
 .cursor/skills/offside-fastendpoint/       .agents/skills/offside-fastendpoint/       .claude/skills/offside-fastendpoint/
+.cursor/skills/offside-implementation/     .agents/skills/offside-implementation/     .claude/skills/offside-implementation/
+.cursor/skills/offside-refactoring/        .agents/skills/offside-refactoring/        .claude/skills/offside-refactoring/
+.cursor/skills/offside-azure-app-configuration/  .agents/skills/offside-azure-app-configuration/  .claude/skills/offside-azure-app-configuration/
 ```
 
 | Skill | Covers |
@@ -44,6 +47,19 @@ Five skills, into each of the three agent directories:
 | `offside-aspnet` | Endpoint mapping, the response shape, severity, 500 sanitization |
 | `offside-fluentvalidation` | FluentValidation failures → `Error` / `Result` |
 | `offside-fastendpoint` | `UseOffside`, `SendOffsideAsync`, `DontProduceOffside` |
+| `offside-implementation` | End-to-end feature work with the selected Offside integrations |
+| `offside-refactoring` | Incremental migration to Offside while preserving public behavior |
+| `offside-azure-app-configuration` | Dynamic message catalogs and refresh through Azure App Configuration |
+
+### Capability selection
+
+The setup, implementation, and refactoring skills inspect the project and ask the user to confirm a modular profile before changing files:
+
+- exactly one message source: local JSON, Azure App Configuration, or a custom `IErrorMessageResolver`;
+- exactly one exposure: domain/application only, standard ASP.NET Core, or ASP.NET Core with FastEndpoints;
+- optional FluentValidation integration.
+
+These axes are independent. For example, JSON + FastEndpoints, Azure without HTTP, Azure + standard ASP.NET Core, and Azure + FastEndpoints are all supported. Agents use an interactive selector when available and fall back to a numbered Markdown checklist.
 
 Plus two catalog templates:
 

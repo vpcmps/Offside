@@ -5,10 +5,12 @@ description: Wires Offside Problem Details into FastEndpoints. Use when adding U
 
 # Offside FastEndpoints
 
-Everything FastEndpoints-specific lives in `Offside.FastEndpoint`. The host also needs `Offside`, `Offside.AspNetCore`, and catalogs via `AddOffside`.
+Everything FastEndpoints-specific lives in `Offside.FastEndpoint`. The host also needs `Offside` and `Offside.AspNetCore`, plus the selected message resolver.
+
+Use this skill after FastEndpoints exposure is selected. If exposure or message source is undecided, use `offside-setup` first. The message source may be local JSON, Azure App Configuration, or a custom resolver.
 
 ```csharp
-builder.Services.AddOffside(options => { /* catalogs */ });
+builder.Services.AddOffside(options => { /* local JSON catalogs, when selected */ });
 builder.Services.AddOffsideAspNetCore();
 builder.Services.AddFastEndpoints();
 

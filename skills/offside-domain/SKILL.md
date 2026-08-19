@@ -7,6 +7,8 @@ description: Implements domain and application failures with Offside Error, Resu
 
 Business rules return `Result` / `Result<T>`. Do not throw for expected failures.
 
+If Offside is not configured yet or the message source is undecided, use `offside-setup` before changing project dependencies. This skill does not choose JSON, Azure, HTTP, or validation integrations.
+
 ```csharp
 using Offside;
 

@@ -23,7 +23,7 @@ dotnet tool install -g Offside.Tool
 offside init
 ```
 
-`offside init` copies skills into `.cursor/skills`, `.agents/skills`, and `.claude/skills`, and writes `errors/errors.json` plus `errors/errors.pt-BR.json`. Use `--dir <path>` and `--force` as needed.
+`offside init` copies eight skills into `.cursor/skills`, `.agents/skills`, and `.claude/skills`, and writes `errors/errors.json` plus `errors/errors.pt-BR.json`. The setup, implementation, and refactoring skills ask the user to select a message source (JSON, Azure, or custom), an exposure mode (domain only, ASP.NET Core, or FastEndpoints), and optional FluentValidation. Use `--dir <path>` and `--force` as needed.
 
 ## Compatibility and status
 

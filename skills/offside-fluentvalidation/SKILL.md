@@ -7,6 +7,8 @@ description: Maps FluentValidation failures to Offside Error and Result. Use whe
 
 Package `Offside.FluentValidation`. No HTTP. No FastEndpoints.
 
+Use this skill after FluentValidation is selected. If project integrations are still undecided, use `offside-setup` first.
+
 ```csharp
 using FluentValidation;
 using Offside.FluentValidation;

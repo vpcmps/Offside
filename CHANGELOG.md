@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Modular agent-skill workflows for Offside setup, feature implementation, refactoring, and Azure App Configuration. Interactive capability selection supports every valid combination of JSON, Azure or custom messages; domain-only, ASP.NET Core or FastEndpoints exposure; and optional FluentValidation.
 - `Error.ErrorCode`: a stable screen identifier (`NOT_FOUND`, `ORDER_ALREADY_SHIPPED`) distinct from `Error.Code` (the message-catalog key). Factories take an optional trailing `errorCode`; blank uses `Error.DefaultErrorCode(Kind)`. Exposed on `OffsideProblem` as `errorCode` (document and `errors[]`). Sanitized 500s force `UNEXPECTED`.
 - `Offside.FluentValidation`: maps FluentValidation failures to Offside `Error` / `Result`.
 - `Offside.FastEndpoint`: `UseOffside`, `DontProduceOffside`, and `SendOffsideAsync` — Problem Details pipeline plus global expected-error OpenAPI metadata.

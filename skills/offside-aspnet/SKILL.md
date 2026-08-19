@@ -7,6 +7,8 @@ description: Maps Offside Result to RFC 7807 Problem Details in ASP.NET Core. Us
 
 The host translates `Result` to Problem Details. It does not decide business rules.
 
+Use this skill after standard ASP.NET Core exposure is selected. If the exposure or message source is undecided, use `offside-setup` first. FastEndpoints hosts use `offside-fastendpoint` for pipeline integration.
+
 Requires `Offside` + `Offside.AspNetCore`, catalogs via `AddOffside`, then `AddOffsideAspNetCore()`.
 
 ## Map endpoints
