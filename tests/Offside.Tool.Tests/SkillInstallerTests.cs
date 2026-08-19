@@ -5,6 +5,18 @@ namespace Offside.Tool.Tests;
 
 public sealed class SkillInstallerTests
 {
+    private static readonly string[] SkillNames =
+    [
+        "offside-setup",
+        "offside-domain",
+        "offside-aspnet",
+        "offside-fluentvalidation",
+        "offside-fastendpoint",
+        "offside-implementation",
+        "offside-refactoring",
+        "offside-azure-app-configuration"
+    ];
+
     [Fact]
     public void Install_copies_skills_and_templates()
     {
@@ -13,10 +25,16 @@ public sealed class SkillInstallerTests
 
         var written = new SkillInstaller(source).Install(dest, force: false);
 
-        Assert.Contains(written, path => path.EndsWith(Path.Combine("offside-setup", "SKILL.md"), StringComparison.Ordinal));
-        Assert.True(File.Exists(Path.Combine(dest, ".cursor", "skills", "offside-setup", "SKILL.md")));
-        Assert.True(File.Exists(Path.Combine(dest, ".agents", "skills", "offside-domain", "SKILL.md")));
-        Assert.True(File.Exists(Path.Combine(dest, ".claude", "skills", "offside-aspnet", "SKILL.md")));
+        foreach (var agentRoot in new[] { ".cursor", ".agents", ".claude" })
+        foreach (var skillName in SkillNames)
+        {
+            var installed = Path.Combine(dest, agentRoot, "skills", skillName, "SKILL.md");
+            Assert.True(File.Exists(installed), $"Expected installed skill at '{installed}'.");
+            Assert.Contains(written, path => string.Equals(
+                path.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar),
+                installed.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar),
+                StringComparison.Ordinal));
+        }
         Assert.True(File.Exists(Path.Combine(dest, "errors", "errors.json")));
         Assert.True(File.Exists(Path.Combine(dest, "errors", "errors.pt-BR.json")));
     }
@@ -67,9 +85,8 @@ public sealed class SkillInstallerTests
     private static string CreateSkillTree()
     {
         var root = Directory.CreateTempSubdirectory().FullName;
-        WriteSkill(root, "offside-setup");
-        WriteSkill(root, "offside-domain");
-        WriteSkill(root, "offside-aspnet");
+        foreach (var skillName in SkillNames)
+            WriteSkill(root, skillName);
         var templates = Path.Combine(root, "templates");
         Directory.CreateDirectory(templates);
         File.WriteAllText(Path.Combine(templates, "errors.json"), "{ }");

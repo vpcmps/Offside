@@ -29,25 +29,27 @@ public sealed class Error : IEquatable<Error>
 | Membro | Descrição |
 |---|---|
 | `string Code { get; }` | Identificador estável e chave no catálogo de mensagens |
+| `string ErrorCode { get; }` | Identificador de tela (`NOT_FOUND`, `ORDER_ALREADY_SHIPPED`) |
 | `ErrorKind Kind { get; }` | Espécie da falha |
 | `IReadOnlyDictionary<string, object?> Arguments { get; }` | Snapshot somente leitura dos valores do template |
 | `string? Field { get; }` | Campo culpado, quando atribuível |
-| `static Error NotFound(string resource, object? id = null)` | Código `not_found` |
-| `static Error Gone(string resource, object? id = null)` | Código `gone` |
-| `static Error Conflict(string resource, string? reason = null)` | Código `conflict` |
-| `static Error Validation(string field, string? code = null, object? attemptedValue = null)` | Código `validation` ou `code`; preenche `Field` |
-| `static Error BadRequest(string? reason = null)` | Código `bad_request` |
-| `static Error Unauthorized(string? reason = null)` | Código `unauthorized` |
-| `static Error Forbidden(string? reason = null)` | Código `forbidden` |
-| `static Error PreconditionFailed(string? reason = null)` | Código `precondition_failed` |
-| `static Error Unprocessable(string? reason = null)` | Código `unprocessable` |
-| `static Error TooManyRequests(string? reason = null)` | Código `too_many_requests` |
-| `static Error Unexpected(string? detail = null)` | Código `unexpected`; `detail` é apenas diagnóstico |
-| `static Error Custom(string code, ErrorKind kind, object? arguments = null, string? field = null)` | Erro de regra de negócio. Lança `ArgumentException` com código em branco |
+| `static string DefaultErrorCode(ErrorKind kind)` | Default do kind, p.ex. `TOO_MANY_REQUESTS` |
+| `static Error NotFound(string resource, object? id = null, string? errorCode = null)` | Código `not_found` |
+| `static Error Gone(string resource, object? id = null, string? errorCode = null)` | Código `gone` |
+| `static Error Conflict(string resource, string? reason = null, string? errorCode = null)` | Código `conflict` |
+| `static Error Validation(string field, string? code = null, object? attemptedValue = null, string? errorCode = null)` | Código `validation` ou `code`; preenche `Field` |
+| `static Error BadRequest(string? reason = null, string? errorCode = null)` | Código `bad_request` |
+| `static Error Unauthorized(string? reason = null, string? errorCode = null)` | Código `unauthorized` |
+| `static Error Forbidden(string? reason = null, string? errorCode = null)` | Código `forbidden` |
+| `static Error PreconditionFailed(string? reason = null, string? errorCode = null)` | Código `precondition_failed` |
+| `static Error Unprocessable(string? reason = null, string? errorCode = null)` | Código `unprocessable` |
+| `static Error TooManyRequests(string? reason = null, string? errorCode = null)` | Código `too_many_requests` |
+| `static Error Unexpected(string? detail = null, string? errorCode = null)` | Código `unexpected`; `detail` é apenas diagnóstico |
+| `static Error Custom(string code, ErrorKind kind, object? arguments = null, string? field = null, string? errorCode = null)` | Erro de regra de negócio. Lança `ArgumentException` com código em branco |
 | `DomainException ToException()` | Escape hatch |
-| `bool Equals(Error?)`, `operator ==`, `operator !=` | Igualdade por valor, argumentos incluídos |
+| `bool Equals(Error?)`, `operator ==`, `operator !=` | Igualdade por valor, incluindo `ErrorCode` e argumentos |
 
-O construtor é interno; a construção passa pelas factories.
+`errorCode` em branco ou só com espaços usa `DefaultErrorCode(Kind)`; senão é aparado. O construtor é interno; a construção passa pelas factories.
 
 ### Result
 
@@ -226,6 +228,7 @@ public sealed class OffsideProblem
     public int Status { get; init; }
     public required string Detail { get; init; }
     public required string TraceId { get; init; }
+    public required string ErrorCode { get; init; }  // identificador de tela do primário
     public string? Debug { get; init; }              // omitido do JSON quando nulo
     public required IReadOnlyList<Item> Errors { get; init; }
 
@@ -239,6 +242,7 @@ public sealed class OffsideProblem
     public sealed class Item
     {
         public required string Code { get; init; }
+        public required string ErrorCode { get; init; }
         public required string Kind { get; init; }
         public required string Detail { get; init; }
         public string? Field { get; init; }
@@ -246,7 +250,19 @@ public sealed class OffsideProblem
 }
 ```
 
-Serializado como `application/problem+json` com nomes em camelCase. Veja [o formato da resposta](aspnet-guide.md#mapeamento-de-falha).
+Serializado como `application/problem+json` com nomes em camelCase. Um 500 sanitizado força `errorCode` para `UNEXPECTED`. Veja [o formato da resposta](aspnet-guide.md#mapeamento-de-falha).
+
+### OffsideHttp
+
+```csharp
+public static class OffsideHttp
+{
+    public static IReadOnlyList<int> StatusCodes { get; }  // 400, 401, 403, 404, 409, 410, 412, 422, 429, 500
+    public static int StatusCode(ErrorKind kind);
+}
+```
+
+O mapeamento kind → HTTP usado pelo Problem Details e pelo `Offside.FastEndpoint`.
 
 ### ResultHttpExtensions
 
@@ -282,6 +298,42 @@ IActionResult ToActionResult<T>(this Result<T> result, IErrorMessageResolver res
 Note a assimetria: **não existe** `ToActionResult(this Result, IErrorMessageResolver, bool)` para o `Result` unitário. Passe uma cultura, ou passe `null` pela sobrecarga com options.
 
 Uma cultura `null` significa "derive do `Accept-Language`". Todas as sobrecargas lançam `ArgumentNullException` com resolver, options ou `HttpContext` nulos.
+
+## Offside.FluentValidation
+
+Namespace `Offside.FluentValidation`. Targets `netstandard2.0`, `net8.0`, `net10.0`.
+
+```csharp
+public static class FluentValidationOffsideExtensions
+{
+    public static IReadOnlyList<Error> ToOffsideErrors(this IEnumerable<ValidationFailure> failures);
+    public static IReadOnlyList<Error> ToOffsideErrors(this ValidationResult result);
+    public static IReadOnlyList<Error> ToOffsideErrors(this ValidationException exception);
+    public static Result ToResult(this ValidationResult result);
+}
+```
+
+`.WithErrorCode("email.taken")` vira `Error.Code`. Os nomes default `*Validator` do FluentValidation (e códigos em branco) viram `validation`. `Error.ErrorCode` é `VALIDATION`. `PropertyName` vazio define `Field` como null. Veja [FluentValidation](fluentvalidation.md).
+
+## Offside.FastEndpoint
+
+Namespace `Offside.FastEndpoint`. Targets `net8.0`, `net10.0`.
+
+```csharp
+public static class OffsideFastEndpointExtensions
+{
+    public static Config UseOffside(this Config config, Action<EndpointDefinition>? configure = null);
+    public static void DontProduceOffside(this EndpointDefinition definition);
+}
+
+public static class OffsideResultSendExtensions
+{
+    public static Task SendOffsideAsync(this Result result, HttpContext httpContext, CancellationToken cancellationToken = default);
+    public static Task SendOffsideAsync<T>(this Result<T> result, HttpContext httpContext, CancellationToken cancellationToken = default);
+}
+```
+
+`UseOffside` define o `ResponseBuilder` de validação para `OffsideProblem`, `ProducesMetadataType` para `typeof(OffsideProblem)`, content type `application/problem+json`, e registra `Produces<OffsideProblem>` para cada valor de `OffsideHttp.StatusCodes`. `SendOffsideAsync` reusa `ToHttpResult`. Veja [FastEndpoints](fastendpoints.md).
 
 ## Offside.Tool
 

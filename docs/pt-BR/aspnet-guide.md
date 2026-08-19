@@ -65,10 +65,12 @@ Toda falha produz o mesmo corpo, `application/problem+json` com nomes em camelCa
   "title": "Conflict",
   "status": 409,
   "detail": "O pedido 42 já foi enviado.",
+  "errorCode": "ORDER_ALREADY_SHIPPED",
   "traceId": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
   "errors": [
     {
       "code": "order.already_shipped",
+      "errorCode": "ORDER_ALREADY_SHIPPED",
       "kind": "Conflict",
       "detail": "O pedido 42 já foi enviado.",
       "field": null
@@ -83,11 +85,14 @@ Toda falha produz o mesmo corpo, `application/problem+json` com nomes em camelCa
 | `title` | O `ErrorKind` do erro primário, como string |
 | `status` | Derivado do kind mais severo presente |
 | `detail` | A mensagem resolvida do erro primário |
+| `errorCode` | O identificador de tela do erro primário |
 | `traceId` | `Activity.Current?.Id`, caindo para `HttpContext.TraceIdentifier` |
 | `errors` | Todos os erros do resultado, na ordem em que o domínio os reportou |
+| `errors[].code` | Chave do catálogo (`order.already_shipped`) |
+| `errors[].errorCode` | Identificador de tela (`ORDER_ALREADY_SHIPPED`) |
 | `debug` | Presente apenas em um 500 com `ExposeExceptionDetails` ligado; omitido nos demais casos |
 
-Clientes devem fazer branch em `errors[].code`, não em `detail` — o código é o contrato, o texto é dado de catálogo.
+Clientes devem fazer branch em `errorCode` (topo ou `errors[].errorCode`), não em `detail`. `code` é a chave do catálogo de mensagens.
 
 ## Status codes
 
@@ -104,6 +109,8 @@ Clientes devem fazer branch em `errors[].code`, não em `detail` — o código �
 | `NotFound` | 404 |
 | `Validation` | 400 |
 | `BadRequest` | 400 |
+
+O mesmo mapeamento é `OffsideHttp.StatusCode(kind)`. `OffsideHttp.StatusCodes` é o conjunto distinto (400, 401, 403, 404, 409, 410, 412, 422, 429, 500) usado como respostas esperadas.
 
 ## Escolhendo o erro primário
 
@@ -140,8 +147,9 @@ Ordenar por severidade em vez de por posição significa que uma falha genuína 
 Quando o kind vencedor é `Unexpected`:
 
 1. O `detail` de todo erro inesperado é substituído pela mensagem genérica `unexpected` do catálogo — tanto no `detail` de topo quanto nas entradas de `errors`.
-2. O detalhe real aparece em `debug` **apenas** quando `ExposeExceptionDetails` está ligado.
-3. A falha é logada via `ILoggerFactory` na categoria `Offside.AspNetCore`, junto com o `traceId`.
+2. O `errorCode` de todo erro inesperado é forçado para `UNEXPECTED`.
+3. O detalhe real aparece em `debug` **apenas** quando `ExposeExceptionDetails` está ligado.
+4. A falha é logada via `ILoggerFactory` na categoria `Offside.AspNetCore`, junto com o `traceId`.
 
 ```csharp
 return Result.Failure(Error.Unexpected(ex.ToString()));
@@ -155,9 +163,10 @@ Em produção:
   "title": "Unexpected",
   "status": 500,
   "detail": "Ocorreu um erro inesperado.",
+  "errorCode": "UNEXPECTED",
   "traceId": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
   "errors": [
-    { "code": "unexpected", "kind": "Unexpected", "detail": "Ocorreu um erro inesperado.", "field": null }
+    { "code": "unexpected", "errorCode": "UNEXPECTED", "kind": "Unexpected", "detail": "Ocorreu um erro inesperado.", "field": null }
   ]
 }
 ```
@@ -204,4 +213,4 @@ Cada linha existe para `Result` e `Result<T>`, com uma exceção: **não existe 
 - Nunca referencie `Offside.AspNetCore` de um projeto de domínio ou aplicação. Status codes são preocupação de transporte.
 - Não construa um segundo formato de erro ao lado deste. Um único formato em toda a API é a maior parte do valor.
 - Mantenha segredos fora de `Error.Arguments` — eles acabam nas mensagens, e mensagens são enviadas.
-- Faça clientes decidirem por `errors[].code`, nunca por `detail`.
+- Faça clientes decidirem por `errorCode`, nunca por `detail`.

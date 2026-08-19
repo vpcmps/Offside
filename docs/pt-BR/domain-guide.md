@@ -52,7 +52,9 @@ Cada factory produz um `ErrorKind` específico e um código de catálogo padrão
 | `Error.Unprocessable(reason?)` | `Unprocessable` | `unprocessable` | `reason` |
 | `Error.TooManyRequests(reason?)` | `TooManyRequests` | `too_many_requests` | `reason` |
 | `Error.Unexpected(detail?)` | `Unexpected` | `unexpected` | `detail` |
-| `Error.Custom(code, kind, arguments?, field?)` | *sua escolha* | *sua escolha* | *sua escolha* |
+| `Error.Custom(code, kind, arguments?, field?, errorCode?)` | *sua escolha* | *sua escolha* | *sua escolha* |
+
+Toda factory também aceita um `errorCode` opcional no final. Em branco ou nulo usa `Error.DefaultErrorCode(Kind)` (`NOT_FOUND`, `VALIDATION`, `TOO_MANY_REQUESTS`, …). Espaços nas pontas são removidos.
 
 `Error.Validation` é a única factory que preenche `Field`, e a única que permite sobrescrever o código sem passar por `Custom`:
 
@@ -66,7 +68,7 @@ Error.Validation("email", "email.malformed", input);       // código "email.mal
 Quando uma regra merece a própria mensagem, mantenha o kind e invente o código:
 
 ```csharp
-Error.Custom("order.already_shipped", ErrorKind.Conflict, new { orderId });
+Error.Custom("order.already_shipped", ErrorKind.Conflict, new { orderId }, errorCode: "ORDER_ALREADY_SHIPPED");
 Error.Custom("payment.insufficient_funds", ErrorKind.Unprocessable, new { required, available });
 Error.Custom("coupon.expired", ErrorKind.PreconditionFailed, new { coupon = code, expiredOn }, field: "coupon");
 ```
@@ -79,7 +81,7 @@ O código vira a chave do catálogo, então adicione a entrada correspondente em
 
 Um código vazio ou só com espaços lança `ArgumentException`. Espaços nas pontas são removidos.
 
-Vale adotar uma convenção pontuada e com namespace (`order.already_shipped`): códigos são contrato público sobre o qual clientes fazem branch, e um namespace plano colide mais cedo do que se espera.
+Vale adotar uma convenção pontuada e com namespace (`order.already_shipped`) para as chaves do catálogo. Clientes decidem pelo `ErrorCode` (`ORDER_ALREADY_SHIPPED`), não pela chave do catálogo e não pelo `detail`. Vários códigos podem compartilhar um error code.
 
 ## Argumentos
 
@@ -170,4 +172,4 @@ Assert.True(result.IsFailure);
 Assert.Equal(Error.NotFound("order", "missing"), result.Errors[0]);
 ```
 
-Faça asserção sobre `Code` e `Kind`, não sobre o texto resolvido — o texto é dado de catálogo e deve poder mudar sem quebrar nada.
+Faça asserção sobre `Code`, `ErrorCode` e `Kind`, não sobre o texto resolvido — o texto é dado de catálogo e deve poder mudar sem quebrar nada.

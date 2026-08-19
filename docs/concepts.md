@@ -6,14 +6,21 @@ Six ideas carry the whole library.
 
 ## Error
 
-A domain failure described by data: a stable `Code`, an `ErrorKind`, interpolation `Arguments`, and an optional `Field`. It is not an exception and carries no stack trace.
+A domain failure described by data: a stable `Code` (the message-catalog key), an `ErrorCode` (the screen identifier), an `ErrorKind`, interpolation `Arguments`, and an optional `Field`. It is not an exception and carries no stack trace.
 
 ```csharp
 var error = Error.NotFound("order", 42);
 // Code      = "not_found"
+// ErrorCode = "NOT_FOUND"
 // Kind      = ErrorKind.NotFound
 // Arguments = { resource: "order", id: 42 }
 // Field     = null
+```
+
+`ErrorCode` is what clients branch on for screens. Several catalog `Code`s may share one `ErrorCode`. Omit it on a factory and `Error.DefaultErrorCode(Kind)` fills it (`NOT_FOUND`, `VALIDATION`, `TOO_MANY_REQUESTS`, …). Pass a specific value when a screen needs a finer identifier:
+
+```csharp
+Error.Custom("order.already_shipped", ErrorKind.Conflict, new { orderId }, errorCode: "ORDER_ALREADY_SHIPPED");
 ```
 
 `Error` is immutable and compares by value, so it is safe to cache, compare in tests, and pass around freely:
@@ -55,7 +62,7 @@ Reading a value is explicit — `Value` throws on a failed result, so use `TryGe
 
 ## Primary error
 
-When a result carries several errors, one of them drives the response: the error of the **most severe kind**, with ties broken in favour of the **first error in the result**. It supplies the Problem Details `title` and `detail`, and its kind supplies the HTTP status.
+When a result carries several errors, one of them drives the response: the error of the **most severe kind**, with ties broken in favour of the **first error in the result**. It supplies the Problem Details `title`, `detail`, and `errorCode`, and its kind supplies the HTTP status.
 
 The other errors are not discarded — every one appears in the `errors` array. A form that fails validation on three fields returns `400` and reports all three.
 

@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <RootNamespace>Offside.FastEndpoint</RootNamespace>
+    <AssemblyName>Offside.FastEndpoint</AssemblyName>
+    <PackageId>Offside.FastEndpoint</PackageId>
+    <Description>FastEndpoints integration for Offside Problem Details. The domain called offside.</Description>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="FastEndpoints" Version="7.0.1" />
+    <ProjectReference Include="..\Offside.AspNetCore\Offside.AspNetCore.csproj" />
+    <ProjectReference Include="..\Offside.FluentValidation\Offside.FluentValidation.csproj" />
+  </ItemGroup>
+</Project>

@@ -48,7 +48,27 @@ public sealed class ProblemDetailsTests
         var payload = await ProblemHttpHarness.Execute(result);
 
         Assert.Equal("order.already_shipped", payload.Errors[0].Code);
+        Assert.Equal("CONFLICT", payload.ErrorCode);
+        Assert.Equal("CONFLICT", payload.Errors[0].ErrorCode);
         Assert.NotNull(payload.TraceId);
+    }
+
+    [Fact]
+    public async Task Primary_error_code_uses_override()
+    {
+        var result = Result.Failure(
+            Error.Custom(
+                "order.already_shipped",
+                ErrorKind.Conflict,
+                new { orderId = "123" },
+                errorCode: "ORDER_ALREADY_SHIPPED"),
+            Error.Validation("email"));
+
+        var payload = await ProblemHttpHarness.Execute(result);
+
+        Assert.Equal("ORDER_ALREADY_SHIPPED", payload.ErrorCode);
+        Assert.Equal("ORDER_ALREADY_SHIPPED", payload.Errors[0].ErrorCode);
+        Assert.Equal("VALIDATION", payload.Errors[1].ErrorCode);
     }
 
     [Fact]

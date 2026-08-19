@@ -52,7 +52,9 @@ Every factory produces a specific `ErrorKind` and a default catalog code.
 | `Error.Unprocessable(reason?)` | `Unprocessable` | `unprocessable` | `reason` |
 | `Error.TooManyRequests(reason?)` | `TooManyRequests` | `too_many_requests` | `reason` |
 | `Error.Unexpected(detail?)` | `Unexpected` | `unexpected` | `detail` |
-| `Error.Custom(code, kind, arguments?, field?)` | *your choice* | *your choice* | *your choice* |
+| `Error.Custom(code, kind, arguments?, field?, errorCode?)` | *your choice* | *your choice* | *your choice* |
+
+Every factory also takes an optional trailing `errorCode`. Blank or null uses `Error.DefaultErrorCode(Kind)` (`NOT_FOUND`, `VALIDATION`, `TOO_MANY_REQUESTS`, …). Surrounding whitespace is trimmed.
 
 `Error.Validation` is the only factory that sets `Field`, and the only one that lets you override the code without going through `Custom`:
 
@@ -66,7 +68,7 @@ Error.Validation("email", "email.malformed", input);       // code "email.malfor
 When a rule deserves its own message, keep the kind and invent the code:
 
 ```csharp
-Error.Custom("order.already_shipped", ErrorKind.Conflict, new { orderId });
+Error.Custom("order.already_shipped", ErrorKind.Conflict, new { orderId }, errorCode: "ORDER_ALREADY_SHIPPED");
 Error.Custom("payment.insufficient_funds", ErrorKind.Unprocessable, new { required, available });
 Error.Custom("coupon.expired", ErrorKind.PreconditionFailed, new { coupon = code, expiredOn }, field: "coupon");
 ```
@@ -79,7 +81,7 @@ The code becomes the catalog key, so add a matching entry to every catalog:
 
 An empty or whitespace code throws `ArgumentException`. Surrounding whitespace is trimmed.
 
-A dotted, namespaced convention (`order.already_shipped`) is worth adopting: codes are a public contract that clients branch on, and a flat namespace collides sooner than you expect.
+A dotted, namespaced convention (`order.already_shipped`) is worth adopting for catalog keys. Clients branch on `ErrorCode` (`ORDER_ALREADY_SHIPPED`), not on the catalog key and not on `detail`. Several codes may share one error code.
 
 ## Arguments
 
@@ -170,4 +172,4 @@ Assert.True(result.IsFailure);
 Assert.Equal(Error.NotFound("order", "missing"), result.Errors[0]);
 ```
 
-Assert on `Code` and `Kind` rather than on resolved text — the text is catalog data and is expected to change without breaking anything.
+Assert on `Code`, `ErrorCode`, and `Kind` rather than on resolved text — the text is catalog data and is expected to change without breaking anything.
