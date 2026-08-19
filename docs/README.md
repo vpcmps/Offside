@@ -12,6 +12,7 @@ Domain errors as `Result`, not exceptions. The domain returns an `Error`; ASP.NE
 | [Concepts](concepts.md) | `Error`, `ErrorKind`, `Result`, primary error, catalogs, the escape hatch |
 | [Domain guide](domain-guide.md) | Writing domain code with `Result<T>`: factories, `Custom`, `Bind`/`Map`/`Combine` |
 | [ASP.NET Core guide](aspnet-guide.md) | `ToHttpResult` / `ToActionResult`, status selection, the response shape, 500 handling |
+| [MediatR integration](mediatr-guide.md) | Publish result errors as notifications, collect them per scope, and handle retries safely |
 | [Messages and cultures](messages.md) | Catalog format, culture fallback, `{token}` interpolation |
 | [CLI](cli.md) | `offside init` — agent skills and catalog templates |
 | [API reference](api-reference.md) | Every public type and member, in one page |
@@ -56,9 +57,10 @@ app.MapGet("/orders/{id}", (string id, HttpContext http) => _orders.Get(id).ToHt
 | `Offside` | `netstandard2.0`, `net8.0`, `net10.0` | `Error`, `ErrorKind`, `Result` / `Result<T>`, JSON resolver, `AddOffside` |
 | `Offside.AspNetCore` | `net8.0`, `net10.0` | `ToHttpResult` / `ToActionResult`, Problem Details, `AddOffsideAspNetCore` |
 | `Offside.AzureAppConfiguration` | `netstandard2.0`, `net8.0`, `net10.0` | Dynamic resolver for catalogs loaded by Azure App Configuration |
+| `Offside.MediatR` | `netstandard2.0`, `net8.0`, `net10.0` | MediatR notifications for failed results and a scoped collector |
 | `Offside.Tool` | `net8.0` | `offside init` — agent skills and catalog templates |
 
-The core package has no ASP.NET dependency, so domain projects can reference it freely.
+The core package has no ASP.NET or MediatR dependency, so domain projects can reference it freely.
 
 ## Elsewhere
 

@@ -8,8 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
-- Bilingual documentation under `docs/` (English) and `docs/pt-BR/` (Portuguese): getting started, concepts, domain guide, ASP.NET Core guide, messages and cultures, CLI, API reference, and FAQ.
-- XML documentation comments across the public API of all three packages, so IntelliSense and the shipped `.xml` files are useful to consumers.
+- Optional `Offside.MediatR` package with ordered domain-notification publication, a thread-safe scoped collector, and compatibility with MediatR 12 through 14.
+- An `offside-mediatr` agent skill installed by `offside init` alongside the existing skills.
+- Bilingual documentation under `docs/` (English) and `docs/pt-BR/` (Portuguese): getting started, concepts, domain guide, ASP.NET Core guide, MediatR integration, messages and cultures, CLI, API reference, and FAQ.
+- XML documentation comments across the public API, so IntelliSense and the shipped `.xml` files are useful to consumers.
 
 ## [0.1.0] - 2026-08-13
 

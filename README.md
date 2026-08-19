@@ -12,6 +12,7 @@ Domain errors as `Result`, not exceptions. The domain returns `Error`; ASP.NET C
 dotnet add package Offside
 dotnet add package Offside.AspNetCore               # ASP.NET hosts only
 dotnet add package Offside.AzureAppConfiguration    # Azure App Configuration catalogs
+dotnet add package Offside.MediatR                  # MediatR hosts only
 ```
 
 Agent skills + catalog templates:
@@ -25,7 +26,7 @@ offside init
 
 ## Compatibility and status
 
-`Offside` and `Offside.AzureAppConfiguration` support `netstandard2.0`, `net8.0`, and `net10.0`. `Offside.AspNetCore` supports `net8.0` and `net10.0`; `Offside.Tool` runs on `net8.0`.
+`Offside`, `Offside.AzureAppConfiguration`, and `Offside.MediatR` support `netstandard2.0`, `net8.0`, and `net10.0`. `Offside.AspNetCore` supports `net8.0` and `net10.0`; `Offside.Tool` runs on `net8.0`. `Offside.MediatR` supports MediatR `12.0.1` through `14.x`.
 
 The project is pre-1.0. Minor releases may include breaking changes. Releases follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html), and notable changes are recorded in [CHANGELOG.md](CHANGELOG.md).
 
@@ -36,9 +37,10 @@ The project is pre-1.0. Minor releases may include breaking changes. Releases fo
 | `Offside` | `Error`, `ErrorKind`, `Result` / `Result<T>`, JSON resolver, `AddOffside` |
 | `Offside.AspNetCore` | `ToHttpResult` / `ToActionResult`, Problem Details, `AddOffsideAspNetCore` |
 | `Offside.AzureAppConfiguration` | Dynamic resolver for catalogs loaded by Azure App Configuration |
+| `Offside.MediatR` | Publishes failed results as domain notifications and provides a scoped collector |
 | `Offside.Tool` | `offside init` — skills and catalog templates |
 
-The Core package has no ASP.NET dependency.
+The Core package has no ASP.NET or MediatR dependency.
 
 ## Example
 
@@ -58,6 +60,17 @@ Result GetOrder(string id) =>
 
 app.MapGet("/orders/{id}", (string id, HttpContext http) =>
     GetOrder(id).ToHttpResult(http));
+```
+
+MediatR hosts can publish every error in a failed result, in order, and read them back from a scoped collector:
+
+```csharp
+builder.Services.AddMediatR(configuration =>
+    configuration.RegisterServicesFromAssemblyContaining<Program>());
+builder.Services.AddOffsideMediatR();
+
+Result result = CancelOrder(id);
+return await result.PublishDomainNotificationsAsync(publisher, cancellationToken);
 ```
 
 A failure becomes `application/problem+json`, with the status taken from the most severe error present:
@@ -84,7 +97,7 @@ A failure becomes `application/problem+json`, with the status taken from the mos
 | `Conflict` | 409 | | `BadRequest` | 400 |
 | `PreconditionFailed` | 412 | | | |
 
-Full guides: [getting started](https://github.com/vpcmps/Offside/blob/master/docs/getting-started.md) · [concepts](https://github.com/vpcmps/Offside/blob/master/docs/concepts.md) · [domain](https://github.com/vpcmps/Offside/blob/master/docs/domain-guide.md) · [ASP.NET Core](https://github.com/vpcmps/Offside/blob/master/docs/aspnet-guide.md) · [messages](https://github.com/vpcmps/Offside/blob/master/docs/messages.md) · [API reference](https://github.com/vpcmps/Offside/blob/master/docs/api-reference.md)
+Full guides: [getting started](https://github.com/vpcmps/Offside/blob/master/docs/getting-started.md) · [concepts](https://github.com/vpcmps/Offside/blob/master/docs/concepts.md) · [domain](https://github.com/vpcmps/Offside/blob/master/docs/domain-guide.md) · [ASP.NET Core](https://github.com/vpcmps/Offside/blob/master/docs/aspnet-guide.md) · [MediatR](https://github.com/vpcmps/Offside/blob/master/docs/mediatr-guide.md) · [messages](https://github.com/vpcmps/Offside/blob/master/docs/messages.md) · [API reference](https://github.com/vpcmps/Offside/blob/master/docs/api-reference.md)
 
 ## Pack locally
 
@@ -92,7 +105,7 @@ Full guides: [getting started](https://github.com/vpcmps/Offside/blob/master/doc
 dotnet pack -c Release -o artifacts
 ```
 
-Produces `Offside`, `Offside.AspNetCore`, `Offside.AzureAppConfiguration`, and `Offside.Tool` nupkgs (plus snupkgs).
+Produces `Offside`, `Offside.AspNetCore`, `Offside.AzureAppConfiguration`, `Offside.MediatR`, and `Offside.Tool` nupkgs (plus snupkgs).
 
 ## CI and publish
 

@@ -27,6 +27,12 @@ If the project is ASP.NET Core (Web SDK, `Microsoft.AspNetCore.App`, Minimal API
 dotnet add package Offside.AspNetCore
 ```
 
+If the project already uses MediatR:
+
+```bash
+dotnet add package Offside.MediatR
+```
+
 Prefer the latest stable from nuget.org. For a local build, `dotnet add package Offside --source <artifacts-dir>`.
 
 ## Catalogs
@@ -79,4 +85,5 @@ Domain/application projects reference **only** `Offside`. They never reference `
 
 ## After setup
 
-Point the user at `offside-domain` (Error/Result) and `offside-aspnet` (Problem Details).
+Point the user at `offside-domain` (Error/Result), `offside-aspnet` (Problem Details),
+and `offside-mediatr` when the host uses MediatR.

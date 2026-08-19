@@ -12,6 +12,7 @@ Erros de domínio como `Result`, não como exceções. O domínio devolve um `Er
 | [Conceitos](concepts.md) | `Error`, `ErrorKind`, `Result`, erro primário, catálogos, escape hatch |
 | [Guia de domínio](domain-guide.md) | Escrever código de domínio com `Result<T>`: factories, `Custom`, `Bind`/`Map`/`Combine` |
 | [Guia ASP.NET Core](aspnet-guide.md) | `ToHttpResult` / `ToActionResult`, escolha do status, formato da resposta, tratamento de 500 |
+| [Integração com MediatR](mediatr-guide.md) | Publicar erros de resultados como notificações, coletá-los por scope e tratar retries com segurança |
 | [Mensagens e culturas](messages.md) | Formato do catálogo, fallback de cultura, interpolação de `{token}` |
 | [CLI](cli.md) | `offside init` — skills de agente e templates de catálogo |
 | [Referência de API](api-reference.md) | Todos os tipos e membros públicos, em uma página |
@@ -56,9 +57,10 @@ app.MapGet("/orders/{id}", (string id, HttpContext http) => _orders.Get(id).ToHt
 | `Offside` | `netstandard2.0`, `net8.0`, `net10.0` | `Error`, `ErrorKind`, `Result` / `Result<T>`, resolver JSON, `AddOffside` |
 | `Offside.AspNetCore` | `net8.0`, `net10.0` | `ToHttpResult` / `ToActionResult`, Problem Details, `AddOffsideAspNetCore` |
 | `Offside.AzureAppConfiguration` | `netstandard2.0`, `net8.0`, `net10.0` | Resolver dinâmico para catálogos carregados pelo Azure App Configuration |
+| `Offside.MediatR` | `netstandard2.0`, `net8.0`, `net10.0` | Notificações MediatR para resultados com falha e coletor scoped |
 | `Offside.Tool` | `net8.0` | `offside init` — skills de agente e templates de catálogo |
 
-O pacote core não tem dependência de ASP.NET, então projetos de domínio podem referenciá-lo livremente.
+O pacote core não tem dependência de ASP.NET nem de MediatR, então projetos de domínio podem referenciá-lo livremente.
 
 ## Em outro lugar
 

@@ -6,3 +6,5 @@
 - **Primary error** — The first Error of the most severe Kind in a Result. Drives Problem Details `detail` and the HTTP status.
 - **Message catalog** — JSON per culture mapping `Code` → template. Metadata stays in C#; only text is translated.
 - **Escape hatch** — `ToException()` / unhandled exceptions. Not used for ordinary business rules.
+- **Domain notification** — A MediatR `INotification` that carries exactly one complete `Error`. Published explicitly from a failed Result at the application boundary.
+- **Domain notification collector** — A thread-safe scoped accumulator of notification errors. Reads return snapshots and never clear state; one dependency-injection scope should represent one logical operation.

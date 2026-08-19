@@ -168,6 +168,60 @@ public static IServiceCollection AddOffside(this IServiceCollection services, Ac
 
 Constrói um `JsonErrorMessageResolver` de forma ansiosa e o registra como o singleton `IErrorMessageResolver`.
 
+## Offside.MediatR
+
+Namespace `Offside.MediatR`. O pacote depende do MediatR no intervalo `[12.0.1,15.0.0)`; o pacote Core do Offside permanece independente.
+
+### DomainNotification
+
+```csharp
+public sealed class DomainNotification : INotification
+{
+    public DomainNotification(Error error);
+    public Error Error { get; }
+}
+```
+
+Carrega exatamente um erro não nulo. É uma notificação de erro, não um domain event que descreve mudança de estado.
+
+### IDomainNotificationCollector
+
+```csharp
+public interface IDomainNotificationCollector
+{
+    bool HasNotifications { get; }
+    IReadOnlyList<Error> Errors { get; }
+    Result ToResult();
+    Result<T> ToResult<T>(T value);
+}
+```
+
+O coletor é scoped e thread-safe. `Errors` é um snapshot independente; leituras nunca limpam o estado. Os dois métodos de resultado devolvem sucesso quando vazio e falha com todos os erros coletados nos demais casos.
+
+### ResultMediatRExtensions
+
+```csharp
+public static Task<Result> PublishDomainNotificationsAsync(
+    this Result result,
+    IPublisher publisher,
+    CancellationToken cancellationToken = default);
+
+public static Task<Result<T>> PublishDomainNotificationsAsync<T>(
+    this Result<T> result,
+    IPublisher publisher,
+    CancellationToken cancellationToken = default);
+```
+
+Sucesso não publica nada. Falha publica uma notificação por erro, sequencialmente e na ordem do Result, e devolve o resultado original. Cancelamento e exceções de handlers interrompem as publicações restantes e são propagados imediatamente.
+
+### OffsideMediatRServiceCollectionExtensions
+
+```csharp
+public static IServiceCollection AddOffsideMediatR(this IServiceCollection services);
+```
+
+Registra de forma idempotente o coletor scoped e seu handler. Não chama `AddMediatR`, não registra `IPublisher` e não configura licenciamento. Veja o [guia do MediatR](mediatr-guide.md).
+
 ## Offside.AzureAppConfiguration
 
 Namespace `Offside.AzureAppConfiguration`.

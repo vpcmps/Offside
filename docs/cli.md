@@ -27,12 +27,13 @@ offside init [--dir <path>] [--force]
 
 ## What it writes
 
-Three skills, into each of the three agent directories:
+Four skills, into each of the three agent directories:
 
 ```
 .cursor/skills/offside-setup/    .agents/skills/offside-setup/    .claude/skills/offside-setup/
 .cursor/skills/offside-domain/   .agents/skills/offside-domain/   .claude/skills/offside-domain/
 .cursor/skills/offside-aspnet/   .agents/skills/offside-aspnet/   .claude/skills/offside-aspnet/
+.cursor/skills/offside-mediatr/  .agents/skills/offside-mediatr/  .claude/skills/offside-mediatr/
 ```
 
 | Skill | Covers |
@@ -40,6 +41,7 @@ Three skills, into each of the three agent directories:
 | `offside-setup` | Wiring Offside into an existing project: packages, catalogs, DI, layering |
 | `offside-domain` | Factories, `Custom`, `Result` rules, the escape hatch |
 | `offside-aspnet` | Endpoint mapping, the response shape, severity, 500 sanitization |
+| `offside-mediatr` | Registration, ordered notification publication, scoped collection, retries |
 
 Plus two catalog templates:
 
