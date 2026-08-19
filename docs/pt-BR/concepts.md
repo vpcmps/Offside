@@ -6,14 +6,21 @@ Seis ideias sustentam a biblioteca inteira.
 
 ## Error
 
-Uma falha de domínio descrita como dado: um `Code` estável, um `ErrorKind`, `Arguments` de interpolação e um `Field` opcional. Não é uma exceção e não carrega stack trace.
+Uma falha de domínio descrita como dado: um `Code` estável (chave do catálogo de mensagens), um `ErrorCode` (identificador de tela), um `ErrorKind`, `Arguments` de interpolação e um `Field` opcional. Não é uma exceção e não carrega stack trace.
 
 ```csharp
 var error = Error.NotFound("order", 42);
 // Code      = "not_found"
+// ErrorCode = "NOT_FOUND"
 // Kind      = ErrorKind.NotFound
 // Arguments = { resource: "order", id: 42 }
 // Field     = null
+```
+
+`ErrorCode` é o que os clientes usam para escolher a tela. Vários `Code`s de catálogo podem compartilhar um `ErrorCode`. Omita-o na factory e `Error.DefaultErrorCode(Kind)` preenche (`NOT_FOUND`, `VALIDATION`, `TOO_MANY_REQUESTS`, …). Passe um valor específico quando a tela precisar de um identificador mais fino:
+
+```csharp
+Error.Custom("order.already_shipped", ErrorKind.Conflict, new { orderId }, errorCode: "ORDER_ALREADY_SHIPPED");
 ```
 
 `Error` é imutável e compara por valor, então é seguro cachear, comparar em testes e passar adiante livremente:
@@ -55,7 +62,7 @@ Ler o valor é explícito — `Value` lança em um resultado falho, então use `
 
 ## Erro primário
 
-Quando um resultado carrega vários erros, um deles dirige a resposta: o erro do **kind mais severo**, com empates resolvidos a favor do **primeiro erro do resultado**. Ele fornece o `title` e o `detail` do Problem Details, e seu kind fornece o status HTTP.
+Quando um resultado carrega vários erros, um deles dirige a resposta: o erro do **kind mais severo**, com empates resolvidos a favor do **primeiro erro do resultado**. Ele fornece o `title`, o `detail` e o `errorCode` do Problem Details, e seu kind fornece o status HTTP.
 
 Os demais erros não são descartados — todos aparecem no array `errors`. Um formulário que falha validação em três campos devolve `400` e reporta os três.
 

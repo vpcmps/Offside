@@ -19,10 +19,10 @@ Porque um conjunto fechado de kinds torna o mapeamento HTTP total. Todo erro que
 A especificidade vive no espaço de códigos, que é aberto:
 
 ```csharp
-Error.Custom("order.already_shipped", ErrorKind.Conflict, new { orderId });
+Error.Custom("order.already_shipped", ErrorKind.Conflict, new { orderId }, errorCode: "ORDER_ALREADY_SHIPPED");
 ```
 
-Clientes decidem pelo código. O kind só define o status e o rank de severidade.
+Clientes decidem pelo `errorCode`. O kind só define o status e o rank de severidade. `code` continua sendo a chave do catálogo de mensagens.
 
 ## Por que o status vem do erro mais severo e não do primeiro?
 
@@ -80,6 +80,10 @@ Copie o catálogo, traduza os valores, registre. Traduções parciais são aceit
 ## De onde vem a cultura?
 
 Do header `Accept-Language` da requisição — primeiro range, sem quality values — a menos que você passe uma explicitamente. Um valor ausente, vazio, `*` ou não reconhecido cai para `CultureInfo.CurrentUICulture`. Um header malformado nunca derruba uma requisição.
+
+## Clientes devem ramificar em `code` ou em `errorCode`?
+
+Em `errorCode`. Esse é o identificador estável de tela (`ORDER_ALREADY_SHIPPED`, `VALIDATION`). `code` é a chave do catálogo usada para resolver a mensagem (`order.already_shipped`). Vários códigos podem compartilhar um error code. Nunca ramifique em `detail` — é texto traduzido do catálogo.
 
 ## Dá para usar o Offside sem ASP.NET Core?
 

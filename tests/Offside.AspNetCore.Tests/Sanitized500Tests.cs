@@ -12,6 +12,8 @@ public sealed class Sanitized500Tests
         Assert.Equal(500, payload.Status);
         Assert.DoesNotContain("secret-stack", payload.Detail);
         Assert.Null(payload.Debug);
+        Assert.Equal("UNEXPECTED", payload.ErrorCode);
+        Assert.Equal("UNEXPECTED", payload.Errors[0].ErrorCode);
         Assert.NotNull(payload.TraceId);
     }
 
@@ -24,6 +26,19 @@ public sealed class Sanitized500Tests
         var payload = await Execute(result, expose: false);
         Assert.Equal(500, payload.Status);
         Assert.DoesNotContain("secret", payload.Detail);
+        Assert.Equal("UNEXPECTED", payload.ErrorCode);
+    }
+
+    [Fact]
+    public async Task Unexpected_custom_error_code_is_sanitized()
+    {
+        var result = Result.Failure(
+            Error.Custom("db.timeout", ErrorKind.Unexpected, errorCode: "DB_TIMEOUT"));
+        var payload = await Execute(result, expose: false);
+
+        Assert.Equal(500, payload.Status);
+        Assert.Equal("UNEXPECTED", payload.ErrorCode);
+        Assert.Equal("UNEXPECTED", payload.Errors[0].ErrorCode);
     }
 
     [Fact]

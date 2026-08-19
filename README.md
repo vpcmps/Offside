@@ -1,6 +1,14 @@
+![offside — catch it before the whistle](https://raw.githubusercontent.com/vpcmps/Offside/master/assets/offside-lockup.png)
+
 # Offside
 
-*the domain called offside*
+*catch it before the whistle*
+
+[![NuGet](https://img.shields.io/nuget/v/Offside?logo=nuget&label=NuGet)](https://www.nuget.org/packages/Offside)
+[![Downloads](https://img.shields.io/nuget/dt/Offside?label=downloads)](https://www.nuget.org/packages/Offside)
+[![CI](https://img.shields.io/github/actions/workflow/status/vpcmps/Offside/ci.yml?branch=master&label=CI)](https://github.com/vpcmps/Offside/actions/workflows/ci.yml)
+[![License](https://img.shields.io/badge/license-MIT-blue)](https://github.com/vpcmps/Offside/blob/master/LICENSE)
+![Frameworks](https://img.shields.io/badge/net-standard2.0%20%7C%208.0%20%7C%2010.0-512BD4)
 
 Domain errors as `Result`, not exceptions. The domain returns `Error`; ASP.NET Core maps that to Problem Details (RFC 7807). Messages live in JSON catalogs, not in C#.
 
@@ -11,6 +19,8 @@ Domain errors as `Result`, not exceptions. The domain returns `Error`; ASP.NET C
 ```bash
 dotnet add package Offside
 dotnet add package Offside.AspNetCore               # ASP.NET hosts only
+dotnet add package Offside.FluentValidation         # FluentValidation → Error
+dotnet add package Offside.FastEndpoint             # FastEndpoints hosts only
 dotnet add package Offside.AzureAppConfiguration    # Azure App Configuration catalogs
 dotnet add package Offside.MediatR                  # MediatR hosts only
 ```
@@ -22,23 +32,25 @@ dotnet tool install -g Offside.Tool
 offside init
 ```
 
-`offside init` copies skills into `.cursor/skills`, `.agents/skills`, and `.claude/skills`, and writes `errors/errors.json` plus `errors/errors.pt-BR.json`. Use `--dir <path>` and `--force` as needed.
+`offside init` copies nine skills into `.cursor/skills`, `.agents/skills`, and `.claude/skills`, and writes `errors/errors.json` plus `errors/errors.pt-BR.json`. The setup, implementation, and refactoring skills ask the user to select a message source (JSON, Azure, or custom), an exposure mode (domain only, ASP.NET Core, or FastEndpoints), and optional FluentValidation. Setup also offers optional MediatR domain notifications. Use `--dir <path>` and `--force` as needed.
 
 ## Compatibility and status
 
-`Offside`, `Offside.AzureAppConfiguration`, and `Offside.MediatR` support `netstandard2.0`, `net8.0`, and `net10.0`. `Offside.AspNetCore` supports `net8.0` and `net10.0`; `Offside.Tool` runs on `net8.0`. `Offside.MediatR` supports MediatR `12.0.1` through `14.x`.
+`Offside`, `Offside.FluentValidation`, `Offside.AzureAppConfiguration`, and `Offside.MediatR` support `netstandard2.0`, `net8.0`, and `net10.0`. `Offside.AspNetCore` and `Offside.FastEndpoint` support `net8.0` and `net10.0`; `Offside.Tool` runs on `net8.0`. `Offside.MediatR` supports MediatR `12.0.1` through `14.x`.
 
 The project is pre-1.0. Minor releases may include breaking changes. Releases follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html), and notable changes are recorded in [CHANGELOG.md](CHANGELOG.md).
 
 ## Packages
 
-| Package | Role |
-|---|---|
-| `Offside` | `Error`, `ErrorKind`, `Result` / `Result<T>`, JSON resolver, `AddOffside` |
-| `Offside.AspNetCore` | `ToHttpResult` / `ToActionResult`, Problem Details, `AddOffsideAspNetCore` |
-| `Offside.AzureAppConfiguration` | Dynamic resolver for catalogs loaded by Azure App Configuration |
-| `Offside.MediatR` | Publishes failed results as domain notifications and provides a scoped collector |
-| `Offside.Tool` | `offside init` — skills and catalog templates |
+| Package | Version | Role |
+|---|---|---|
+| `Offside` | [![NuGet](https://img.shields.io/nuget/v/Offside?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside) | `Error`, `ErrorKind`, `Result` / `Result<T>`, JSON resolver, `AddOffside` |
+| `Offside.AspNetCore` | [![NuGet](https://img.shields.io/nuget/v/Offside.AspNetCore?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside.AspNetCore) | `ToHttpResult` / `ToActionResult`, Problem Details, `AddOffsideAspNetCore` |
+| `Offside.FluentValidation` | [![NuGet](https://img.shields.io/nuget/v/Offside.FluentValidation?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside.FluentValidation) | FluentValidation failures → `Error` / `Result` |
+| `Offside.FastEndpoint` | [![NuGet](https://img.shields.io/nuget/v/Offside.FastEndpoint?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside.FastEndpoint) | `UseOffside`, `SendOffsideAsync`, OpenAPI expected errors |
+| `Offside.AzureAppConfiguration` | [![NuGet](https://img.shields.io/nuget/v/Offside.AzureAppConfiguration?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside.AzureAppConfiguration) | Dynamic resolver for catalogs loaded by Azure App Configuration |
+| `Offside.MediatR` | [![NuGet](https://img.shields.io/nuget/v/Offside.MediatR?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside.MediatR) | Publishes failed results as domain notifications and provides a scoped collector |
+| `Offside.Tool` | [![NuGet](https://img.shields.io/nuget/v/Offside.Tool?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside.Tool) | `offside init` — skills and catalog templates |
 
 The Core package has no ASP.NET or MediatR dependency.
 
@@ -81,9 +93,10 @@ A failure becomes `application/problem+json`, with the status taken from the mos
   "title": "NotFound",
   "status": 404,
   "detail": "Order '42' was not found.",
+  "errorCode": "NOT_FOUND",
   "traceId": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
   "errors": [
-    { "code": "not_found", "kind": "NotFound", "detail": "Order '42' was not found.", "field": null }
+    { "code": "not_found", "errorCode": "NOT_FOUND", "kind": "NotFound", "detail": "Order '42' was not found.", "field": null }
   ]
 }
 ```
@@ -97,7 +110,7 @@ A failure becomes `application/problem+json`, with the status taken from the mos
 | `Conflict` | 409 | | `BadRequest` | 400 |
 | `PreconditionFailed` | 412 | | | |
 
-Full guides: [getting started](https://github.com/vpcmps/Offside/blob/master/docs/getting-started.md) · [concepts](https://github.com/vpcmps/Offside/blob/master/docs/concepts.md) · [domain](https://github.com/vpcmps/Offside/blob/master/docs/domain-guide.md) · [ASP.NET Core](https://github.com/vpcmps/Offside/blob/master/docs/aspnet-guide.md) · [MediatR](https://github.com/vpcmps/Offside/blob/master/docs/mediatr-guide.md) · [messages](https://github.com/vpcmps/Offside/blob/master/docs/messages.md) · [API reference](https://github.com/vpcmps/Offside/blob/master/docs/api-reference.md)
+Full guides: [getting started](https://github.com/vpcmps/Offside/blob/master/docs/getting-started.md) · [concepts](https://github.com/vpcmps/Offside/blob/master/docs/concepts.md) · [domain](https://github.com/vpcmps/Offside/blob/master/docs/domain-guide.md) · [ASP.NET Core](https://github.com/vpcmps/Offside/blob/master/docs/aspnet-guide.md) · [FluentValidation](https://github.com/vpcmps/Offside/blob/master/docs/fluentvalidation.md) · [FastEndpoints](https://github.com/vpcmps/Offside/blob/master/docs/fastendpoints.md) · [MediatR](https://github.com/vpcmps/Offside/blob/master/docs/mediatr-guide.md) · [messages](https://github.com/vpcmps/Offside/blob/master/docs/messages.md) · [API reference](https://github.com/vpcmps/Offside/blob/master/docs/api-reference.md)
 
 ## Pack locally
 
@@ -105,7 +118,7 @@ Full guides: [getting started](https://github.com/vpcmps/Offside/blob/master/doc
 dotnet pack -c Release -o artifacts
 ```
 
-Produces `Offside`, `Offside.AspNetCore`, `Offside.AzureAppConfiguration`, `Offside.MediatR`, and `Offside.Tool` nupkgs (plus snupkgs).
+Produces `Offside`, `Offside.AspNetCore`, `Offside.FluentValidation`, `Offside.FastEndpoint`, `Offside.AzureAppConfiguration`, `Offside.MediatR`, and `Offside.Tool` nupkgs (plus snupkgs).
 
 ## CI and publish
 

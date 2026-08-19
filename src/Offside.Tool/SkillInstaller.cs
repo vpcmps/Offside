@@ -20,7 +20,12 @@ public sealed class SkillInstaller
         "offside-setup",
         "offside-domain",
         "offside-aspnet",
-        "offside-mediatr"
+        "offside-mediatr",
+        "offside-fluentvalidation",
+        "offside-fastendpoint",
+        "offside-implementation",
+        "offside-refactoring",
+        "offside-azure-app-configuration"
     ];
 
     private static readonly string[] AgentRoots =
@@ -48,7 +53,7 @@ public sealed class SkillInstaller
     }
 
     /// <summary>
-    /// Writes the four Offside skills into each agent directory and the catalog templates into
+    /// Writes the Offside skills into each agent directory and the catalog templates into
     /// <c>&lt;projectRoot&gt;/errors</c>.
     /// </summary>
     /// <param name="projectRoot">The project directory. Created if it does not exist.</param>

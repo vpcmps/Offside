@@ -7,7 +7,7 @@
     <PackageId>Offside.Tool</PackageId>
     <AssemblyName>Offside.Tool</AssemblyName>
     <RootNamespace>Offside.Tool</RootNamespace>
-    <Description>dotnet tool: offside init installs Offside agent skills and error catalog templates into a project.</Description>
+    <Description>dotnet tool: offside init installs Offside agent skills and error catalog templates into a project. Catch it before the whistle.</Description>
     <IsPackable>true</IsPackable>
     <RollForward>Major</RollForward>
   </PropertyGroup>

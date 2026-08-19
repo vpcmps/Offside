@@ -10,7 +10,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Optional `Offside.MediatR` package with ordered domain-notification publication, a thread-safe scoped collector, and compatibility with MediatR 12 through 14.
 - An `offside-mediatr` agent skill installed by `offside init` alongside the existing skills.
-- Bilingual documentation under `docs/` (English) and `docs/pt-BR/` (Portuguese): getting started, concepts, domain guide, ASP.NET Core guide, MediatR integration, messages and cultures, CLI, API reference, and FAQ.
+- Modular agent-skill workflows for Offside setup, feature implementation, refactoring, and Azure App Configuration. Interactive capability selection supports every valid combination of JSON, Azure or custom messages; domain-only, ASP.NET Core or FastEndpoints exposure; and optional FluentValidation.
+- `Error.ErrorCode`: a stable screen identifier (`NOT_FOUND`, `ORDER_ALREADY_SHIPPED`) distinct from `Error.Code` (the message-catalog key). Factories take an optional trailing `errorCode`; blank uses `Error.DefaultErrorCode(Kind)`. Exposed on `OffsideProblem` as `errorCode` (document and `errors[]`). Sanitized 500s force `UNEXPECTED`.
+- `Offside.FluentValidation`: maps FluentValidation failures to Offside `Error` / `Result`.
+- `Offside.FastEndpoint`: `UseOffside`, `DontProduceOffside`, and `SendOffsideAsync` — Problem Details pipeline plus global expected-error OpenAPI metadata.
+- `OffsideHttp.StatusCode` / `StatusCodes` for the kind → HTTP mapping.
+- Bilingual documentation under `docs/` (English) and `docs/pt-BR/` (Portuguese): getting started, concepts, domain guide, ASP.NET Core guide, MediatR integration, FluentValidation, FastEndpoints, messages and cultures, CLI, API reference, and FAQ.
 - XML documentation comments across the public API, so IntelliSense and the shipped `.xml` files are useful to consumers.
 
 ## [0.1.0] - 2026-08-13

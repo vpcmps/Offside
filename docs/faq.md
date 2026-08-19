@@ -19,10 +19,10 @@ Because a closed kind set makes the HTTP mapping total. Every error the domain c
 Specificity lives in the code space instead, which is open:
 
 ```csharp
-Error.Custom("order.already_shipped", ErrorKind.Conflict, new { orderId });
+Error.Custom("order.already_shipped", ErrorKind.Conflict, new { orderId }, errorCode: "ORDER_ALREADY_SHIPPED");
 ```
 
-Clients branch on the code. The kind only decides the status and the severity rank.
+Clients branch on `errorCode`. The kind only decides the status and the severity rank. `code` remains the message-catalog key.
 
 ## Why does the status come from the most severe error rather than the first?
 
@@ -80,6 +80,10 @@ Copy the catalog, translate the values, register it. Partial translations are fi
 ## Where does the culture come from?
 
 From the request's `Accept-Language` header — first range, quality values stripped — unless you pass one explicitly. An absent, empty, `*`, or unrecognised value falls back to `CultureInfo.CurrentUICulture`. A malformed header never fails a request.
+
+## Should clients branch on `code` or `errorCode`?
+
+On `errorCode`. That is the stable screen identifier (`ORDER_ALREADY_SHIPPED`, `VALIDATION`). `code` is the catalog key used to resolve the message (`order.already_shipped`). Several codes may share one error code. Never branch on `detail` — it is translated catalog text.
 
 ## Can I use Offside without ASP.NET Core?
 
