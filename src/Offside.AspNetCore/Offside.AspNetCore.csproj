@@ -3,7 +3,7 @@
     <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
     <RootNamespace>Offside.AspNetCore</RootNamespace>
     <PackageId>Offside.AspNetCore</PackageId>
-    <Description>ASP.NET Core Problem Details mapping for Offside Results. The domain called offside.</Description>
+    <Description>ASP.NET Core Problem Details mapping for Offside Results. Catch it before the whistle.</Description>
     <IsPackable>true</IsPackable>
   </PropertyGroup>
   <ItemGroup>

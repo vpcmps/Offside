@@ -4,7 +4,7 @@
     <RootNamespace>Offside</RootNamespace>
     <AssemblyName>Offside</AssemblyName>
     <PackageId>Offside</PackageId>
-    <Description>Domain errors as Result, not exceptions. The domain called offside.</Description>
+    <Description>Domain errors as Result, not exceptions. Catch it before the whistle.</Description>
     <IsPackable>true</IsPackable>
   </PropertyGroup>
   <ItemGroup>
