@@ -20,6 +20,7 @@ public sealed class SkillInstaller
         "offside-setup",
         "offside-domain",
         "offside-aspnet",
+        "offside-mediatr",
         "offside-fluentvalidation",
         "offside-fastendpoint",
         "offside-implementation",

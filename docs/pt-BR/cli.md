@@ -27,12 +27,13 @@ offside init [--dir <caminho>] [--force]
 
 ## O que ele escreve
 
-Oito skills, em cada um dos três diretórios de agente:
+Nove skills, em cada um dos três diretórios de agente:
 
 ```
 .cursor/skills/offside-setup/              .agents/skills/offside-setup/              .claude/skills/offside-setup/
 .cursor/skills/offside-domain/             .agents/skills/offside-domain/             .claude/skills/offside-domain/
 .cursor/skills/offside-aspnet/             .agents/skills/offside-aspnet/             .claude/skills/offside-aspnet/
+.cursor/skills/offside-mediatr/            .agents/skills/offside-mediatr/            .claude/skills/offside-mediatr/
 .cursor/skills/offside-fluentvalidation/   .agents/skills/offside-fluentvalidation/   .claude/skills/offside-fluentvalidation/
 .cursor/skills/offside-fastendpoint/       .agents/skills/offside-fastendpoint/       .claude/skills/offside-fastendpoint/
 .cursor/skills/offside-implementation/     .agents/skills/offside-implementation/     .claude/skills/offside-implementation/
@@ -45,6 +46,7 @@ Oito skills, em cada um dos três diretórios de agente:
 | `offside-setup` | Integrar o Offside a um projeto existente: pacotes, catálogos, DI, camadas |
 | `offside-domain` | Factories, `Custom`, `ErrorCode`, regras de `Result`, escape hatch |
 | `offside-aspnet` | Mapeamento de endpoints, formato da resposta, severidade, sanitização de 500 |
+| `offside-mediatr` | Registro, publicação ordenada de notificações, coleta scoped e retries |
 | `offside-fluentvalidation` | Falhas FluentValidation → `Error` / `Result` |
 | `offside-fastendpoint` | `UseOffside`, `SendOffsideAsync`, `DontProduceOffside` |
 | `offside-implementation` | Implementação de features ponta a ponta com as integrações Offside selecionadas |
@@ -58,6 +60,8 @@ As skills de setup, implementação e refatoração inspecionam o projeto e pede
 - exatamente uma fonte de mensagens: JSON local, Azure App Configuration ou `IErrorMessageResolver` customizado;
 - exatamente uma exposição: somente domínio/aplicação, ASP.NET Core padrão ou ASP.NET Core com FastEndpoints;
 - integração opcional com FluentValidation.
+
+A skill de setup também oferece domain notifications opcionais com MediatR.
 
 Esses eixos são independentes. Por exemplo, JSON + FastEndpoints, Azure sem HTTP, Azure + ASP.NET Core padrão e Azure + FastEndpoints são suportados. O agente usa um seletor interativo quando disponível e recorre a um checklist Markdown numerado nos demais ambientes.
 

@@ -1,6 +1,6 @@
 ---
 name: offside-setup
-description: Configures a .NET project to use Offside with a user-selected message source, host adapter, and validation integration. Use when installing Offside or changing its project-level integrations.
+description: Configures a .NET project to use Offside with a user-selected message source, host adapter, validation, and optional MediatR notifications. Use when installing Offside or changing its project-level integrations.
 ---
 
 # Offside setup
@@ -11,7 +11,7 @@ Configure the **current** .NET project. Do not scaffold a new repository unless 
 
 Inspect project files and existing registrations first. Preselect only capabilities already present, clearly marking them as detected. Do not install or remove a capability based on detection alone.
 
-Before changing files, ask the user to confirm one option from each required group and any optional validation integration. Use a structured checkbox or multi-select UI when available. Otherwise show this numbered Markdown checklist and wait for a reply:
+Before changing files, ask the user to confirm one option from each required group and any optional integrations. Use a structured checkbox or multi-select UI when available. Otherwise show this numbered Markdown checklist and wait for a reply:
 
 ```text
 Message source — select exactly one:
@@ -26,6 +26,9 @@ Exposure — select exactly one:
 
 Validation — optional:
 [ ] 7. FluentValidation
+
+Notifications — optional:
+[ ] 8. MediatR domain notifications
 ```
 
 FastEndpoints is an exposure choice, not a message source. All message-source and exposure combinations are valid. After confirmation, summarize the selection, packages, and files to change before editing.
@@ -42,6 +45,7 @@ Always add `Offside`. Add only the selected integrations:
 | Standard ASP.NET Core | `Offside.AspNetCore` |
 | FastEndpoints | `Offside.AspNetCore`, `Offside.FastEndpoint` |
 | FluentValidation | `Offside.FluentValidation`; FastEndpoints hosts also use their normal FastEndpoints validation package |
+| MediatR domain notifications | `Offside.MediatR`; the host remains responsible for registering MediatR and `IPublisher` |
 
 Prefer the latest stable packages from nuget.org unless the repository pins versions or uses a local feed.
 
@@ -80,6 +84,8 @@ Implement `IErrorMessageResolver` and register that implementation directly. Do 
 - FastEndpoints: call `AddOffsideAspNetCore()` and configure the pipeline using `offside-fastendpoint`.
 
 Use `offside-fluentvalidation` when standalone FluentValidation mapping was selected. FastEndpoints validation failures are integrated by `offside-fastendpoint`.
+
+Use `offside-mediatr` when MediatR domain notifications were selected. Configure MediatR first, then call `AddOffsideMediatR()`; do not register MediatR or `IPublisher` implicitly.
 
 ## Verify
 
