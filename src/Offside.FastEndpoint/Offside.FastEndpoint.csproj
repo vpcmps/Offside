@@ -9,7 +9,7 @@
   </PropertyGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
-    <PackageReference Include="FastEndpoints" Version="7.0.1" />
+    <PackageReference Include="FastEndpoints" Version="8.3.0" />
     <ProjectReference Include="..\Offside.AspNetCore\Offside.AspNetCore.csproj" />
     <ProjectReference Include="..\Offside.FluentValidation\Offside.FluentValidation.csproj" />
   </ItemGroup>
