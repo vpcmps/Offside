@@ -17,9 +17,10 @@ namespace Offside.AspNetCore;
 ///   "title": "Conflict",
 ///   "status": 409,
 ///   "detail": "Conflict on order.",
+///   "errorCode": "CONFLICT",
 ///   "traceId": "00-8a3c...-01",
 ///   "errors": [
-///     { "code": "conflict", "kind": "Conflict", "detail": "Conflict on order.", "field": null }
+///     { "code": "conflict", "errorCode": "CONFLICT", "kind": "Conflict", "detail": "Conflict on order.", "field": null }
 ///   ]
 /// }
 /// </code>
@@ -40,6 +41,12 @@ public sealed class OffsideProblem
 
     /// <summary>Gets the correlation id: <c>Activity.Current?.Id</c> when available, otherwise <c>HttpContext.TraceIdentifier</c>.</summary>
     public required string TraceId { get; init; }
+
+    /// <summary>
+    /// Gets the screen identifier of the primary error. Clients should branch on this
+    /// (or on <see cref="Item.ErrorCode"/>) rather than on <see cref="Detail"/>.
+    /// </summary>
+    public required string ErrorCode { get; init; }
 
     /// <summary>
     /// Gets the raw diagnostic detail of an unexpected error. Present only when the response is a
@@ -79,10 +86,12 @@ public sealed class OffsideProblem
             Status = status,
             Detail = ResolveClientDetail(primary, resolver, culture, sanitize),
             TraceId = traceId,
+            ErrorCode = ClientErrorCode(primary, sanitize),
             Debug = sanitize && exposeExceptionDetails ? ReadUnexpectedDetail(primary) : null,
             Errors = errors.Select(error => new Item
             {
                 Code = error.Code,
+                ErrorCode = ClientErrorCode(error, sanitize),
                 Kind = error.Kind.ToString(),
                 Detail = ResolveClientDetail(error, resolver, culture, sanitize),
                 Field = error.Field
@@ -102,6 +111,14 @@ public sealed class OffsideProblem
         return resolver.GetMessage(error, culture);
     }
 
+    private static string ClientErrorCode(Error error, bool sanitize)
+    {
+        if (sanitize && error.Kind == ErrorKind.Unexpected)
+            return Error.DefaultErrorCode(ErrorKind.Unexpected);
+
+        return error.ErrorCode;
+    }
+
     private static string? ReadUnexpectedDetail(Error error)
     {
         if (!error.Arguments.TryGetValue("detail", out var value) || value is null)
@@ -113,8 +130,11 @@ public sealed class OffsideProblem
     /// <summary>One entry of the <c>errors</c> array — a single domain error rendered for the wire.</summary>
     public sealed class Item
     {
-        /// <summary>Gets the stable error code. This is what clients should branch on.</summary>
+        /// <summary>Gets the stable catalog code. Used to look up the message template.</summary>
         public required string Code { get; init; }
+
+        /// <summary>Gets the screen identifier. This is what clients should branch on.</summary>
+        public required string ErrorCode { get; init; }
 
         /// <summary>Gets the <see cref="ErrorKind"/> as a string.</summary>
         public required string Kind { get; init; }
