@@ -8,8 +8,8 @@
     <IsPackable>true</IsPackable>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="MediatR" Version="[12.0.1,15.0.0)" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
+    <PackageReference Include="MediatR" Version="[14.2.0, 15.0.0)" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.0" />
     <ProjectReference Include="..\Offside\Offside.csproj" />
   </ItemGroup>
 </Project>
