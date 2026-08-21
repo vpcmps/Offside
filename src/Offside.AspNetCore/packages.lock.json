@@ -1,28 +1,29 @@
 {
   "version": 1,
   "dependencies": {
+    "net10.0": {
+      "Microsoft.Bcl.HashCode": {
+        "type": "Transitive",
+        "resolved": "1.1.1",
+        "contentHash": "MalY0Y/uM/LjXtHfX/26l2VtN4LDNZ2OE3aumNOHDLsT4fNYy2hiHXI4CXCqKpNUNm7iJ2brrc4J89UdaL56FA=="
+      },
+      "offside": {
+        "type": "Project",
+        "dependencies": {
+          "Microsoft.Bcl.HashCode": "[1.1.1, )"
+        }
+      }
+    },
     "net8.0": {
       "Microsoft.Bcl.HashCode": {
         "type": "Transitive",
         "resolved": "1.1.1",
         "contentHash": "MalY0Y/uM/LjXtHfX/26l2VtN4LDNZ2OE3aumNOHDLsT4fNYy2hiHXI4CXCqKpNUNm7iJ2brrc4J89UdaL56FA=="
       },
-      "Microsoft.Extensions.DependencyInjection.Abstractions": {
-        "type": "Transitive",
-        "resolved": "8.0.2",
-        "contentHash": "3iE7UF7MQkCv1cxzCahz+Y/guQbTqieyxyaWKhrRO91itI9cOKO76OHeQDahqG4MmW5umr3CcCvGmK92lWNlbg=="
-      },
-      "System.Text.Json": {
-        "type": "Transitive",
-        "resolved": "8.0.5",
-        "contentHash": "0f1B50Ss7rqxXiaBJyzUu9bWFOO2/zSlifZ/UNMdiIpDYe4cY4LQQicP4nirK1OS31I43rn062UIJ1Q9bpmHpg=="
-      },
       "offside": {
         "type": "Project",
         "dependencies": {
-          "Microsoft.Bcl.HashCode": "[1.1.1, )",
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "[8.0.2, )",
-          "System.Text.Json": "[8.0.5, )"
+          "Microsoft.Bcl.HashCode": "[1.1.1, )"
         }
       }
     }
