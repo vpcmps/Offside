@@ -1,0 +1,31 @@
+---
+description: Toda alteração visível ao usuário deve atualizar README e docs (EN + pt-BR)
+alwaysApply: true
+---
+
+# Update README and docs on every user-facing change
+
+User documentation is the wiki: `docs/` (English, canonical) and `docs/pt-BR/` (page-for-page mirror). Do not treat `docs/superpowers/` as user docs.
+
+Before considering work complete, map whether the change affects public API, packages, CLI, examples, HTTP behavior, message catalogs, or install steps.
+
+## What to update
+
+- `README.md` — install, packages, example, compatibility, links
+- The matching page in `docs/`
+- The same filename in `docs/pt-BR/` in the same change
+- `docs/api-reference.md` and `docs/pt-BR/api-reference.md` when public API or XML docs change
+
+If a user-facing change lands without those updates, the work is not done.
+
+## Skip (do not force cosmetic README diffs)
+
+- Internal refactors with no contract or behavior change
+- Tests, CI, formatting
+- `docs/superpowers/` (historical)
+
+```text
+❌ Changed ToHttpResult and committed only C#
+✅ Same change updates docs/aspnet-guide.md, docs/pt-BR/aspnet-guide.md,
+   and the README example when the public contract or sample changed
+```

@@ -30,6 +30,7 @@ try
     Console.WriteLine("Next:");
     Console.WriteLine("  dotnet add package Offside");
     Console.WriteLine("  dotnet add package Offside.AspNetCore   # ASP.NET hosts only");
+    Console.WriteLine("  dotnet add package Offside.MediatR      # MediatR hosts only");
     return 0;
 }
 catch (Exception ex)

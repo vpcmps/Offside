@@ -1,16 +1,31 @@
 namespace Offside.Tool;
 
+/// <summary>
+/// Copies the Offside agent skills and error-catalog templates into a project. This is the
+/// engine behind <c>offside init</c>.
+/// </summary>
 public sealed class SkillInstaller
 {
+    /// <summary>The Cursor skills directory, relative to the project root.</summary>
     public const string CursorSkills = ".cursor/skills";
+
+    /// <summary>The generic agent skills directory, relative to the project root.</summary>
     public const string AgentsSkills = ".agents/skills";
+
+    /// <summary>The Claude Code skills directory, relative to the project root.</summary>
     public const string ClaudeSkills = ".claude/skills";
 
     private static readonly string[] SkillNames =
     [
         "offside-setup",
         "offside-domain",
-        "offside-aspnet"
+        "offside-aspnet",
+        "offside-mediatr",
+        "offside-fluentvalidation",
+        "offside-fastendpoint",
+        "offside-implementation",
+        "offside-refactoring",
+        "offside-azure-app-configuration"
     ];
 
     private static readonly string[] AgentRoots =
@@ -22,17 +37,29 @@ public sealed class SkillInstaller
 
     private readonly string _skillsSource;
 
+    /// <summary>Initializes a new installer reading from a given skills directory.</summary>
+    /// <param name="skillsSource">The directory holding the <c>offside-*</c> skill folders and <c>templates</c>.</param>
     public SkillInstaller(string skillsSource)
     {
         _skillsSource = skillsSource;
     }
 
+    /// <summary>Creates an installer reading the skills shipped alongside the tool.</summary>
+    /// <returns>The installer.</returns>
     public static SkillInstaller FromToolLocation()
     {
         var source = Path.Combine(AppContext.BaseDirectory, "skills");
         return new SkillInstaller(source);
     }
 
+    /// <summary>
+    /// Writes the Offside skills into each agent directory and the catalog templates into
+    /// <c>&lt;projectRoot&gt;/errors</c>.
+    /// </summary>
+    /// <param name="projectRoot">The project directory. Created if it does not exist.</param>
+    /// <param name="force">When <see langword="false"/>, existing files are left untouched; when <see langword="true"/>, they are overwritten.</param>
+    /// <returns>The absolute path of every file written, in write order.</returns>
+    /// <exception cref="DirectoryNotFoundException">The skills source directory, or one of the expected skill folders, is missing.</exception>
     public IReadOnlyList<string> Install(string projectRoot, bool force)
     {
         if (!Directory.Exists(_skillsSource))

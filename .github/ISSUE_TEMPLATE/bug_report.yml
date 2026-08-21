@@ -1,0 +1,41 @@
+name: Bug report
+description: Report reproducible unexpected behavior in an Offside package.
+title: "bug: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: "Do not report security vulnerabilities here. Use the private process in SECURITY.md."
+  - type: input
+    id: package
+    attributes:
+      label: Package and version
+      placeholder: "Offside.AspNetCore 0.1.0"
+    validations:
+      required: true
+  - type: input
+    id: framework
+    attributes:
+      label: Target framework
+      placeholder: "net8.0"
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: Include code, configuration, and the steps required to reproduce the problem.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
