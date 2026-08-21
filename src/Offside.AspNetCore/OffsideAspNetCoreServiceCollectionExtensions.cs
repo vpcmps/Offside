@@ -3,6 +3,9 @@ using Microsoft.Extensions.Hosting;
 
 namespace Offside.AspNetCore;
 
+/// <summary>
+/// Registration entry point for the ASP.NET Core integration.
+/// </summary>
 public static class OffsideAspNetCoreServiceCollectionExtensions
 {
     /// <summary>
@@ -11,6 +14,9 @@ public static class OffsideAspNetCoreServiceCollectionExtensions
     /// When <see cref="IHostEnvironment"/> is in DI, <see cref="OffsideAspNetCoreOptions.ExposeExceptionDetails"/>
     /// defaults to <c>IsDevelopment()</c>.
     /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <returns><paramref name="services"/>, for chaining.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="services"/> is <see langword="null"/>.</exception>
     public static IServiceCollection AddOffsideAspNetCore(this IServiceCollection services)
     {
         ArgumentNullException.ThrowIfNull(services);

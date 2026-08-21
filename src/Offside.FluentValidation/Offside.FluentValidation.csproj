@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net8.0;net10.0</TargetFrameworks>
+    <RootNamespace>Offside.FluentValidation</RootNamespace>
+    <AssemblyName>Offside.FluentValidation</AssemblyName>
+    <PackageId>Offside.FluentValidation</PackageId>
+    <Description>Maps FluentValidation failures to Offside Errors. The domain called offside.</Description>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="FluentValidation" Version="11.11.0" />
+    <ProjectReference Include="..\Offside\Offside.csproj" />
+  </ItemGroup>
+</Project>

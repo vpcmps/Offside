@@ -7,6 +7,7 @@ Describe the change and its motivation.
 - [ ] `dotnet restore --locked-mode`
 - [ ] `dotnet build Offside.sln -c Release --no-restore`
 - [ ] `dotnet test Offside.sln -c Release --no-build --no-restore`
+- [ ] README and docs (`docs/` + `docs/pt-BR/`) updated, or N/A (internal-only)
 
 ## Compatibility
 

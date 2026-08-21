@@ -50,7 +50,7 @@ jobs:
             $package = [System.IO.Compression.ZipFile]::OpenRead($_.FullName)
             try {
               $entries = $package.Entries.FullName
-              foreach ($required in 'README.md', 'LICENSE') {
+              foreach ($required in 'README.md', 'LICENSE', 'offside-icon-128.png') {
                 if ($entries -notcontains $required) { throw "$($_.Name) is missing $required" }
               }
               if (-not ($entries | Where-Object { $_ -like 'lib/*/*.xml' -or $_ -like 'tools/*/*.xml' })) {
@@ -67,3 +67,26 @@ jobs:
             artifacts/*.snupkg
           if-no-files-found: error
           retention-days: 7
+
+  mediatr-compatibility:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        mediatr: ["12.0.1", "13.1.0", "14.2.0"]
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - name: Test MediatR ${{ matrix.mediatr }} compatibility
+        run: >-
+          dotnet test tests/Offside.MediatR.Compatibility.Tests/Offside.MediatR.Compatibility.Tests.csproj
+          -c Release
+          -p:MediatRVersion=${{ matrix.mediatr }}
+          -p:RestoreLockedMode=false

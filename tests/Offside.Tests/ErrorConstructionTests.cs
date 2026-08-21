@@ -105,6 +105,21 @@ public sealed class ErrorConstructionTests
     }
 
     [Fact]
+    public void Errors_with_different_error_code_are_not_equal()
+    {
+        var left = Error.Custom(
+            "order.already_shipped",
+            ErrorKind.Conflict,
+            errorCode: "ORDER_ALREADY_SHIPPED");
+        var right = Error.Custom(
+            "order.already_shipped",
+            ErrorKind.Conflict,
+            errorCode: "ORDER_SHIPPED");
+
+        Assert.NotEqual(left, right);
+    }
+
+    [Fact]
     public void Equal_errors_with_arguments_have_the_same_hash_code()
     {
         var arguments = new Dictionary<string, object?> { ["orderId"] = "123" };
