@@ -22,8 +22,9 @@ dotnet add package Offside.AspNetCore               # ASP.NET hosts only
 dotnet add package Offside.FluentValidation         # FluentValidation → Error
 dotnet add package Offside.FastEndpoint             # FastEndpoints hosts only
 dotnet add package Offside.AzureAppConfiguration    # Azure App Configuration catalogs
-dotnet add package Offside.MediatR                  # MediatR hosts only
 ```
+
+`Offside.MediatR` is not published to NuGet yet. Its source and local package remain available; see [Pack locally](#pack-locally) when using MediatR before publication.
 
 Agent skills + catalog templates:
 
@@ -49,7 +50,7 @@ The project is pre-1.0. Minor releases may include breaking changes. Releases fo
 | `Offside.FluentValidation` | [![NuGet](https://img.shields.io/nuget/v/Offside.FluentValidation?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside.FluentValidation) | FluentValidation failures → `Error` / `Result` |
 | `Offside.FastEndpoint` | [![NuGet](https://img.shields.io/nuget/v/Offside.FastEndpoint?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside.FastEndpoint) | `UseOffside`, `SendOffsideAsync`, OpenAPI expected errors |
 | `Offside.AzureAppConfiguration` | [![NuGet](https://img.shields.io/nuget/v/Offside.AzureAppConfiguration?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside.AzureAppConfiguration) | Dynamic resolver for catalogs loaded by Azure App Configuration |
-| `Offside.MediatR` | [![NuGet](https://img.shields.io/nuget/v/Offside.MediatR?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside.MediatR) | Publishes failed results as domain notifications and provides a scoped collector |
+| `Offside.MediatR` | Publication pending | Publishes failed results as domain notifications and provides a scoped collector |
 | `Offside.Tool` | [![NuGet](https://img.shields.io/nuget/v/Offside.Tool?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside.Tool) | `offside init` — skills and catalog templates |
 
 The Core package has no ASP.NET or MediatR dependency.
