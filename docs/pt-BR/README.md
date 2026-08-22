@@ -12,6 +12,8 @@
 
 Erros de domínio como `Result`, não como exceções. O domínio devolve um `Error`; o ASP.NET Core mapeia isso para Problem Details (RFC 7807). As mensagens ficam em catálogos JSON, não em C#.
 
+> Prefere um guia navegável com diagramas de arquitetura? Visite a **[Wiki em português](https://github.com/vpcmps/Offside/wiki)** ou a **[Wiki em inglês](https://github.com/vpcmps/Offside/wiki/Home-English)**.
+
 ## Comece por aqui
 
 | Página | O que cobre |
