@@ -12,6 +12,8 @@
 
 Domain errors as `Result`, not exceptions. The domain returns an `Error`; ASP.NET Core maps it to Problem Details (RFC 7807). Messages live in JSON catalogs, not in C#.
 
+> Prefer a browsable guide with architecture diagrams? Visit the **[English Wiki](https://github.com/vpcmps/Offside/wiki/Home-English)** or the **[Portuguese Wiki](https://github.com/vpcmps/Offside/wiki)**.
+
 ## Start here
 
 | Page | What it covers |
