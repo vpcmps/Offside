@@ -161,22 +161,22 @@
       "offside.aspnetcore": {
         "type": "Project",
         "dependencies": {
-          "Offside": "[0.1.0, )"
+          "Offside": "[0.2.0, )"
         }
       },
       "offside.fastendpoint": {
         "type": "Project",
         "dependencies": {
           "FastEndpoints": "[8.3.0, )",
-          "Offside.AspNetCore": "[0.1.0, )",
-          "Offside.FluentValidation": "[0.1.0, )"
+          "Offside.AspNetCore": "[0.2.0, )",
+          "Offside.FluentValidation": "[0.2.0, )"
         }
       },
       "offside.fluentvalidation": {
         "type": "Project",
         "dependencies": {
           "FluentValidation": "[11.11.0, )",
-          "Offside": "[0.1.0, )"
+          "Offside": "[0.2.0, )"
         }
       }
     },
@@ -420,22 +420,22 @@
       "offside.aspnetcore": {
         "type": "Project",
         "dependencies": {
-          "Offside": "[0.1.0, )"
+          "Offside": "[0.2.0, )"
         }
       },
       "offside.fastendpoint": {
         "type": "Project",
         "dependencies": {
           "FastEndpoints": "[8.3.0, )",
-          "Offside.AspNetCore": "[0.1.0, )",
-          "Offside.FluentValidation": "[0.1.0, )"
+          "Offside.AspNetCore": "[0.2.0, )",
+          "Offside.FluentValidation": "[0.2.0, )"
         }
       },
       "offside.fluentvalidation": {
         "type": "Project",
         "dependencies": {
           "FluentValidation": "[11.11.0, )",
-          "Offside": "[0.1.0, )"
+          "Offside": "[0.2.0, )"
         }
       }
     }

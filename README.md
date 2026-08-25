@@ -136,8 +136,8 @@ To publish to nuget.org, add a [Trusted Publishing](https://www.nuget.org/accoun
 Then push a version tag (the tag is the package version):
 
 ```bash
-git tag v0.1.0
-git push origin v0.1.0
+git tag v0.2.0
+git push origin v0.2.0
 ```
 
 ## Spec

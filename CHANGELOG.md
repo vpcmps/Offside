@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-08-25
+
 ### Added
 
 - `ErrorKind.ServiceUnavailable` (HTTP 503) and `ErrorKind.Timeout` (HTTP 504), with factories `Error.ServiceUnavailable` / `Error.Timeout`. Rank sits after `TooManyRequests` and before `Conflict`, so auth and rate-limit still win over a retryable outage.
@@ -35,5 +37,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Initial `Offside`, `Offside.AspNetCore`, and `Offside.Tool` packages.
 
-[Unreleased]: https://github.com/vpcmps/Offside/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/vpcmps/Offside/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/vpcmps/Offside/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/vpcmps/Offside/releases/tag/v0.1.0

@@ -65,14 +65,14 @@
       "offside.aspnetcore": {
         "type": "Project",
         "dependencies": {
-          "Offside": "[0.1.0, )"
+          "Offside": "[0.2.0, )"
         }
       },
       "offside.fluentvalidation": {
         "type": "Project",
         "dependencies": {
           "FluentValidation": "[11.11.0, )",
-          "Offside": "[0.1.0, )"
+          "Offside": "[0.2.0, )"
         }
       }
     },
@@ -220,14 +220,14 @@
       "offside.aspnetcore": {
         "type": "Project",
         "dependencies": {
-          "Offside": "[0.1.0, )"
+          "Offside": "[0.2.0, )"
         }
       },
       "offside.fluentvalidation": {
         "type": "Project",
         "dependencies": {
           "FluentValidation": "[11.11.0, )",
-          "Offside": "[0.1.0, )"
+          "Offside": "[0.2.0, )"
         }
       }
     }

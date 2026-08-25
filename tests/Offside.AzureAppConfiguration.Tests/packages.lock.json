@@ -194,7 +194,7 @@
         "dependencies": {
           "Microsoft.Extensions.Configuration.Abstractions": "[8.0.0, )",
           "Microsoft.Extensions.DependencyInjection.Abstractions": "[8.0.2, )",
-          "Offside": "[0.1.0, )"
+          "Offside": "[0.2.0, )"
         }
       }
     },
@@ -391,7 +391,7 @@
         "dependencies": {
           "Microsoft.Extensions.Configuration.Abstractions": "[8.0.0, )",
           "Microsoft.Extensions.DependencyInjection.Abstractions": "[8.0.2, )",
-          "Offside": "[0.1.0, )"
+          "Offside": "[0.2.0, )"
         }
       }
     }

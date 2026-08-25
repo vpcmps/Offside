@@ -407,7 +407,7 @@
       "offside.aspnetcore": {
         "type": "Project",
         "dependencies": {
-          "Offside": "[0.1.0, )"
+          "Offside": "[0.2.0, )"
         }
       }
     },
@@ -825,7 +825,7 @@
       "offside.aspnetcore": {
         "type": "Project",
         "dependencies": {
-          "Offside": "[0.1.0, )"
+          "Offside": "[0.2.0, )"
         }
       }
     }

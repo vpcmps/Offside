@@ -139,7 +139,7 @@
         "dependencies": {
           "MediatR": "[12.0.1, 15.0.0)",
           "Microsoft.Extensions.DependencyInjection.Abstractions": "[8.0.2, )",
-          "Offside": "[0.1.0, )"
+          "Offside": "[0.2.0, )"
         }
       }
     },
@@ -281,7 +281,7 @@
         "dependencies": {
           "MediatR": "[12.0.1, 15.0.0)",
           "Microsoft.Extensions.DependencyInjection.Abstractions": "[8.0.2, )",
-          "Offside": "[0.1.0, )"
+          "Offside": "[0.2.0, )"
         }
       }
     }
