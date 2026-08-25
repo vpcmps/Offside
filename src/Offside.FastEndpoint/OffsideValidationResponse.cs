@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Globalization;
 using FluentValidation.Results;
 using Microsoft.AspNetCore.Http;
@@ -37,34 +36,7 @@ public static class OffsideValidationResponse
         var resolver = httpContext.RequestServices.GetRequiredService<IErrorMessageResolver>();
         var options = httpContext.RequestServices.GetService<OffsideAspNetCoreOptions>()
             ?? new OffsideAspNetCoreOptions();
-        var culture = ResolveCulture(httpContext);
-        var traceId = Activity.Current?.Id ?? httpContext.TraceIdentifier;
 
-        return OffsideProblem.Create(
-            errors,
-            resolver,
-            culture,
-            traceId,
-            options.ExposeExceptionDetails);
-    }
-
-    private static CultureInfo ResolveCulture(HttpContext httpContext)
-    {
-        var header = httpContext.Request.Headers.AcceptLanguage.ToString();
-        if (header.Length == 0)
-            return CultureInfo.CurrentUICulture;
-
-        var firstRange = header.Split(',', 2)[0].Split(';', 2)[0].Trim();
-        if (firstRange.Length == 0 || firstRange == "*")
-            return CultureInfo.CurrentUICulture;
-
-        try
-        {
-            return CultureInfo.GetCultureInfo(firstRange);
-        }
-        catch (CultureNotFoundException)
-        {
-            return CultureInfo.CurrentUICulture;
-        }
+        return OffsideProblemPipeline.Render(errors, resolver, httpContext, options);
     }
 }

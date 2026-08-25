@@ -50,7 +50,9 @@ O Offside nunca fixa o texto da mensagem no código. Crie `errors/errors.json` c
   "precondition_failed": "Pré-condição não atendida.",
   "unprocessable": "Não foi possível processar a requisição.",
   "too_many_requests": "Requisições em excesso.",
-  "unexpected": "Ocorreu um erro inesperado."
+  "unexpected": "Ocorreu um erro inesperado.",
+  "service_unavailable": "O serviço está temporariamente indisponível.",
+  "timeout": "A requisição excedeu o tempo limite."
 }
 ```
 
@@ -73,11 +75,11 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOffside(options =>
 {
-    options.AddJson(CultureInfo.InvariantCulture, File.ReadAllText("errors/errors.json"));
+    options.AddJsonFile(CultureInfo.InvariantCulture, "errors/errors.json");
 
-    var ptBr = Path.Combine(builder.Environment.ContentRootPath, "errors/errors.pt-BR.json");
+    var ptBr = Path.Combine(AppContext.BaseDirectory, "errors/errors.pt-BR.json");
     if (File.Exists(ptBr))
-        options.AddJson(new CultureInfo("pt-BR"), File.ReadAllText(ptBr));
+        options.AddJsonFile(new CultureInfo("pt-BR"), ptBr);
 });
 
 builder.Services.AddOffsideAspNetCore();
@@ -85,7 +87,7 @@ builder.Services.AddOffsideAspNetCore();
 
 Dois pontos que costumam pegar as pessoas:
 
-- **`AddJson` recebe o *conteúdo* do catálogo, não um caminho.** Leia o arquivo você mesmo, ou passe um `Stream` para um recurso embutido.
+- **`AddJsonFile` lê o arquivo.** Caminhos relativos resolvem contra `AppContext.BaseDirectory`. Um arquivo ausente falha na inicialização e nomeia o path. `AddJson` ainda recebe o *conteúdo* quando você já tem a string; `AddJsonFromAssembly` carrega um resource embutido.
 - **O catálogo de cultura invariante é obrigatório.** Sem ele, `AddOffside` lança `InvalidOperationException` na inicialização — de propósito, para que um catálogo faltando seja uma falha de boot e não uma surpresa às 3 da manhã.
 
 `AddOffsideAspNetCore` registra `OffsideAspNetCoreOptions`. Quando há um `IHostEnvironment` presente, `ExposeExceptionDetails` assume `IsDevelopment()`.

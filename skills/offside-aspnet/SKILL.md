@@ -44,11 +44,11 @@ Status = most severe `ErrorKind`. Tie (Unauthorized/Forbidden, Validation/BadReq
 
 Clients branch on `errorCode` for screens. `code` is the message-catalog key.
 
-Severity (high → low): Unexpected → Unauthorized/Forbidden → TooManyRequests → Conflict → PreconditionFailed → Gone → Unprocessable → NotFound → Validation/BadRequest.
+Severity (high → low): Unexpected → Unauthorized/Forbidden → TooManyRequests → ServiceUnavailable/Timeout → Conflict → PreconditionFailed → Gone → Unprocessable → NotFound → Validation/BadRequest.
 
 ## 500
 
-Winning Kind `Unexpected`: generic `detail` (JSON template `unexpected`, no secret args). `errorCode` is forced to `UNEXPECTED`. Optional `debug` only when `ExposeExceptionDetails` is true (default `IsDevelopment()`). Log the real detail via `ILogger` when present.
+Winning Kind `Unexpected`: generic `detail` (JSON template `unexpected`, no secret args). `errorCode` is forced to `UNEXPECTED`. Optional `debug` only when `ExposeExceptionDetails` is true (default `IsDevelopment()`). Log the real detail via `ILogger` when `LogUnexpected` is true (default). Use `OnProblem` for host telemetry.
 
 ## Do not
 

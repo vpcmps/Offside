@@ -14,7 +14,8 @@ Namespace `Offside`.
 public enum ErrorKind
 {
     Unexpected, Unauthorized, Forbidden, TooManyRequests, Conflict,
-    PreconditionFailed, Gone, Unprocessable, NotFound, Validation, BadRequest
+    PreconditionFailed, Gone, Unprocessable, NotFound, Validation, BadRequest,
+    ServiceUnavailable, Timeout
 }
 ```
 
@@ -44,6 +45,8 @@ public sealed class Error : IEquatable<Error>
 | `static Error PreconditionFailed(string? reason = null, string? errorCode = null)` | Código `precondition_failed` |
 | `static Error Unprocessable(string? reason = null, string? errorCode = null)` | Código `unprocessable` |
 | `static Error TooManyRequests(string? reason = null, string? errorCode = null)` | Código `too_many_requests` |
+| `static Error ServiceUnavailable(string? reason = null, string? errorCode = null)` | Código `service_unavailable`. O catálogo default não interpola `{reason}` |
+| `static Error Timeout(string? reason = null, string? errorCode = null)` | Código `timeout`. O catálogo default não interpola `{reason}` |
 | `static Error Unexpected(string? detail = null, string? errorCode = null)` | Código `unexpected`; `detail` é apenas diagnóstico |
 | `static Error Custom(string code, ErrorKind kind, object? arguments = null, string? field = null, string? errorCode = null)` | Erro de regra de negócio. Lança `ArgumentException` com código em branco |
 | `DomainException ToException()` | Escape hatch |
@@ -157,10 +160,12 @@ public sealed class OffsideOptions
 {
     public OffsideOptions AddJson(CultureInfo culture, string json);
     public OffsideOptions AddJson(CultureInfo culture, Stream json);
+    public OffsideOptions AddJsonFile(CultureInfo culture, string path);
+    public OffsideOptions AddJsonFromAssembly(CultureInfo culture, Assembly assembly, string resourceName);
 }
 ```
 
-As duas sobrecargas recebem o **conteúdo** do catálogo, não um caminho. Fluente.
+`AddJson` recebe o **conteúdo** do catálogo, não um caminho. `AddJsonFile` lê o arquivo (caminhos relativos resolvem contra `AppContext.BaseDirectory`) e lança `FileNotFoundException` nomeando o path resolvido. `AddJsonFromAssembly` copia um resource embutido e lança `InvalidOperationException` nomeando o resource ausente. Fluente.
 
 ### OffsideServiceCollectionExtensions
 
@@ -258,19 +263,25 @@ Namespace `Offside.AspNetCore`.
 public sealed class OffsideAspNetCoreOptions
 {
     public bool ExposeExceptionDetails { get; set; }
+    public bool LogUnexpected { get; set; } = true;
+    public Action<OffsideProblem, IReadOnlyList<Error>>? CustomizeProblem { get; set; }
+    public Action<OffsideProblem, IReadOnlyList<Error>, HttpContext>? OnProblem { get; set; }
+    public Func<HttpContext, string>? ResolveTraceId { get; set; }
     public static OffsideAspNetCoreOptions FromEnvironment(IHostEnvironment environment);
 }
 ```
 
-`ExposeExceptionDetails` controla apenas o campo `debug`; o `detail` visível ao cliente em um 500 é sempre a mensagem genérica.
+`ExposeExceptionDetails` controla apenas o campo `debug`; o `detail` visível ao cliente em um 500 é sempre a mensagem genérica. `LogUnexpected` controla a linha built-in de `ILogger` para falhas `Unexpected`. `CustomizeProblem` pode acrescentar membros JSON achatados via `Extensions`; chaves reservadas são removidas. `OnProblem` é o gancho de observabilidade — não escreva no body da resposta. `ResolveTraceId` substitui o default de 32 hex de `Activity.TraceId`. As sobrecargas `bool exposeExceptionDetails` constroem options sem esses callbacks; os ganchos exigem o caminho `HttpContext` / DI ou um objeto de options explícito.
 
 ### OffsideAspNetCoreServiceCollectionExtensions
 
 ```csharp
-public static IServiceCollection AddOffsideAspNetCore(this IServiceCollection services);
+public static IServiceCollection AddOffsideAspNetCore(
+    this IServiceCollection services,
+    Action<OffsideAspNetCoreOptions>? configure = null);
 ```
 
-Registra `OffsideAspNetCoreOptions` como singleton, com `ExposeExceptionDetails` vindo de `IHostEnvironment.IsDevelopment()` quando há um presente, senão `false`.
+Registra `OffsideAspNetCoreOptions` como singleton, com `ExposeExceptionDetails` vindo de `IHostEnvironment.IsDevelopment()` quando há um presente, senão `false`. `configure` roda depois e prevalece.
 
 ### OffsideProblem
 
@@ -285,6 +296,7 @@ public sealed class OffsideProblem
     public required string ErrorCode { get; init; }  // identificador de tela do primário
     public string? Debug { get; init; }              // omitido do JSON quando nulo
     public required IReadOnlyList<Item> Errors { get; init; }
+    public IDictionary<string, object?> Extensions { get; init; }  // achatado via [JsonExtensionData]
 
     public static OffsideProblem Create(
         IReadOnlyList<Error> errors,
@@ -300,23 +312,25 @@ public sealed class OffsideProblem
         public required string Kind { get; init; }
         public required string Detail { get; init; }
         public string? Field { get; init; }
+        public IDictionary<string, object?> Extensions { get; init; }
     }
 }
 ```
 
-Serializado como `application/problem+json` com nomes em camelCase. Um 500 sanitizado força `errorCode` para `UNEXPECTED`. Veja [o formato da resposta](aspnet-guide.md#mapeamento-de-falha).
+Serializado como `application/problem+json` com nomes em camelCase. Campos extras em `Extensions` são achatados no JSON. Um 500 sanitizado força `errorCode` para `UNEXPECTED`. Veja [o formato da resposta](aspnet-guide.md#mapeamento-de-falha).
 
 ### OffsideHttp
 
 ```csharp
 public static class OffsideHttp
 {
-    public static IReadOnlyList<int> StatusCodes { get; }  // 400, 401, 403, 404, 409, 410, 412, 422, 429, 500
+    public static IReadOnlyList<int> StatusCodes { get; }  // 400, 401, 403, 404, 409, 410, 412, 422, 429, 500, 503, 504
     public static int StatusCode(ErrorKind kind);
+    public static Error SelectPrimary(IReadOnlyList<Error> errors);
 }
 ```
 
-O mapeamento kind → HTTP usado pelo Problem Details e pelo `Offside.FastEndpoint`.
+O mapeamento kind → HTTP usado pelo Problem Details e pelo `Offside.FastEndpoint`. `SelectPrimary` devolve o erro do kind mais severo; lista vazia lança `ArgumentException`.
 
 ### ResultHttpExtensions
 

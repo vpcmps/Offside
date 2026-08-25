@@ -58,8 +58,7 @@ Use the catalogs created by `offside init` and copy them to output:
 ```csharp
 builder.Services.AddOffside(options =>
 {
-    options.AddJson(CultureInfo.InvariantCulture,
-        File.ReadAllText("errors/errors.json"));
+    options.AddJsonFile(CultureInfo.InvariantCulture, "errors/errors.json");
 });
 ```
 
@@ -67,7 +66,7 @@ builder.Services.AddOffside(options =>
 <None Update="errors\**\*.json" CopyToOutputDirectory="PreserveNewest" />
 ```
 
-The invariant `errors/errors.json` catalog is required. Register file **contents**, not paths.
+The invariant `errors/errors.json` catalog is required. Prefer `AddJsonFile` (relative paths resolve against `AppContext.BaseDirectory`); a missing file fails at startup and names the path.
 
 ### Azure App Configuration
 

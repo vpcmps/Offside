@@ -11,7 +11,15 @@ builder.Services.AddOffside(options => { /* catálogos */ });
 builder.Services.AddOffsideAspNetCore();
 ```
 
-`AddOffsideAspNetCore` registra `OffsideAspNetCoreOptions`. Quando há um `IHostEnvironment` no container, `ExposeExceptionDetails` assume `IsDevelopment()`.
+`AddOffsideAspNetCore` registra `OffsideAspNetCoreOptions`. Quando há um `IHostEnvironment` no container, `ExposeExceptionDetails` assume `IsDevelopment()`. Passe um callback de configure para definir ganchos depois — ele prevalece sobre o default do ambiente:
+
+```csharp
+builder.Services.AddOffsideAspNetCore(options =>
+{
+    options.LogUnexpected = false;
+    options.OnProblem = (problem, errors, http) => { /* sua telemetria */ };
+});
+```
 
 ## Minimal APIs
 
@@ -66,7 +74,7 @@ Toda falha produz o mesmo corpo, `application/problem+json` com nomes em camelCa
   "status": 409,
   "detail": "O pedido 42 já foi enviado.",
   "errorCode": "ORDER_ALREADY_SHIPPED",
-  "traceId": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+  "traceId": "4bf92f3577b34da6a3ce929d0e0e4736",
   "errors": [
     {
       "code": "order.already_shipped",
@@ -86,11 +94,13 @@ Toda falha produz o mesmo corpo, `application/problem+json` com nomes em camelCa
 | `status` | Derivado do kind mais severo presente |
 | `detail` | A mensagem resolvida do erro primário |
 | `errorCode` | O identificador de tela do erro primário |
-| `traceId` | `Activity.Current?.Id`, caindo para `HttpContext.TraceIdentifier` |
+| `traceId` | `Activity.Current.TraceId` (32 hex), caindo para `HttpContext.TraceIdentifier`. Substitua com `ResolveTraceId` |
 | `errors` | Todos os erros do resultado, na ordem em que o domínio os reportou |
 | `errors[].code` | Chave do catálogo (`order.already_shipped`) |
 | `errors[].errorCode` | Identificador de tela (`ORDER_ALREADY_SHIPPED`) |
 | `debug` | Presente apenas em um 500 com `ExposeExceptionDetails` ligado; omitido nos demais casos |
+
+Campos extras adicionados por `CustomizeProblem` são achatados no documento (e em `errors[]`) como o `ProblemDetails.Extensions` do ASP.NET. Chaves que colidem com o contrato (`type`, `title`, `status`, `detail`, `instance`, `traceId`, `errorCode`, `debug`, `errors`) são removidas. Use primitivos seguros para JSON.
 
 Clientes devem fazer branch em `errorCode` (topo ou `errors[].errorCode`), não em `detail`. `code` é a chave do catálogo de mensagens.
 
@@ -109,8 +119,10 @@ Clientes devem fazer branch em `errorCode` (topo ou `errors[].errorCode`), não 
 | `NotFound` | 404 |
 | `Validation` | 400 |
 | `BadRequest` | 400 |
+| `ServiceUnavailable` | 503 |
+| `Timeout` | 504 |
 
-O mesmo mapeamento é `OffsideHttp.StatusCode(kind)`. `OffsideHttp.StatusCodes` é o conjunto distinto (400, 401, 403, 404, 409, 410, 412, 422, 429, 500) usado como respostas esperadas.
+O mesmo mapeamento é `OffsideHttp.StatusCode(kind)`. `OffsideHttp.StatusCodes` é o conjunto distinto (400, 401, 403, 404, 409, 410, 412, 422, 429, 500, 503, 504) usado como respostas esperadas. `OffsideHttp.SelectPrimary` escolhe o erro que dirige o status quando você escreve uma resposta própria.
 
 ## Escolhendo o erro primário
 
@@ -121,14 +133,15 @@ Quando um resultado carrega vários erros, a resposta reflete o **kind mais seve
 | 0 | `Unexpected` |
 | 1 | `Unauthorized`, `Forbidden` |
 | 2 | `TooManyRequests` |
-| 3 | `Conflict` |
-| 4 | `PreconditionFailed` |
-| 5 | `Gone` |
-| 6 | `Unprocessable` |
-| 7 | `NotFound` |
-| 8 | `Validation`, `BadRequest` |
+| 3 | `ServiceUnavailable`, `Timeout` |
+| 4 | `Conflict` |
+| 5 | `PreconditionFailed` |
+| 6 | `Gone` |
+| 7 | `Unprocessable` |
+| 8 | `NotFound` |
+| 9 | `Validation`, `BadRequest` |
 
-**Empates vão para o primeiro erro do resultado.** `Unauthorized` e `Forbidden` compartilham o rank 1, então um resultado que carrega os dois reporta aquele que o domínio listou primeiro.
+**Empates vão para o primeiro erro do resultado.** `Unauthorized` e `Forbidden` compartilham o rank 1, então um resultado que carrega os dois reporta aquele que o domínio listou primeiro. Auth e rate-limit vencem 503/504 para o cliente não ser instruído a retentar um pedido não autenticado ou limitado.
 
 ```csharp
 Result.Failure(
@@ -149,7 +162,7 @@ Quando o kind vencedor é `Unexpected`:
 1. O `detail` de todo erro inesperado é substituído pela mensagem genérica `unexpected` do catálogo — tanto no `detail` de topo quanto nas entradas de `errors`.
 2. O `errorCode` de todo erro inesperado é forçado para `UNEXPECTED`.
 3. O detalhe real aparece em `debug` **apenas** quando `ExposeExceptionDetails` está ligado.
-4. A falha é logada via `ILoggerFactory` na categoria `Offside.AspNetCore`, junto com o `traceId`.
+4. A falha é logada via `ILoggerFactory` na categoria `Offside.AspNetCore`, junto com o `traceId`, a menos que `LogUnexpected` seja `false`.
 
 ```csharp
 return Result.Failure(Error.Unexpected(ex.ToString()));
@@ -164,7 +177,7 @@ Em produção:
   "status": 500,
   "detail": "Ocorreu um erro inesperado.",
   "errorCode": "UNEXPECTED",
-  "traceId": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+  "traceId": "4bf92f3577b34da6a3ce929d0e0e4736",
   "errors": [
     { "code": "unexpected", "errorCode": "UNEXPECTED", "kind": "Unexpected", "detail": "Ocorreu um erro inesperado.", "field": null }
   ]
@@ -173,19 +186,50 @@ Em produção:
 
 Em desenvolvimento, a mesma resposta ganha um campo `"debug": "System.InvalidOperationException: ..."`. O `detail` visível ao cliente é genérico nos dois casos — `ExposeExceptionDetails` controla apenas o `debug`.
 
-O `traceId` é a ponte: aparece na resposta e na linha de log, então o usuário pode citá-lo e você encontra a causa real.
+O `traceId` é a ponte: aparece na resposta e na linha de log, então o usuário pode citá-lo e você encontra a causa real. O default é o `TraceId` W3C de 32 hex (o valor que o Application Insights guarda como `operation_Id`), não o traceparent completo em `Activity.Id`. Restaure o formato antigo com `ResolveTraceId`:
 
-Defina explicitamente se não quiser depender do ambiente. `OffsideAspNetCoreOptions` é um singleton simples, então registre a sua própria instância em vez de chamar `AddOffsideAspNetCore`:
+```csharp
+builder.Services.AddOffsideAspNetCore(options =>
+{
+    options.ResolveTraceId = http =>
+        Activity.Current?.Id ?? http.TraceIdentifier;
+});
+```
+
+Defina as options explicitamente se não quiser depender do ambiente. Prefira o callback de configure em `AddOffsideAspNetCore`; registrar o próprio singleton ainda funciona:
 
 ```csharp
 builder.Services.AddSingleton(new OffsideAspNetCoreOptions { ExposeExceptionDetails = false });
 ```
 
-Ou construa direto no ponto de chamada:
+Ou construa direto no ponto de chamada (esta forma não tem ganchos de DI a menos que você os coloque no objeto):
 
 ```csharp
 result.ToHttpResult(resolver, culture: null, new OffsideAspNetCoreOptions { ExposeExceptionDetails = false });
 ```
+
+## Customizando o documento e observando falhas
+
+`CustomizeProblem` roda depois que o documento é montado. As propriedades centrais continuam `init`; acrescente campos legados ou do host por `Extensions` (e `Item.Extensions`). Mantenha valores seguros para JSON. Um callback que lança é logado em `Offside.AspNetCore` e o documento ainda é escrito.
+
+`OnProblem` roda em seguida, com o `HttpContext`. Use-o para um único evento de telemetria do host. Ponha `LogUnexpected` em `false` quando esse callback for dono do log, senão um 500 é logado duas vezes. Deixar `LogUnexpected` falso e `OnProblem` nulo significa um 500 silencioso. 503 e 504 não são logados pelo Offside; observe-os em `OnProblem` se precisar.
+
+```csharp
+builder.Services.AddOffsideAspNetCore(options =>
+{
+    options.LogUnexpected = false;
+    options.CustomizeProblem = (problem, errors) =>
+    {
+        problem.Extensions["message"] = problem.Detail;
+    };
+    options.OnProblem = (problem, errors, http) =>
+    {
+        // um evento, template constante
+    };
+});
+```
+
+O `ResponseBuilder` de validação do FastEndpoints usa o mesmo pipeline, então os ganchos e o `traceId` de 32 hex valem lá também.
 
 ## Culturas
 
@@ -214,3 +258,4 @@ Cada linha existe para `Result` e `Result<T>`, com uma exceção: **não existe 
 - Não construa um segundo formato de erro ao lado deste. Um único formato em toda a API é a maior parte do valor.
 - Mantenha segredos fora de `Error.Arguments` — eles acabam nas mensagens, e mensagens são enviadas.
 - Faça clientes decidirem por `errorCode`, nunca por `detail`.
+- Coloque falhas operacionais de dependência em `ErrorKind.ServiceUnavailable` / `Timeout`, não em `Unexpected`. Não coloque texto de exceção em templates `{reason}`.

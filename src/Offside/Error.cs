@@ -82,6 +82,8 @@ public sealed class Error : IEquatable<Error>
         ErrorKind.NotFound => "NOT_FOUND",
         ErrorKind.Validation => "VALIDATION",
         ErrorKind.BadRequest => "BAD_REQUEST",
+        ErrorKind.ServiceUnavailable => "SERVICE_UNAVAILABLE",
+        ErrorKind.Timeout => "TIMEOUT",
         _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
     };
 
@@ -174,6 +176,20 @@ public sealed class Error : IEquatable<Error>
     /// <returns>The error.</returns>
     public static Error TooManyRequests(string? reason = null, string? errorCode = null) =>
         Create("too_many_requests", ErrorKind.TooManyRequests, new { reason }, errorCode);
+
+    /// <summary>Creates an <see cref="ErrorKind.ServiceUnavailable"/> error with code <c>service_unavailable</c>.</summary>
+    /// <param name="reason">An optional reason, exposed to the template as <c>{reason}</c>. The default catalog does not interpolate it.</param>
+    /// <param name="errorCode">A specific screen identifier. When omitted or blank, <c>SERVICE_UNAVAILABLE</c> is used.</param>
+    /// <returns>The error.</returns>
+    public static Error ServiceUnavailable(string? reason = null, string? errorCode = null) =>
+        Create("service_unavailable", ErrorKind.ServiceUnavailable, new { reason }, errorCode);
+
+    /// <summary>Creates an <see cref="ErrorKind.Timeout"/> error with code <c>timeout</c>.</summary>
+    /// <param name="reason">An optional reason, exposed to the template as <c>{reason}</c>. The default catalog does not interpolate it.</param>
+    /// <param name="errorCode">A specific screen identifier. When omitted or blank, <c>TIMEOUT</c> is used.</param>
+    /// <returns>The error.</returns>
+    public static Error Timeout(string? reason = null, string? errorCode = null) =>
+        Create("timeout", ErrorKind.Timeout, new { reason }, errorCode);
 
     /// <summary>Creates an <see cref="ErrorKind.Unexpected"/> error with code <c>unexpected</c>.</summary>
     /// <param name="detail">

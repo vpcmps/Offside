@@ -1,10 +1,8 @@
-using System.Diagnostics;
 using System.Globalization;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 
 namespace Offside.AspNetCore;
 
@@ -310,63 +308,16 @@ public static class ResultHttpExtensions
 
         public async Task ExecuteAsync(HttpContext httpContext)
         {
-            var culture = _culture ?? ResolveRequestCulture(httpContext);
-            var traceId = Activity.Current?.Id ?? httpContext.TraceIdentifier;
-            var problem = OffsideProblem.Create(
+            var problem = OffsideProblemPipeline.Render(
                 _errors,
                 _resolver,
-                culture,
-                traceId,
-                _options.ExposeExceptionDetails);
-
-            if (problem.Status == 500)
-                TryLogUnexpected(httpContext, _errors, traceId);
+                httpContext,
+                _options,
+                _culture);
 
             httpContext.Response.StatusCode = problem.Status;
             httpContext.Response.ContentType = "application/problem+json";
             await JsonSerializer.SerializeAsync(httpContext.Response.Body, problem, SerializerOptions);
-        }
-
-        private static void TryLogUnexpected(
-            HttpContext httpContext,
-            IReadOnlyList<Error> errors,
-            string traceId)
-        {
-            var unexpected = errors.FirstOrDefault(error => error.Kind == ErrorKind.Unexpected);
-            if (unexpected is null)
-                return;
-
-            var logger = httpContext.RequestServices?.GetService<ILoggerFactory>()
-                ?.CreateLogger("Offside.AspNetCore");
-            if (logger is null)
-                return;
-
-            unexpected.Arguments.TryGetValue("detail", out var detail);
-            logger.LogError(
-                "Unexpected error {ErrorCode}. Detail: {Detail}. TraceId: {TraceId}",
-                unexpected.Code,
-                detail,
-                traceId);
-        }
-
-        private static CultureInfo ResolveRequestCulture(HttpContext httpContext)
-        {
-            var header = httpContext.Request.Headers.AcceptLanguage.ToString();
-            if (header.Length == 0)
-                return CultureInfo.CurrentUICulture;
-
-            var firstRange = header.Split(',', 2)[0].Split(';', 2)[0].Trim();
-            if (firstRange.Length == 0 || firstRange == "*")
-                return CultureInfo.CurrentUICulture;
-
-            try
-            {
-                return CultureInfo.GetCultureInfo(firstRange);
-            }
-            catch (CultureNotFoundException)
-            {
-                return CultureInfo.CurrentUICulture;
-            }
         }
     }
 }

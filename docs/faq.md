@@ -14,7 +14,7 @@ So a value never becomes a success by accident. With an implicit conversion, cha
 
 ## Why can't I define my own `ErrorKind`?
 
-Because a closed kind set makes the HTTP mapping total. Every error the domain can produce already has a defined status code — no registry to keep in sync, no default branch to forget, no `500` because someone added a kind and missed a switch.
+Because a closed kind set makes the HTTP mapping total. Every error the domain can produce already has a defined status code — no registry to keep in sync, no default branch to forget, no `500` because someone added a kind and missed a switch. The library may **add** kinds (as it did with `ServiceUnavailable` and `Timeout`); consumers still cannot invent their own.
 
 Specificity lives in the code space instead, which is open:
 
@@ -46,7 +46,7 @@ return result.IsSuccess
 You did not register an invariant-culture catalog:
 
 ```csharp
-options.AddJson(CultureInfo.InvariantCulture, File.ReadAllText("errors/errors.json"));
+options.AddJsonFile(CultureInfo.InvariantCulture, "errors/errors.json");
 ```
 
 It is the final fallback for every lookup, so it is required. Failing at boot is deliberate — the alternative is discovering it on the first failing request in production.
@@ -57,7 +57,7 @@ The resolver could not find a template, so it returned the code. Check that:
 
 - The code has an entry in the catalog — custom codes need one added by hand.
 - The catalog file actually reaches the output directory (`<None Update="errors\*.json" CopyToOutputDirectory="PreserveNewest" />`).
-- You passed the file **contents** to `AddJson`, not the path.
+- You passed the file **contents** to `AddJson`, not the path. Prefer `AddJsonFile`, which names a missing file at startup.
 
 ## A `{token}` shows up literally in the message
 

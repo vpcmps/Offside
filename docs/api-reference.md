@@ -14,7 +14,8 @@ Namespace `Offside`.
 public enum ErrorKind
 {
     Unexpected, Unauthorized, Forbidden, TooManyRequests, Conflict,
-    PreconditionFailed, Gone, Unprocessable, NotFound, Validation, BadRequest
+    PreconditionFailed, Gone, Unprocessable, NotFound, Validation, BadRequest,
+    ServiceUnavailable, Timeout
 }
 ```
 
@@ -44,6 +45,8 @@ public sealed class Error : IEquatable<Error>
 | `static Error PreconditionFailed(string? reason = null, string? errorCode = null)` | Code `precondition_failed` |
 | `static Error Unprocessable(string? reason = null, string? errorCode = null)` | Code `unprocessable` |
 | `static Error TooManyRequests(string? reason = null, string? errorCode = null)` | Code `too_many_requests` |
+| `static Error ServiceUnavailable(string? reason = null, string? errorCode = null)` | Code `service_unavailable`. Default catalog does not interpolate `{reason}` |
+| `static Error Timeout(string? reason = null, string? errorCode = null)` | Code `timeout`. Default catalog does not interpolate `{reason}` |
 | `static Error Unexpected(string? detail = null, string? errorCode = null)` | Code `unexpected`; `detail` is diagnostic only |
 | `static Error Custom(string code, ErrorKind kind, object? arguments = null, string? field = null, string? errorCode = null)` | Business-rule error. Throws `ArgumentException` on a blank code |
 | `DomainException ToException()` | Escape hatch |
@@ -157,10 +160,12 @@ public sealed class OffsideOptions
 {
     public OffsideOptions AddJson(CultureInfo culture, string json);
     public OffsideOptions AddJson(CultureInfo culture, Stream json);
+    public OffsideOptions AddJsonFile(CultureInfo culture, string path);
+    public OffsideOptions AddJsonFromAssembly(CultureInfo culture, Assembly assembly, string resourceName);
 }
 ```
 
-Both overloads take catalog **content**, not a path. Fluent.
+`AddJson` takes catalog **content**, not a path. `AddJsonFile` reads the file (relative paths resolve against `AppContext.BaseDirectory`) and throws `FileNotFoundException` naming the resolved path. `AddJsonFromAssembly` copies an embedded resource and throws `InvalidOperationException` naming a missing resource. Fluent.
 
 ### OffsideServiceCollectionExtensions
 
@@ -258,19 +263,25 @@ Namespace `Offside.AspNetCore`.
 public sealed class OffsideAspNetCoreOptions
 {
     public bool ExposeExceptionDetails { get; set; }
+    public bool LogUnexpected { get; set; } = true;
+    public Action<OffsideProblem, IReadOnlyList<Error>>? CustomizeProblem { get; set; }
+    public Action<OffsideProblem, IReadOnlyList<Error>, HttpContext>? OnProblem { get; set; }
+    public Func<HttpContext, string>? ResolveTraceId { get; set; }
     public static OffsideAspNetCoreOptions FromEnvironment(IHostEnvironment environment);
 }
 ```
 
-`ExposeExceptionDetails` gates the `debug` field only; the client-facing `detail` of a 500 is always the generic message.
+`ExposeExceptionDetails` gates the `debug` field only; the client-facing `detail` of a 500 is always the generic message. `LogUnexpected` controls the built-in `ILogger` line for `Unexpected` failures. `CustomizeProblem` may add flattened JSON members via `Extensions`; reserved keys are stripped. `OnProblem` is the observability hook — do not write the response body. `ResolveTraceId` replaces the default 32-hex `Activity.TraceId`. The `bool exposeExceptionDetails` overloads construct options without these callbacks; hooks require the `HttpContext` / DI path or an explicit options object.
 
 ### OffsideAspNetCoreServiceCollectionExtensions
 
 ```csharp
-public static IServiceCollection AddOffsideAspNetCore(this IServiceCollection services);
+public static IServiceCollection AddOffsideAspNetCore(
+    this IServiceCollection services,
+    Action<OffsideAspNetCoreOptions>? configure = null);
 ```
 
-Registers `OffsideAspNetCoreOptions` as a singleton, defaulting `ExposeExceptionDetails` from `IHostEnvironment.IsDevelopment()` when one is present, otherwise `false`.
+Registers `OffsideAspNetCoreOptions` as a singleton, defaulting `ExposeExceptionDetails` from `IHostEnvironment.IsDevelopment()` when one is present, otherwise `false`. `configure` runs afterwards and wins.
 
 ### OffsideProblem
 
@@ -285,6 +296,7 @@ public sealed class OffsideProblem
     public required string ErrorCode { get; init; }  // primary screen identifier
     public string? Debug { get; init; }              // omitted from JSON when null
     public required IReadOnlyList<Item> Errors { get; init; }
+    public IDictionary<string, object?> Extensions { get; init; }  // flattened via [JsonExtensionData]
 
     public static OffsideProblem Create(
         IReadOnlyList<Error> errors,
@@ -300,23 +312,25 @@ public sealed class OffsideProblem
         public required string Kind { get; init; }
         public required string Detail { get; init; }
         public string? Field { get; init; }
+        public IDictionary<string, object?> Extensions { get; init; }
     }
 }
 ```
 
-Serialized as `application/problem+json` with camelCase names. A sanitized 500 forces `errorCode` to `UNEXPECTED`. See [the response shape](aspnet-guide.md#failure-mapping).
+Serialized as `application/problem+json` with camelCase names. Extra fields on `Extensions` are flattened into the JSON. A sanitized 500 forces `errorCode` to `UNEXPECTED`. See [the response shape](aspnet-guide.md#failure-mapping).
 
 ### OffsideHttp
 
 ```csharp
 public static class OffsideHttp
 {
-    public static IReadOnlyList<int> StatusCodes { get; }  // 400, 401, 403, 404, 409, 410, 412, 422, 429, 500
+    public static IReadOnlyList<int> StatusCodes { get; }  // 400, 401, 403, 404, 409, 410, 412, 422, 429, 500, 503, 504
     public static int StatusCode(ErrorKind kind);
+    public static Error SelectPrimary(IReadOnlyList<Error> errors);
 }
 ```
 
-The kind → HTTP mapping used by Problem Details and by `Offside.FastEndpoint`.
+The kind → HTTP mapping used by Problem Details and by `Offside.FastEndpoint`. `SelectPrimary` returns the error of the most severe kind; empty lists throw `ArgumentException`.
 
 ### ResultHttpExtensions
 

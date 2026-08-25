@@ -9,6 +9,8 @@ namespace Offside.AspNetCore;
 /// </summary>
 /// <remarks>
 /// Serialized as <c>application/problem+json</c> with camelCase property names.
+/// Extra fields added through <see cref="Extensions"/> are flattened into the document
+/// (the same pattern as ASP.NET <c>ProblemDetails.Extensions</c>).
 /// </remarks>
 /// <example>
 /// <code language="json">
@@ -18,7 +20,7 @@ namespace Offside.AspNetCore;
 ///   "status": 409,
 ///   "detail": "Conflict on order.",
 ///   "errorCode": "CONFLICT",
-///   "traceId": "00-8a3c...-01",
+///   "traceId": "4bf92f3577b34da6a3ce929d0e0e4736",
 ///   "errors": [
 ///     { "code": "conflict", "errorCode": "CONFLICT", "kind": "Conflict", "detail": "Conflict on order.", "field": null }
 ///   ]
@@ -39,7 +41,11 @@ public sealed class OffsideProblem
     /// <summary>Gets the resolved message of the primary error, sanitized when the primary kind is <see cref="ErrorKind.Unexpected"/>.</summary>
     public required string Detail { get; init; }
 
-    /// <summary>Gets the correlation id: <c>Activity.Current?.Id</c> when available, otherwise <c>HttpContext.TraceIdentifier</c>.</summary>
+    /// <summary>
+    /// Gets the correlation id: <c>Activity.Current.TraceId</c> (32 hex) when an activity is
+    /// present, otherwise <c>HttpContext.TraceIdentifier</c>, unless
+    /// <see cref="OffsideAspNetCoreOptions.ResolveTraceId"/> replaced the default.
+    /// </summary>
     public required string TraceId { get; init; }
 
     /// <summary>
@@ -60,6 +66,13 @@ public sealed class OffsideProblem
     public required IReadOnlyList<Item> Errors { get; init; }
 
     /// <summary>
+    /// Gets extra members flattened into the JSON document. Populate from
+    /// <see cref="OffsideAspNetCoreOptions.CustomizeProblem"/>. Never null.
+    /// </summary>
+    [JsonExtensionData]
+    public IDictionary<string, object?> Extensions { get; init; } = new Dictionary<string, object?>();
+
+    /// <summary>
     /// Builds a problem document from a set of errors.
     /// </summary>
     /// <param name="errors">The errors carried by the failed result. The most severe kind wins; ties go to the first error in this list.</param>
@@ -75,8 +88,8 @@ public sealed class OffsideProblem
         string traceId,
         bool exposeExceptionDetails = false)
     {
-        var primary = ErrorSeverity.SelectPrimary(errors);
-        var status = ErrorSeverity.StatusCode(primary.Kind);
+        var primary = OffsideHttp.SelectPrimary(errors);
+        var status = OffsideHttp.StatusCode(primary.Kind);
         var sanitize = primary.Kind == ErrorKind.Unexpected;
 
         return new OffsideProblem
@@ -88,13 +101,15 @@ public sealed class OffsideProblem
             TraceId = traceId,
             ErrorCode = ClientErrorCode(primary, sanitize),
             Debug = sanitize && exposeExceptionDetails ? ReadUnexpectedDetail(primary) : null,
+            Extensions = new Dictionary<string, object?>(),
             Errors = errors.Select(error => new Item
             {
                 Code = error.Code,
                 ErrorCode = ClientErrorCode(error, sanitize),
                 Kind = error.Kind.ToString(),
                 Detail = ResolveClientDetail(error, resolver, culture, sanitize),
-                Field = error.Field
+                Field = error.Field,
+                Extensions = new Dictionary<string, object?>()
             }).ToList()
         };
     }
@@ -144,5 +159,12 @@ public sealed class OffsideProblem
 
         /// <summary>Gets the offending field name, or <see langword="null"/> when the error is not attributable to one.</summary>
         public string? Field { get; init; }
+
+        /// <summary>
+        /// Gets extra members flattened into this error object. Populate from
+        /// <see cref="OffsideAspNetCoreOptions.CustomizeProblem"/>. Never null.
+        /// </summary>
+        [JsonExtensionData]
+        public IDictionary<string, object?> Extensions { get; init; } = new Dictionary<string, object?>();
     }
 }

@@ -51,6 +51,8 @@ Cada factory produz um `ErrorKind` específico e um código de catálogo padrão
 | `Error.PreconditionFailed(reason?)` | `PreconditionFailed` | `precondition_failed` | `reason` |
 | `Error.Unprocessable(reason?)` | `Unprocessable` | `unprocessable` | `reason` |
 | `Error.TooManyRequests(reason?)` | `TooManyRequests` | `too_many_requests` | `reason` |
+| `Error.ServiceUnavailable(reason?)` | `ServiceUnavailable` | `service_unavailable` | `reason` |
+| `Error.Timeout(reason?)` | `Timeout` | `timeout` | `reason` |
 | `Error.Unexpected(detail?)` | `Unexpected` | `unexpected` | `detail` |
 | `Error.Custom(code, kind, arguments?, field?, errorCode?)` | *sua escolha* | *sua escolha* | *sua escolha* |
 

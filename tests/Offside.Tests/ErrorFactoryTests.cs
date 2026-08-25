@@ -42,6 +42,8 @@ public sealed class ErrorFactoryTests
     [InlineData(nameof(ErrorKind.PreconditionFailed), "precondition_failed", ErrorKind.PreconditionFailed)]
     [InlineData(nameof(ErrorKind.Unprocessable), "unprocessable", ErrorKind.Unprocessable)]
     [InlineData(nameof(ErrorKind.TooManyRequests), "too_many_requests", ErrorKind.TooManyRequests)]
+    [InlineData(nameof(ErrorKind.ServiceUnavailable), "service_unavailable", ErrorKind.ServiceUnavailable)]
+    [InlineData(nameof(ErrorKind.Timeout), "timeout", ErrorKind.Timeout)]
     [InlineData(nameof(ErrorKind.Unexpected), "unexpected", ErrorKind.Unexpected)]
     public void Built_in_factory_sets_default_code_and_kind(
         string factory,
@@ -58,6 +60,8 @@ public sealed class ErrorFactoryTests
             nameof(ErrorKind.PreconditionFailed) => Error.PreconditionFailed("etag"),
             nameof(ErrorKind.Unprocessable) => Error.Unprocessable("state"),
             nameof(ErrorKind.TooManyRequests) => Error.TooManyRequests("limit"),
+            nameof(ErrorKind.ServiceUnavailable) => Error.ServiceUnavailable("otp"),
+            nameof(ErrorKind.Timeout) => Error.Timeout("upstream"),
             nameof(ErrorKind.Unexpected) => Error.Unexpected("boom"),
             _ => throw new ArgumentOutOfRangeException(nameof(factory))
         };
@@ -146,6 +150,8 @@ public sealed class ErrorFactoryTests
     [InlineData(ErrorKind.NotFound, "NOT_FOUND")]
     [InlineData(ErrorKind.Validation, "VALIDATION")]
     [InlineData(ErrorKind.BadRequest, "BAD_REQUEST")]
+    [InlineData(ErrorKind.ServiceUnavailable, "SERVICE_UNAVAILABLE")]
+    [InlineData(ErrorKind.Timeout, "TIMEOUT")]
     public void DefaultErrorCode_maps_every_kind(ErrorKind kind, string errorCode)
     {
         Assert.Equal(errorCode, Error.DefaultErrorCode(kind));

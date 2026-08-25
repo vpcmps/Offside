@@ -18,20 +18,23 @@ internal static class ErrorSeverity
         ErrorKind.NotFound => 404,
         ErrorKind.Validation => 400,
         ErrorKind.BadRequest => 400,
+        ErrorKind.ServiceUnavailable => 503,
+        ErrorKind.Timeout => 504,
         _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
     };
 
-    private static int Rank(ErrorKind kind) => kind switch
+    internal static int Rank(ErrorKind kind) => kind switch
     {
         ErrorKind.Unexpected => 0,
         ErrorKind.Unauthorized or ErrorKind.Forbidden => 1,
         ErrorKind.TooManyRequests => 2,
-        ErrorKind.Conflict => 3,
-        ErrorKind.PreconditionFailed => 4,
-        ErrorKind.Gone => 5,
-        ErrorKind.Unprocessable => 6,
-        ErrorKind.NotFound => 7,
-        ErrorKind.Validation or ErrorKind.BadRequest => 8,
+        ErrorKind.ServiceUnavailable or ErrorKind.Timeout => 3,
+        ErrorKind.Conflict => 4,
+        ErrorKind.PreconditionFailed => 5,
+        ErrorKind.Gone => 6,
+        ErrorKind.Unprocessable => 7,
+        ErrorKind.NotFound => 8,
+        ErrorKind.Validation or ErrorKind.BadRequest => 9,
         _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
     };
 }

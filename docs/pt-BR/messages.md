@@ -17,24 +17,23 @@ Um objeto JSON plano mapeando código de erro para template de mensagem:
 }
 ```
 
-Os onze códigos padrão — `not_found`, `gone`, `conflict`, `validation`, `bad_request`, `unauthorized`, `forbidden`, `precondition_failed`, `unprocessable`, `too_many_requests`, `unexpected` — cobrem todas as factories nativas. Adicione uma entrada por código customizado que você introduzir com `Error.Custom`.
+Os treze códigos padrão — `not_found`, `gone`, `conflict`, `validation`, `bad_request`, `unauthorized`, `forbidden`, `precondition_failed`, `unprocessable`, `too_many_requests`, `unexpected`, `service_unavailable`, `timeout` — cobrem todas as factories nativas. Adicione uma entrada por código customizado que você introduzir com `Error.Custom`.
 
 ## Registro
 
 ```csharp
 builder.Services.AddOffside(options =>
 {
-    options.AddJson(CultureInfo.InvariantCulture, File.ReadAllText("errors/errors.json"));
-    options.AddJson(new CultureInfo("pt-BR"),     File.ReadAllText("errors/errors.pt-BR.json"));
-    options.AddJson(new CultureInfo("es"),        File.ReadAllText("errors/errors.es.json"));
+    options.AddJsonFile(CultureInfo.InvariantCulture, "errors/errors.json");
+    options.AddJsonFile(new CultureInfo("pt-BR"),     "errors/errors.pt-BR.json");
+    options.AddJsonFile(new CultureInfo("es"),        "errors/errors.es.json");
 });
 ```
 
-`AddJson` recebe o **conteúdo** do catálogo, não um caminho. Há também uma sobrecarga com `Stream` para recursos embutidos:
+`AddJsonFile` lê o arquivo na inicialização. Caminhos relativos resolvem contra `AppContext.BaseDirectory` (o diretório de saída), então os arquivos ainda precisam de `CopyToOutputDirectory`. Um arquivo ausente lança `FileNotFoundException` nomeando o path resolvido. `AddJson` ainda recebe o **conteúdo** quando você já tem a string. Há também `AddJsonFromAssembly` para resources embutidos, e uma sobrecarga com `Stream`:
 
 ```csharp
-options.AddJson(CultureInfo.InvariantCulture,
-    typeof(Program).Assembly.GetManifestResourceStream("MyApp.errors.json")!);
+options.AddJsonFromAssembly(CultureInfo.InvariantCulture, typeof(Program).Assembly, "MyApp.errors.json");
 ```
 
 Os catálogos são parseados uma vez, no registro. Um arquivo malformado falha na inicialização, não na primeira requisição que der erro.

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Hosting;
 
 namespace Offside.AspNetCore;
@@ -18,6 +19,53 @@ public sealed class OffsideAspNetCoreOptions
     /// is gated by it.
     /// </remarks>
     public bool ExposeExceptionDetails { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether Offside logs <see cref="ErrorKind.Unexpected"/>
+    /// failures through <c>ILoggerFactory</c> under the category <c>Offside.AspNetCore</c>.
+    /// Defaults to <see langword="true"/>.
+    /// </summary>
+    /// <remarks>
+    /// Set this to <see langword="false"/> when <see cref="OnProblem"/> owns telemetry, so the
+    /// built-in line is not duplicated. Leaving both this <see langword="false"/> and
+    /// <see cref="OnProblem"/> unset means a 500 is silent.
+    /// </remarks>
+    public bool LogUnexpected { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets a callback that runs after the problem document is built and may add
+    /// fields through <see cref="OffsideProblem.Extensions"/> (and
+    /// <see cref="OffsideProblem.Item.Extensions"/>). Core properties stay init-only.
+    /// </summary>
+    /// <remarks>
+    /// Use JSON-safe primitives. Keys that collide with the Problem Details contract
+    /// (<c>type</c>, <c>title</c>, <c>status</c>, <c>detail</c>, <c>instance</c>,
+    /// <c>traceId</c>, <c>errorCode</c>, <c>debug</c>, <c>errors</c>) are stripped before
+    /// the response is written. Exceptions are logged and do not replace the problem document.
+    /// Hooks are applied only when the request's <c>HttpContext</c> is available — the
+    /// <c>bool exposeExceptionDetails</c> overloads construct options without this callback.
+    /// </remarks>
+    public Action<OffsideProblem, IReadOnlyList<Error>>? CustomizeProblem { get; set; }
+
+    /// <summary>
+    /// Gets or sets a callback invoked after <see cref="CustomizeProblem"/> and before the
+    /// response is written. Use it for host telemetry. Do not write to the response body.
+    /// </summary>
+    /// <remarks>
+    /// Exceptions are logged and do not replace the problem document. The callback is applied
+    /// only when the request's <c>HttpContext</c> is available.
+    /// </remarks>
+    public Action<OffsideProblem, IReadOnlyList<Error>, HttpContext>? OnProblem { get; set; }
+
+    /// <summary>
+    /// Gets or sets a callback that supplies the <c>traceId</c> written on the problem document.
+    /// When <see langword="null"/>, Offside uses <c>Activity.Current.TraceId</c> (32 hex) and
+    /// falls back to <c>HttpContext.TraceIdentifier</c>.
+    /// </summary>
+    /// <remarks>
+    /// Restore the W3C traceparent with <c>context => Activity.Current?.Id ?? context.TraceIdentifier</c>.
+    /// </remarks>
+    public Func<HttpContext, string>? ResolveTraceId { get; set; }
 
     /// <summary>
     /// Creates options whose <see cref="ExposeExceptionDetails"/> follows

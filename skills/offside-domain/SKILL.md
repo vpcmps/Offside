@@ -36,6 +36,8 @@ public Result<Order> Get(string id)
 | `Error.PreconditionFailed(reason?)` | PreconditionFailed | `precondition_failed` |
 | `Error.Unprocessable(reason?)` | Unprocessable | `unprocessable` |
 | `Error.TooManyRequests(reason?)` | TooManyRequests | `too_many_requests` |
+| `Error.ServiceUnavailable(reason?)` | ServiceUnavailable | `service_unavailable` |
+| `Error.Timeout(reason?)` | Timeout | `timeout` |
 | `Error.Unexpected(detail?)` | Unexpected | `unexpected` (`detail` is for logs, not HTTP) |
 | `Error.Custom(code, kind, args?, field?, errorCode?)` | caller Kind | caller code |
 

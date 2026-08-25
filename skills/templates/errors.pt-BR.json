@@ -9,5 +9,7 @@
   "precondition_failed": "Pré-condição falhou.",
   "unprocessable": "Não foi possível processar o pedido.",
   "too_many_requests": "Demasiados pedidos.",
-  "unexpected": "Ocorreu um erro inesperado."
+  "unexpected": "Ocorreu um erro inesperado.",
+  "service_unavailable": "O serviço está temporariamente indisponível.",
+  "timeout": "A requisição excedeu o tempo limite."
 }

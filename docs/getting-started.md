@@ -50,7 +50,9 @@ Offside never hard-codes message text. Create `errors/errors.json` with a templa
   "precondition_failed": "Precondition failed.",
   "unprocessable": "Unable to process the request.",
   "too_many_requests": "Too many requests.",
-  "unexpected": "An unexpected error occurred."
+  "unexpected": "An unexpected error occurred.",
+  "service_unavailable": "The service is temporarily unavailable.",
+  "timeout": "The request timed out."
 }
 ```
 
@@ -73,11 +75,11 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOffside(options =>
 {
-    options.AddJson(CultureInfo.InvariantCulture, File.ReadAllText("errors/errors.json"));
+    options.AddJsonFile(CultureInfo.InvariantCulture, "errors/errors.json");
 
-    var ptBr = Path.Combine(builder.Environment.ContentRootPath, "errors/errors.pt-BR.json");
+    var ptBr = Path.Combine(AppContext.BaseDirectory, "errors/errors.pt-BR.json");
     if (File.Exists(ptBr))
-        options.AddJson(new CultureInfo("pt-BR"), File.ReadAllText(ptBr));
+        options.AddJsonFile(new CultureInfo("pt-BR"), ptBr);
 });
 
 builder.Services.AddOffsideAspNetCore();
@@ -85,7 +87,7 @@ builder.Services.AddOffsideAspNetCore();
 
 Two things trip people up here:
 
-- **`AddJson` takes the catalog *content*, not a path.** Read the file yourself, or pass a `Stream` for an embedded resource.
+- **`AddJsonFile` reads the file.** Relative paths resolve against `AppContext.BaseDirectory`. A missing file fails at startup and names the path. `AddJson` still takes catalog *content* when you already have a string; `AddJsonFromAssembly` loads an embedded resource.
 - **The invariant-culture catalog is required.** Without it `AddOffside` throws an `InvalidOperationException` at startup — deliberately, so a missing catalog is a boot failure rather than a surprise at 3 a.m.
 
 `AddOffsideAspNetCore` registers `OffsideAspNetCoreOptions`. When an `IHostEnvironment` is present, `ExposeExceptionDetails` defaults to `IsDevelopment()`.

@@ -27,6 +27,31 @@ public sealed class ProblemDetailsTests
     }
 
     [Fact]
+    public async Task Timeout_and_validation_use_504()
+    {
+        var result = Result.Failure(
+            Error.Validation("email"),
+            Error.Timeout());
+
+        var payload = await ProblemHttpHarness.Execute(result);
+
+        Assert.Equal(504, payload.Status);
+        Assert.Equal("Timeout", payload.Title);
+    }
+
+    [Fact]
+    public async Task Unauthorized_and_service_unavailable_use_401()
+    {
+        var result = Result.Failure(
+            Error.ServiceUnavailable(),
+            Error.Unauthorized());
+
+        var payload = await ProblemHttpHarness.Execute(result);
+
+        Assert.Equal(401, payload.Status);
+    }
+
+    [Fact]
     public async Task Tie_Unauthorized_Forbidden_uses_first_in_list()
     {
         var forbiddenFirst = Result.Failure(

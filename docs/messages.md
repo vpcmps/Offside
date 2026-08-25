@@ -17,24 +17,23 @@ A flat JSON object mapping error code to message template:
 }
 ```
 
-The eleven default codes — `not_found`, `gone`, `conflict`, `validation`, `bad_request`, `unauthorized`, `forbidden`, `precondition_failed`, `unprocessable`, `too_many_requests`, `unexpected` — cover every built-in factory. Add one entry per custom code you introduce with `Error.Custom`.
+The thirteen default codes — `not_found`, `gone`, `conflict`, `validation`, `bad_request`, `unauthorized`, `forbidden`, `precondition_failed`, `unprocessable`, `too_many_requests`, `unexpected`, `service_unavailable`, `timeout` — cover every built-in factory. Add one entry per custom code you introduce with `Error.Custom`.
 
 ## Registration
 
 ```csharp
 builder.Services.AddOffside(options =>
 {
-    options.AddJson(CultureInfo.InvariantCulture, File.ReadAllText("errors/errors.json"));
-    options.AddJson(new CultureInfo("pt-BR"),     File.ReadAllText("errors/errors.pt-BR.json"));
-    options.AddJson(new CultureInfo("es"),        File.ReadAllText("errors/errors.es.json"));
+    options.AddJsonFile(CultureInfo.InvariantCulture, "errors/errors.json");
+    options.AddJsonFile(new CultureInfo("pt-BR"),     "errors/errors.pt-BR.json");
+    options.AddJsonFile(new CultureInfo("es"),        "errors/errors.es.json");
 });
 ```
 
-`AddJson` takes the catalog **content**, not a path. There is also a `Stream` overload for embedded resources:
+`AddJsonFile` reads the file at startup. Relative paths resolve against `AppContext.BaseDirectory` (the output directory), so the files still need `CopyToOutputDirectory`. A missing file throws `FileNotFoundException` naming the resolved path. `AddJson` still takes catalog **content** when you already have a string. There is also `AddJsonFromAssembly` for embedded resources, and a `Stream` overload:
 
 ```csharp
-options.AddJson(CultureInfo.InvariantCulture,
-    typeof(Program).Assembly.GetManifestResourceStream("MyApp.errors.json")!);
+options.AddJsonFromAssembly(CultureInfo.InvariantCulture, typeof(Program).Assembly, "MyApp.errors.json");
 ```
 
 Catalogs are parsed once, at registration. A malformed file fails at startup, not on the first failing request.

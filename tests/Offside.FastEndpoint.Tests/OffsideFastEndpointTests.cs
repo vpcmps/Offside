@@ -33,6 +33,38 @@ public sealed class OffsideValidationResponseTests
     }
 
     [Fact]
+    public void Create_applies_customize_problem_and_trace_id_from_options()
+    {
+        var services = new ServiceCollection();
+        services.AddOffside(options =>
+        {
+            options.AddJson(
+                CultureInfo.InvariantCulture,
+                """{ "validation": "{field}", "email.taken": "taken {attemptedValue}" }""");
+        });
+        services.AddOffsideAspNetCore(options =>
+        {
+            options.CustomizeProblem = (problem, _) => problem.Extensions["message"] = "legacy";
+            options.ResolveTraceId = _ => "fe-trace";
+        });
+
+        var http = new DefaultHttpContext
+        {
+            RequestServices = services.BuildServiceProvider()
+        };
+
+        var failures = new List<ValidationFailure>
+        {
+            new("Email", "taken") { ErrorCode = "email.taken" }
+        };
+
+        var problem = OffsideValidationResponse.Create(failures, http);
+
+        Assert.Equal("legacy", problem.Extensions["message"]);
+        Assert.Equal("fe-trace", problem.TraceId);
+    }
+
+    [Fact]
     public void Create_empty_failures_still_returns_a_validation_problem()
     {
         var http = CreateHttp();

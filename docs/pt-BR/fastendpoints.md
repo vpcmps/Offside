@@ -27,7 +27,7 @@ app.UseFastEndpoints(c => c.UseOffside());
 - Define `Errors.ResponseBuilder` para serializar falhas FluentValidation como `OffsideProblem`.
 - Define `Errors.ProducesMetadataType` como `typeof(OffsideProblem)`.
 - Define `Errors.ContentType` como `application/problem+json`.
-- Regista `Produces<OffsideProblem>` para cada status Offside (400, 401, 403, 404, 409, 410, 412, 422, 429, 500) em todos os endpoints.
+- Regista `Produces<OffsideProblem>` para cada status Offside (400, 401, 403, 404, 409, 410, 412, 422, 429, 500, 503, 504) em todos os endpoints.
 
 O FastEndpoints não expõe o `Endpoints.Configurator` anterior a outros assemblies. Se já tiver um, passe-o:
 

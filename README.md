@@ -64,7 +64,7 @@ using Offside.AspNetCore;
 
 builder.Services.AddOffside(options =>
 {
-    options.AddJson(CultureInfo.InvariantCulture, File.ReadAllText("errors/errors.json"));
+    options.AddJsonFile(CultureInfo.InvariantCulture, "errors/errors.json");
 });
 builder.Services.AddOffsideAspNetCore();
 
@@ -95,7 +95,7 @@ A failure becomes `application/problem+json`, with the status taken from the mos
   "status": 404,
   "detail": "Order '42' was not found.",
   "errorCode": "NOT_FOUND",
-  "traceId": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+  "traceId": "4bf92f3577b34da6a3ce929d0e0e4736",
   "errors": [
     { "code": "not_found", "errorCode": "NOT_FOUND", "kind": "NotFound", "detail": "Order '42' was not found.", "field": null }
   ]
@@ -109,7 +109,8 @@ A failure becomes `application/problem+json`, with the status taken from the mos
 | `Forbidden` | 403 | | `NotFound` | 404 |
 | `TooManyRequests` | 429 | | `Validation` | 400 |
 | `Conflict` | 409 | | `BadRequest` | 400 |
-| `PreconditionFailed` | 412 | | | |
+| `PreconditionFailed` | 412 | | `ServiceUnavailable` | 503 |
+| `Timeout` | 504 | | | |
 
 Full guides: [getting started](https://github.com/vpcmps/Offside/blob/master/docs/getting-started.md) · [concepts](https://github.com/vpcmps/Offside/blob/master/docs/concepts.md) · [domain](https://github.com/vpcmps/Offside/blob/master/docs/domain-guide.md) · [ASP.NET Core](https://github.com/vpcmps/Offside/blob/master/docs/aspnet-guide.md) · [FluentValidation](https://github.com/vpcmps/Offside/blob/master/docs/fluentvalidation.md) · [FastEndpoints](https://github.com/vpcmps/Offside/blob/master/docs/fastendpoints.md) · [MediatR](https://github.com/vpcmps/Offside/blob/master/docs/mediatr-guide.md) · [messages](https://github.com/vpcmps/Offside/blob/master/docs/messages.md) · [API reference](https://github.com/vpcmps/Offside/blob/master/docs/api-reference.md)
 

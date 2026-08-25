@@ -14,7 +14,7 @@ Para que um valor nunca vire sucesso por acidente. Com conversão implícita, mu
 
 ## Por que não posso definir meu próprio `ErrorKind`?
 
-Porque um conjunto fechado de kinds torna o mapeamento HTTP total. Todo erro que o domínio pode produzir já tem um status definido — sem registro para manter sincronizado, sem branch default para esquecer, sem um `500` porque alguém adicionou um kind e passou batido em um switch.
+Porque um conjunto fechado de kinds torna o mapeamento HTTP total. Todo erro que o domínio pode produzir já tem um status definido — sem registro para manter sincronizado, sem branch default para esquecer, sem um `500` porque alguém adicionou um kind e passou batido em um switch. A biblioteca pode **acrescentar** kinds (como fez com `ServiceUnavailable` e `Timeout`); o consumidor ainda não inventa os seus.
 
 A especificidade vive no espaço de códigos, que é aberto:
 
@@ -46,7 +46,7 @@ return result.IsSuccess
 Você não registrou um catálogo de cultura invariante:
 
 ```csharp
-options.AddJson(CultureInfo.InvariantCulture, File.ReadAllText("errors/errors.json"));
+options.AddJsonFile(CultureInfo.InvariantCulture, "errors/errors.json");
 ```
 
 Ele é o fallback final de toda busca, então é obrigatório. Falhar no boot é deliberado — a alternativa é descobrir na primeira requisição com erro em produção.
@@ -57,7 +57,7 @@ O resolver não achou um template e devolveu o código. Verifique se:
 
 - O código tem entrada no catálogo — códigos customizados precisam ser adicionados à mão.
 - O arquivo de catálogo realmente chega ao diretório de saída (`<None Update="errors\*.json" CopyToOutputDirectory="PreserveNewest" />`).
-- Você passou o **conteúdo** do arquivo para `AddJson`, não o caminho.
+- Você passou o **conteúdo** do arquivo para `AddJson`, não o caminho. Prefira `AddJsonFile`, que nomeia um arquivo ausente na inicialização.
 
 ## Um `{token}` aparece literalmente na mensagem
 

@@ -8,6 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- `ErrorKind.ServiceUnavailable` (HTTP 503) and `ErrorKind.Timeout` (HTTP 504), with factories `Error.ServiceUnavailable` / `Error.Timeout`. Rank sits after `TooManyRequests` and before `Conflict`, so auth and rate-limit still win over a retryable outage.
+- `OffsideProblem.Extensions` and `OffsideProblem.Item.Extensions` (`[JsonExtensionData]`) plus `OffsideAspNetCoreOptions.CustomizeProblem` for brownfield fields during deprecation.
+- `OffsideAspNetCoreOptions.OnProblem` observability hook and `LogUnexpected` to suppress the built-in Unexpected log.
+- `OffsideAspNetCoreOptions.ResolveTraceId`.
+- `OffsideHttp.SelectPrimary` for custom writers.
+- `OffsideOptions.AddJsonFile` and `AddJsonFromAssembly`, which fail at startup naming the missing file or resource.
+- Optional `configure` callback on `AddOffsideAspNetCore`.
 - Optional `Offside.MediatR` package with ordered domain-notification publication, a thread-safe scoped collector, and compatibility with MediatR 12 through 14.
 - An `offside-mediatr` agent skill installed by `offside init` alongside the existing skills.
 - Modular agent-skill workflows for Offside setup, feature implementation, refactoring, and Azure App Configuration. Interactive capability selection supports every valid combination of JSON, Azure or custom messages; domain-only, ASP.NET Core or FastEndpoints exposure; and optional FluentValidation.
@@ -17,6 +24,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `OffsideHttp.StatusCode` / `StatusCodes` for the kind → HTTP mapping.
 - Bilingual documentation under `docs/` (English) and `docs/pt-BR/` (Portuguese): getting started, concepts, domain guide, ASP.NET Core guide, MediatR integration, FluentValidation, FastEndpoints, messages and cultures, CLI, API reference, and FAQ.
 - XML documentation comments across the public API, so IntelliSense and the shipped `.xml` files are useful to consumers.
+
+### Changed
+
+- Breaking (pre-1.0): problem `traceId` is now `Activity.Current.TraceId` (32 hex, searchable as Application Insights `operation_Id`), not the W3C `Activity.Id` traceparent. Restore the previous format with `ResolveTraceId`.
 
 ## [0.1.0] - 2026-08-13
 

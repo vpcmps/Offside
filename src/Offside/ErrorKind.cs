@@ -41,5 +41,17 @@ public enum ErrorKind
     Validation,
 
     /// <summary>The request itself is malformed. Maps to HTTP 400 and is the least severe kind.</summary>
-    BadRequest
+    BadRequest,
+
+    /// <summary>
+    /// A dependency required to fulfill the request is temporarily unavailable. Maps to HTTP 503.
+    /// Distinct from <see cref="Unexpected"/>: the failure is operational, and the client may retry.
+    /// </summary>
+    ServiceUnavailable,
+
+    /// <summary>
+    /// A dependency required to fulfill the request timed out. Maps to HTTP 504.
+    /// Distinct from <see cref="Unexpected"/>: the failure is operational, and the client may retry.
+    /// </summary>
+    Timeout
 }

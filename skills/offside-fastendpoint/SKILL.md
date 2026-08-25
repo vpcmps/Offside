@@ -21,7 +21,7 @@ app.UseFastEndpoints(c => c.UseOffside());
 
 - Validation failures become `OffsideProblem` (`application/problem+json`).
 - OpenAPI documents `OffsideProblem` as the error DTO.
-- Every endpoint gets `Produces<OffsideProblem>` for Offside statuses (400, 401, 403, 404, 409, 410, 412, 422, 429, 500).
+- Every endpoint gets `Produces<OffsideProblem>` for Offside statuses (400, 401, 403, 404, 409, 410, 412, 422, 429, 500, 503, 504).
 
 Pass extra endpoint setup into `UseOffside` if you already have a configurator — FastEndpoints does not expose the previous callback:
 

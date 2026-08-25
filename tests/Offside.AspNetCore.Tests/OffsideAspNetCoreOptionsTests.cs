@@ -54,6 +54,26 @@ public sealed class OffsideAspNetCoreOptionsTests
     }
 
     [Fact]
+    public void AddOffsideAspNetCore_configure_runs_after_environment()
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton<IHostEnvironment>(
+            new StubHostEnvironment { EnvironmentName = Environments.Development });
+        services.AddOffsideAspNetCore(options =>
+        {
+            Assert.True(options.ExposeExceptionDetails);
+            options.ExposeExceptionDetails = false;
+            options.LogUnexpected = false;
+        });
+
+        var options = services.BuildServiceProvider()
+            .GetRequiredService<OffsideAspNetCoreOptions>();
+
+        Assert.False(options.ExposeExceptionDetails);
+        Assert.False(options.LogUnexpected);
+    }
+
+    [Fact]
     public async Task ToHttpResult_HttpContext_resolves_resolver_and_options()
     {
         var services = new ServiceCollection();

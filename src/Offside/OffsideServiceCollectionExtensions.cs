@@ -24,8 +24,8 @@ public static class OffsideServiceCollectionExtensions
     /// <code>
     /// builder.Services.AddOffside(options =>
     /// {
-    ///     options.AddJson(CultureInfo.InvariantCulture, File.ReadAllText("errors/errors.json"));
-    ///     options.AddJson(new CultureInfo("pt-BR"), File.ReadAllText("errors/errors.pt-BR.json"));
+    ///     options.AddJsonFile(CultureInfo.InvariantCulture, "errors/errors.json");
+    ///     options.AddJsonFile(new CultureInfo("pt-BR"), "errors/errors.pt-BR.json");
     /// });
     /// </code>
     /// </example>
