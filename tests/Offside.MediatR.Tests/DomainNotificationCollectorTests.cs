@@ -1,5 +1,6 @@
 using global::MediatR;
 using Microsoft.Extensions.DependencyInjection;
+using Offside.Testing;
 using Xunit;
 
 namespace Offside.MediatR.Tests;
@@ -28,8 +29,8 @@ public sealed class DomainNotificationCollectorTests
 
         Assert.False(collector.HasNotifications);
         Assert.Empty(collector.Errors);
-        Assert.True(result.IsSuccess);
-        Assert.True(resultT.IsSuccess);
+        result.ShouldBeSuccess();
+        resultT.ShouldBeSuccess();
         Assert.Equal(42, resultT.Value);
     }
 

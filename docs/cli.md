@@ -27,7 +27,7 @@ offside init [--dir <path>] [--force]
 
 ## What it writes
 
-Nine skills, into each of the three agent directories:
+Ten skills, into each of the three agent directories:
 
 ```
 .cursor/skills/offside-setup/              .agents/skills/offside-setup/              .claude/skills/offside-setup/
@@ -38,6 +38,7 @@ Nine skills, into each of the three agent directories:
 .cursor/skills/offside-fastendpoint/       .agents/skills/offside-fastendpoint/       .claude/skills/offside-fastendpoint/
 .cursor/skills/offside-implementation/     .agents/skills/offside-implementation/     .claude/skills/offside-implementation/
 .cursor/skills/offside-refactoring/        .agents/skills/offside-refactoring/        .claude/skills/offside-refactoring/
+.cursor/skills/offside-testing/            .agents/skills/offside-testing/            .claude/skills/offside-testing/
 .cursor/skills/offside-azure-app-configuration/  .agents/skills/offside-azure-app-configuration/  .claude/skills/offside-azure-app-configuration/
 ```
 
@@ -51,6 +52,7 @@ Nine skills, into each of the three agent directories:
 | `offside-fastendpoint` | `UseOffside`, `SendOffsideAsync`, `DontProduceOffside` |
 | `offside-implementation` | End-to-end feature work with the selected Offside integrations |
 | `offside-refactoring` | Incremental migration to Offside while preserving public behavior |
+| `offside-testing` | Assertions over `Result`, `Error`, and message catalogs in unit tests |
 | `offside-azure-app-configuration` | Dynamic message catalogs and refresh through Azure App Configuration |
 
 ### Capability selection

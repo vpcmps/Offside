@@ -15,7 +15,8 @@ public sealed class SkillInstallerTests
         "offside-fastendpoint",
         "offside-implementation",
         "offside-refactoring",
-        "offside-azure-app-configuration"
+        "offside-azure-app-configuration",
+        "offside-testing"
     ];
 
     [Fact]

@@ -118,6 +118,12 @@
           "Microsoft.Bcl.HashCode": "[6.0.0, )",
           "Microsoft.Extensions.DependencyInjection.Abstractions": "[8.0.2, )"
         }
+      },
+      "offside.testing": {
+        "type": "Project",
+        "dependencies": {
+          "Offside": "[0.2.0, )"
+        }
       }
     },
     "net8.0": {
@@ -236,6 +242,12 @@
         "dependencies": {
           "Microsoft.Bcl.HashCode": "[6.0.0, )",
           "Microsoft.Extensions.DependencyInjection.Abstractions": "[8.0.2, )"
+        }
+      },
+      "offside.testing": {
+        "type": "Project",
+        "dependencies": {
+          "Offside": "[0.2.0, )"
         }
       }
     }

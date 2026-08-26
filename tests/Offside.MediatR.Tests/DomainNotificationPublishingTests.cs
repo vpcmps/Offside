@@ -1,4 +1,5 @@
 using global::MediatR;
+using Offside.Testing;
 using Xunit;
 
 namespace Offside.MediatR.Tests;
@@ -18,7 +19,7 @@ public sealed class DomainNotificationPublishingTests
 
         var returned = await Result.Success().PublishDomainNotificationsAsync(publisher);
 
-        Assert.True(returned.IsSuccess);
+        returned.ShouldBeSuccess();
         Assert.Empty(publisher.Notifications);
     }
 
@@ -30,7 +31,7 @@ public sealed class DomainNotificationPublishingTests
         var returned = await Result<int>.Success(42)
             .PublishDomainNotificationsAsync(publisher);
 
-        Assert.True(returned.IsSuccess);
+        returned.ShouldBeSuccess();
         Assert.Equal(42, returned.Value);
         Assert.Empty(publisher.Notifications);
     }
@@ -58,7 +59,7 @@ public sealed class DomainNotificationPublishingTests
 
         var returned = await result.PublishDomainNotificationsAsync(publisher);
 
-        Assert.True(returned.IsFailure);
+        returned.ShouldBeFailure();
         Assert.Same(error, Assert.Single(returned.Errors));
         Assert.Same(error, Assert.Single(publisher.Notifications).Error);
     }

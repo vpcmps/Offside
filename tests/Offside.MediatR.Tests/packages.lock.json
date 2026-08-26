@@ -141,6 +141,12 @@
           "Microsoft.Extensions.DependencyInjection.Abstractions": "[8.0.2, )",
           "Offside": "[0.2.0, )"
         }
+      },
+      "offside.testing": {
+        "type": "Project",
+        "dependencies": {
+          "Offside": "[0.2.0, )"
+        }
       }
     },
     "net8.0": {
@@ -281,6 +287,12 @@
         "dependencies": {
           "MediatR": "[12.0.1, 15.0.0)",
           "Microsoft.Extensions.DependencyInjection.Abstractions": "[8.0.2, )",
+          "Offside": "[0.2.0, )"
+        }
+      },
+      "offside.testing": {
+        "type": "Project",
+        "dependencies": {
           "Offside": "[0.2.0, )"
         }
       }

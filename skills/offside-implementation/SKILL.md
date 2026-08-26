@@ -24,4 +24,4 @@ State the confirmed profile, packages, and files expected to change.
 
 ## Verify the outcome
 
-Add behavior-focused tests proportional to the change: domain results, validation aggregation, HTTP status/problem shape, or message resolution as applicable. Run the affected tests and build. Report the observable behavior, catalog additions, and any intentionally unchanged contracts.
+Add behavior-focused tests proportional to the change: domain results, validation aggregation, HTTP status/problem shape, or message resolution as applicable. When the project uses `Offside.Testing`, use `offside-testing` for how to assert results and to confirm every new catalog code resolves. Run the affected tests and build. Report the observable behavior, catalog additions, and any intentionally unchanged contracts.
