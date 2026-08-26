@@ -149,6 +149,57 @@ public class DomainErrorRecorderTests
     }
 
     [Fact]
+    public void The_code_prefixed_format_puts_the_catalog_code_on_the_line()
+    {
+        using var harness = TelemetryHarness.Create(
+            options => options.FormatMessage = DomainErrorMessageFormat.CodePrefixed,
+            new StubMessageResolver("Order not found."));
+
+        harness.Recorder.Record(Error.NotFound("order", 42));
+
+        Assert.Equal("[not_found] Order not found.", harness.SingleTrace().Message);
+    }
+
+    [Fact]
+    public void The_error_code_prefixed_format_puts_the_screen_identifier_on_the_line()
+    {
+        using var harness = TelemetryHarness.Create(
+            options => options.FormatMessage = DomainErrorMessageFormat.ErrorCodePrefixed,
+            new StubMessageResolver("Order not found."));
+
+        harness.Recorder.Record(Error.NotFound("order", 42));
+
+        Assert.Equal("[NOT_FOUND] Order not found.", harness.SingleTrace().Message);
+    }
+
+    [Fact]
+    public void A_custom_format_receives_the_error_and_the_resolved_message()
+    {
+        using var harness = TelemetryHarness.Create(
+            options => options.FormatMessage = (error, message) => $"{error.Kind}/{error.Code}: {message}",
+            new StubMessageResolver("Order not found."));
+
+        harness.Recorder.Record(Error.NotFound("order", 42));
+
+        Assert.Equal("NotFound/not_found: Order not found.", harness.SingleTrace().Message);
+    }
+
+    [Fact]
+    public void The_format_shapes_the_text_but_never_the_dimensions()
+    {
+        using var harness = TelemetryHarness.Create(
+            options => options.FormatMessage = static (_, _) => "redacted",
+            new StubMessageResolver("Order not found."));
+
+        harness.Recorder.Record(Error.NotFound("order", 42));
+
+        var trace = harness.SingleTrace();
+        Assert.Equal("redacted", trace.Message);
+        Assert.Equal("not_found", trace.Properties["offside.code"]);
+        Assert.Equal("NotFound", trace.Properties["offside.kind"]);
+    }
+
+    [Fact]
     public void Recording_a_null_error_is_rejected()
     {
         using var harness = TelemetryHarness.Create();

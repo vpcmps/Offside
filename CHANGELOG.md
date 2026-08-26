@@ -12,9 +12,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - An `offside-testing` agent skill installed by `offside init` alongside the existing skills.
 - Bilingual testing guide under `docs/testing.md` and `docs/pt-BR/testing.md`.
 - Optional `Offside.Refit` package: maps a failed Refit call to Offside errors, mirroring the dependency's HTTP status onto `ErrorKind` and restoring an `application/problem+json` body when the dependency is itself an Offside service. Ships `IExternalApiCaller` (no `try`/`catch` at the call site), the `ApiException` mapping extensions, and `OffsideRefitDiagnosticsHandler` with an `IExternalApiErrorObserver` seam.
-- Optional `Offside.ApplicationInsights` package: records `Error` and `Result` failures as Application Insights traces, with severity derived from `ErrorKind` and `offside.*` dimensions. `Error.Arguments` stay out of telemetry unless `IncludeArguments` is enabled.
+- Optional `Offside.ApplicationInsights` package: records `Error` and `Result` failures as Application Insights traces, with severity derived from `ErrorKind` and `offside.*` dimensions. `Error.Arguments` stay out of telemetry unless `IncludeArguments` is enabled. The trace text is shaped by `FormatMessage`, with `DomainErrorMessageFormat.MessageOnly` (default), `CodePrefixed`, and `ErrorCodePrefixed` ready to use — it affects the trace text only, never the dimensions.
 - Optional `Offside.ApplicationInsights.MediatR` package: records published `DomainNotification` values as telemetry, alongside the existing scoped collector.
-- Bilingual guides for both integrations under `docs/` and `docs/pt-BR/`.
+- Optional `Offside.OpenTelemetry` package: records `Error` and `Result` failures through OpenTelemetry primitives — a structured `ILogger` entry, an `offside.error` event on the activity in scope, and an `offside.errors` counter — for hosts instrumented with `Azure.Monitor.OpenTelemetry` or any OTLP exporter, where no `TelemetryClient` exists. It references no OpenTelemetry or Azure package itself. Severity is kept identical to `Offside.ApplicationInsights`, enforced by a parity test. The log line is shaped by `FormatMessage`, with `DomainErrorMessageFormat.MessageOnly` (default), `CodePrefixed`, and `ErrorCodePrefixed` ready to use — it affects the log text only, never the dimensions.
+- Optional `Offside.OpenTelemetry.MediatR` package: the OpenTelemetry counterpart of the MediatR telemetry bridge.
+- Bilingual guides for all integrations under `docs/` and `docs/pt-BR/`.
 
 ### Changed
 

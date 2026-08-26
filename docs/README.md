@@ -27,6 +27,7 @@ Domain errors as `Result`, not exceptions. The domain returns an `Error`; ASP.NE
 | [MediatR integration](mediatr-guide.md) | Publish result errors as notifications, collect them per scope, and handle retries safely |
 | [Refit integration](refit.md) | Turn an external API failure into an `Error`, without a `try`/`catch` at every call site |
 | [Application Insights](application-insights.md) | Record domain errors as traces with severity and stable dimensions |
+| [OpenTelemetry](open-telemetry.md) | Record domain errors through OpenTelemetry, for hosts using `Azure.Monitor.OpenTelemetry` or an OTLP exporter |
 | [Messages and cultures](messages.md) | Catalog format, culture fallback, `{token}` interpolation |
 | [Testing guide](testing.md) | Assert `Result`, `Error`, and message catalogs in unit tests |
 | [CLI](cli.md) | `offside init` — agent skills and catalog templates |
