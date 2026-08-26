@@ -11,6 +11,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Optional `Offside.Testing` package: fluent assertions over `Result`, `Result<T>`, `Error`, and JSON message catalogs, with no test-framework dependency (failures throw `OffsideAssertionException`, which xUnit, NUnit, MSTest and TUnit all report as a failed test). Entry points are named `ShouldHaveError` rather than `Should()` so the package coexists with FluentAssertions and Shouldly. `OffsideCatalog` reads catalogs directly, making a missing code distinguishable from a template equal to the code, and detecting `{token}` values no argument fills.
 - An `offside-testing` agent skill installed by `offside init` alongside the existing skills.
 - Bilingual testing guide under `docs/testing.md` and `docs/pt-BR/testing.md`.
+- Optional `Offside.Refit` package: maps a failed Refit call to Offside errors, mirroring the dependency's HTTP status onto `ErrorKind` and restoring an `application/problem+json` body when the dependency is itself an Offside service. Ships `IExternalApiCaller` (no `try`/`catch` at the call site), the `ApiException` mapping extensions, and `OffsideRefitDiagnosticsHandler` with an `IExternalApiErrorObserver` seam.
+- Optional `Offside.ApplicationInsights` package: records `Error` and `Result` failures as Application Insights traces, with severity derived from `ErrorKind` and `offside.*` dimensions. `Error.Arguments` stay out of telemetry unless `IncludeArguments` is enabled.
+- Optional `Offside.ApplicationInsights.MediatR` package: records published `DomainNotification` values as telemetry, alongside the existing scoped collector.
+- Bilingual guides for both integrations under `docs/` and `docs/pt-BR/`.
 
 ### Changed
 

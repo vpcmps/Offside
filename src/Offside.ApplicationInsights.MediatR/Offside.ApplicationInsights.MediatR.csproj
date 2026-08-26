@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net8.0;net10.0</TargetFrameworks>
+    <RootNamespace>Offside.ApplicationInsights.MediatR</RootNamespace>
+    <AssemblyName>Offside.ApplicationInsights.MediatR</AssemblyName>
+    <PackageId>Offside.ApplicationInsights.MediatR</PackageId>
+    <Description>Bridge that records Offside MediatR domain notifications in Application Insights. Catch it before the whistle.</Description>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="MediatR" Version="[12.0.1,15.0.0)" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
+    <ProjectReference Include="..\Offside\Offside.csproj" />
+    <ProjectReference Include="..\Offside.MediatR\Offside.MediatR.csproj" />
+    <ProjectReference Include="..\Offside.ApplicationInsights\Offside.ApplicationInsights.csproj" />
+  </ItemGroup>
+</Project>
