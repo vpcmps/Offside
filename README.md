@@ -22,12 +22,11 @@ dotnet add package Offside.AspNetCore               # ASP.NET hosts only
 dotnet add package Offside.FluentValidation         # FluentValidation → Error
 dotnet add package Offside.FastEndpoint             # FastEndpoints hosts only
 dotnet add package Offside.AzureAppConfiguration    # Azure App Configuration catalogs
+dotnet add package Offside.MediatR                  # domain notifications for failed results
 dotnet add package Offside.Testing                  # assertions for unit tests
 dotnet add package Offside.Refit                    # Refit clients calling external APIs
 dotnet add package Offside.ApplicationInsights      # domain errors as telemetry
 ```
-
-`Offside.MediatR`, `Offside.Testing`, `Offside.Refit`, `Offside.ApplicationInsights`, and `Offside.ApplicationInsights.MediatR` are not published to NuGet yet. Their source and local packages remain available; see [Pack locally](#pack-locally) to use them before publication.
 
 Agent skills + catalog templates:
 
@@ -53,11 +52,11 @@ The project is pre-1.0. Minor releases may include breaking changes. Releases fo
 | `Offside.FluentValidation` | [![NuGet](https://img.shields.io/nuget/v/Offside.FluentValidation?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside.FluentValidation) | FluentValidation failures → `Error` / `Result` |
 | `Offside.FastEndpoint` | [![NuGet](https://img.shields.io/nuget/v/Offside.FastEndpoint?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside.FastEndpoint) | `UseOffside`, `SendOffsideAsync`, OpenAPI expected errors |
 | `Offside.AzureAppConfiguration` | [![NuGet](https://img.shields.io/nuget/v/Offside.AzureAppConfiguration?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside.AzureAppConfiguration) | Dynamic resolver for catalogs loaded by Azure App Configuration |
-| `Offside.MediatR` | Publication pending | Publishes failed results as domain notifications and provides a scoped collector |
-| `Offside.Testing` | Publication pending | Fluent assertions for `Result`, `Error`, and message catalogs, with no test-framework dependency |
-| `Offside.Refit` | Publication pending | Maps external API failures to `Error` / `Result`, with a call wrapper and a diagnostics handler |
-| `Offside.ApplicationInsights` | Publication pending | Records domain errors as traces, with severity and stable dimensions |
-| `Offside.ApplicationInsights.MediatR` | Publication pending | Records published domain notifications as telemetry |
+| `Offside.MediatR` | [![NuGet](https://img.shields.io/nuget/v/Offside.MediatR?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside.MediatR) | Publishes failed results as domain notifications and provides a scoped collector |
+| `Offside.Testing` | [![NuGet](https://img.shields.io/nuget/v/Offside.Testing?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside.Testing) | Fluent assertions for `Result`, `Error`, and message catalogs, with no test-framework dependency |
+| `Offside.Refit` | [![NuGet](https://img.shields.io/nuget/v/Offside.Refit?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside.Refit) | Maps external API failures to `Error` / `Result`, with a call wrapper and a diagnostics handler |
+| `Offside.ApplicationInsights` | [![NuGet](https://img.shields.io/nuget/v/Offside.ApplicationInsights?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside.ApplicationInsights) | Records domain errors as traces, with severity and stable dimensions |
+| `Offside.ApplicationInsights.MediatR` | [![NuGet](https://img.shields.io/nuget/v/Offside.ApplicationInsights.MediatR?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside.ApplicationInsights.MediatR) | Records published domain notifications as telemetry |
 | `Offside.Tool` | [![NuGet](https://img.shields.io/nuget/v/Offside.Tool?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside.Tool) | `offside init` — skills and catalog templates |
 
 The Core package has no ASP.NET, MediatR, Refit, or Application Insights dependency.
@@ -143,8 +142,8 @@ To publish to nuget.org, add a [Trusted Publishing](https://www.nuget.org/accoun
 Then push a version tag (the tag is the package version):
 
 ```bash
-git tag v0.2.0
-git push origin v0.2.0
+git tag v0.3.0
+git push origin v0.3.0
 ```
 
 ## Spec
