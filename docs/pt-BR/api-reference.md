@@ -403,6 +403,109 @@ public static class OffsideResultSendExtensions
 
 `UseOffside` define o `ResponseBuilder` de validação para `OffsideProblem`, `ProducesMetadataType` para `typeof(OffsideProblem)`, content type `application/problem+json`, e registra `Produces<OffsideProblem>` para cada valor de `OffsideHttp.StatusCodes`. `SendOffsideAsync` reusa `ToHttpResult`. Veja [FastEndpoints](fastendpoints.md).
 
+## Offside.Refit
+
+Namespace `Offside.Refit`. Alvos `netstandard2.0`, `net8.0`, `net10.0`.
+
+```csharp
+public static class OffsideRefit
+{
+    public static ErrorKind Kind(HttpStatusCode statusCode);
+    public static string CodeSuffix(ErrorKind kind);
+}
+
+public sealed class OffsideRefitOptions
+{
+    public string ApiName { get; set; }              // "external api"
+    public string CodePrefix { get; set; }           // "external_api"
+    public bool ReadProblemDetails { get; set; }     // true
+}
+
+public static class RefitOffsideExtensions
+{
+    public static IReadOnlyList<Error> ToOffsideErrors(this ApiException exception, OffsideRefitOptions? options = null);
+    public static Error ToError(this ApiException exception, OffsideRefitOptions? options = null);
+    public static Result ToResult(this ApiException exception, OffsideRefitOptions? options = null);
+    public static Result<T> ToResult<T>(this ApiException exception, OffsideRefitOptions? options = null);
+    public static Error ToOffsideError(this HttpRequestException exception, OffsideRefitOptions? options = null);
+}
+
+public interface IExternalApiCaller
+{
+    Task<Result<T>> CallAsync<T>(Func<CancellationToken, Task<T>> call, OffsideRefitOptions? options = null, CancellationToken cancellationToken = default);
+    Task<Result> CallAsync(Func<CancellationToken, Task> call, OffsideRefitOptions? options = null, CancellationToken cancellationToken = default);
+}
+
+public interface IExternalApiErrorObserver
+{
+    void Observe(Error error);
+}
+
+public sealed class OffsideRefitDiagnosticsHandler : DelegatingHandler
+{
+    public OffsideRefitDiagnosticsHandler(IExternalApiErrorObserver observer, OffsideRefitOptions options);
+}
+
+public static class OffsideRefitServiceCollectionExtensions
+{
+    public static IServiceCollection AddOffsideRefit(this IServiceCollection services, Action<OffsideRefitOptions>? configure = null);
+    public static IServiceCollection AddOffsideRefitDiagnostics(this IServiceCollection services);
+}
+```
+
+O mapeamento de status espelha a dependência: 404 → `NotFound`, 502/503 → `ServiceUnavailable`, 504 → `Timeout`, demais 5xx → `Unexpected`, demais 4xx → `BadRequest`. `CallAsync` converte apenas `ApiException`, timeouts e falhas de transporte; um cancelamento pedido pelo chamador é relançado. O parsing do problem body nunca lança. Veja [Integração com Refit](refit.md).
+
+## Offside.ApplicationInsights
+
+Namespace `Offside.ApplicationInsights`. Alvos `netstandard2.0`, `net8.0`, `net10.0`.
+
+```csharp
+public interface IDomainErrorRecorder
+{
+    void Record(Error error, IReadOnlyDictionary<string, string>? properties = null);
+}
+
+public sealed class OffsideApplicationInsightsOptions
+{
+    public string PropertyPrefix { get; set; }              // "offside."
+    public bool IncludeArguments { get; set; }              // false
+    public CultureInfo Culture { get; set; }                // InvariantCulture
+    public Func<ErrorKind, SeverityLevel> SeverityFor { get; set; }
+}
+
+public static class ResultTelemetryExtensions
+{
+    public static Result RecordTo(this Result result, IDomainErrorRecorder recorder, IReadOnlyDictionary<string, string>? properties = null);
+    public static Result<T> RecordTo<T>(this Result<T> result, IDomainErrorRecorder recorder, IReadOnlyDictionary<string, string>? properties = null);
+}
+
+public static class OffsideApplicationInsightsServiceCollectionExtensions
+{
+    public static IServiceCollection AddOffsideApplicationInsights(this IServiceCollection services, Action<OffsideApplicationInsightsOptions>? configure = null);
+}
+```
+
+Cada erro vira um `TraceTelemetry` com `offside.code`, `offside.errorCode`, `offside.kind` e `offside.field`. As dimensões do Offside vencem as propriedades fornecidas. `Error.Arguments` só são escritos como `offside.arg.{nome}` quando `IncludeArguments` está ligado. Veja [Application Insights](application-insights.md).
+
+## Offside.ApplicationInsights.MediatR
+
+Namespace `Offside.ApplicationInsights.MediatR`. Alvos `netstandard2.0`, `net8.0`, `net10.0`.
+
+```csharp
+public sealed class DomainNotificationTelemetryHandler : INotificationHandler<DomainNotification>
+{
+    public DomainNotificationTelemetryHandler(IDomainErrorRecorder recorder);
+    public Task Handle(DomainNotification notification, CancellationToken cancellationToken);
+}
+
+public static class OffsideApplicationInsightsMediatRServiceCollectionExtensions
+{
+    public static IServiceCollection AddOffsideApplicationInsightsMediatR(this IServiceCollection services);
+}
+```
+
+Idempotente e independente do coletor scoped registrado por `AddOffsideMediatR`.
+
 ## Offside.Tool
 
 Namespace `Offside.Tool`.
