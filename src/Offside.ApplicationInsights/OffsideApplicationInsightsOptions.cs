@@ -1,5 +1,4 @@
 using System.Globalization;
-using Microsoft.ApplicationInsights.DataContracts;
 
 namespace Offside.ApplicationInsights;
 
@@ -19,9 +18,17 @@ public sealed class OffsideApplicationInsightsOptions
     /// <remarks>
     /// Leave this off unless you know every argument is safe to store. Arguments carry whatever
     /// the domain put in them — identifiers, attempted values, reasons from a dependency — and
-    /// telemetry is retained far longer than a request.
+    /// telemetry is retained far longer than a request. Prefer <see cref="IncludeArgumentKeys"/>
+    /// when only a few keys are safe.
     /// </remarks>
     public bool IncludeArguments { get; set; }
+
+    /// <summary>
+    /// Gets or sets the argument names written as <c>offside.arg.{name}</c> when
+    /// <see cref="IncludeArguments"/> is <see langword="false"/>. Ignored when
+    /// <see cref="IncludeArguments"/> is <see langword="true"/>. Defaults to empty.
+    /// </summary>
+    public IReadOnlyCollection<string> IncludeArgumentKeys { get; set; } = Array.Empty<string>();
 
     /// <summary>
     /// Gets or sets the culture used to resolve the message written as the trace text.
@@ -32,11 +39,9 @@ public sealed class OffsideApplicationInsightsOptions
 
     /// <summary>
     /// Gets or sets the severity chosen for a kind. Defaults to
-    /// <see cref="ErrorKind.Unexpected"/> → <c>Critical</c>, <c>ServiceUnavailable</c> and
-    /// <c>Timeout</c> → <c>Error</c>, <c>NotFound</c>, <c>Validation</c>, and <c>BadRequest</c>
-    /// → <c>Information</c>, everything else → <c>Warning</c>.
+    /// <see cref="DomainErrorSeverityMap.Library"/>.
     /// </summary>
-    public Func<ErrorKind, SeverityLevel> SeverityFor { get; set; } = ErrorKindSeverity.Default;
+    public Func<ErrorKind, DomainErrorSeverity> SeverityFor { get; set; } = DomainErrorSeverityMap.Library;
 
     /// <summary>
     /// Gets or sets the text of the trace, from the error and its resolved message. Defaults to

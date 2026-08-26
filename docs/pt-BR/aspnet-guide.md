@@ -16,10 +16,13 @@ builder.Services.AddOffsideAspNetCore();
 ```csharp
 builder.Services.AddOffsideAspNetCore(options =>
 {
-    options.LogUnexpected = false;
-    options.OnProblem = (problem, errors, http) => { /* sua telemetria */ };
+    options.LegacyAliases = LegacyProblemAliases.MessageReasonAndTechnicalDetail;
+    options.TelemetryProperties = (problem, errors, http) =>
+        new Dictionary<string, string> { ["Operation"] = http.Request.Path };
 });
 ```
+
+Quando um `IDomainErrorRecorder` está registrado (`AddOffsideOpenTelemetry` ou `AddOffsideApplicationInsights`), toda falha que passa por este pipeline é gravada uma vez. `OnProblem` não é telemetria.
 
 ## Minimal APIs
 
@@ -162,7 +165,7 @@ Quando o kind vencedor é `Unexpected`:
 1. O `detail` de todo erro inesperado é substituído pela mensagem genérica `unexpected` do catálogo — tanto no `detail` de topo quanto nas entradas de `errors`.
 2. O `errorCode` de todo erro inesperado é forçado para `UNEXPECTED`.
 3. O detalhe real aparece em `debug` **apenas** quando `ExposeExceptionDetails` está ligado.
-4. A falha é logada via `ILoggerFactory` na categoria `Offside.AspNetCore`, junto com o `traceId`, a menos que `LogUnexpected` seja `false`.
+4. A falha é logada via `ILoggerFactory` na categoria `Offside.AspNetCore`, junto com o `traceId`, a menos que `LogUnexpected` seja `false`. Quando há um recorder registrado, esta linha assume desligada para um 500 não ser duplicado. Defina `LogUnexpected = true` para manter as duas.
 
 ```csharp
 return Result.Failure(Error.Unexpected(ex.ToString()));
@@ -208,28 +211,44 @@ Ou construa direto no ponto de chamada (esta forma não tem ganchos de DI a meno
 result.ToHttpResult(resolver, culture: null, new OffsideAspNetCoreOptions { ExposeExceptionDetails = false });
 ```
 
+## Gravando falhas
+
+O host configura o recorder uma vez. `ToHttpResult`, `ToActionResult` e `SendOffsideAsync` fazem o resto — não há `RecordTo` no endpoint HTTP. Workers e handlers MediatR sem `HttpContext` ainda chamam `RecordTo`.
+
+Dimensões extras (nome de operação, tenant) vêm de `TelemetryProperties`. O pipeline sempre grava `HttpStatus`. As dimensões do Offside ainda vencem dentro do recorder.
+
+`OnProblem` não emite telemetria. Continua sendo um gancho do host para qualquer outra coisa que deva rodar depois que o documento é montado.
+
+## Aliases legados
+
+Hosts que ainda não podem mudar o cliente achatam os nomes antigos no documento:
+
+```csharp
+builder.Services.AddOffsideAspNetCore(options =>
+    options.LegacyAliases = LegacyProblemAliases.MessageReasonAndTechnicalDetail);
+```
+
+Isso acrescenta `message` (= `detail`), por item `name` (= `field`) e `reason` (= `detail`), e `technicalDetail` quando o detalhe de diagnóstico já está sendo exposto (`debug`, ou o detalhe resolvido com `ExposeExceptionDetails`). `CustomizeProblem` fica para extensões raras.
+
 ## Customizando o documento e observando falhas
 
-`CustomizeProblem` roda depois que o documento é montado. As propriedades centrais continuam `init`; acrescente campos legados ou do host por `Extensions` (e `Item.Extensions`). Mantenha valores seguros para JSON. Um callback que lança é logado em `Offside.AspNetCore` e o documento ainda é escrito.
-
-`OnProblem` roda em seguida, com o `HttpContext`. Use-o para um único evento de telemetria do host. Ponha `LogUnexpected` em `false` quando esse callback for dono do log, senão um 500 é logado duas vezes. Deixar `LogUnexpected` falso e `OnProblem` nulo significa um 500 silencioso. 503 e 504 não são logados pelo Offside; observe-os em `OnProblem` se precisar.
+`CustomizeProblem` roda depois que o documento é montado. As propriedades centrais continuam `init`; acrescente campos do host por `Extensions` (e `Item.Extensions`). Mantenha valores seguros para JSON. Um callback que lança é logado em `Offside.AspNetCore` e o documento ainda é escrito.
 
 ```csharp
 builder.Services.AddOffsideAspNetCore(options =>
 {
-    options.LogUnexpected = false;
     options.CustomizeProblem = (problem, errors) =>
     {
-        problem.Extensions["message"] = problem.Detail;
+        problem.Extensions["correlation"] = "…";
     };
     options.OnProblem = (problem, errors, http) =>
     {
-        // um evento, template constante
+        // trabalho específico do host — não é telemetria de erro de domínio
     };
 });
 ```
 
-O `ResponseBuilder` de validação do FastEndpoints usa o mesmo pipeline, então os ganchos e o `traceId` de 32 hex valem lá também.
+O `ResponseBuilder` de validação do FastEndpoints usa o mesmo pipeline, então ganchos, aliases e o `traceId` de 32 hex valem lá também.
 
 ## Culturas
 
@@ -243,11 +262,11 @@ Veja [Mensagens e culturas](messages.md) para a resolução de catálogo.
 
 | Método | Cultura | Options |
 |---|---|---|
-| `ToHttpResult(resolver, exposeExceptionDetails?)` | `CurrentUICulture` | flag |
-| `ToHttpResult(resolver, culture, exposeExceptionDetails?)` | explícita | flag |
+| `ToHttpResult(resolver, exposeExceptionDetails?)` | `CurrentUICulture` | flag — **obsoleto**, constrói options vazias |
+| `ToHttpResult(resolver, culture, exposeExceptionDetails?)` | explícita | flag — **obsoleto**, constrói options vazias |
 | `ToHttpResult(resolver, culture?, options)` | explícita ou `Accept-Language` | objeto |
-| `ToHttpResult(httpContext)` | `Accept-Language` | do DI |
-| `ToActionResult(resolver, culture, exposeExceptionDetails?)` | explícita | flag |
+| `ToHttpResult(httpContext)` | `Accept-Language` | do DI; lança se `AddOffsideAspNetCore` não rodou |
+| `ToActionResult(resolver, culture, exposeExceptionDetails?)` | explícita | flag — **obsoleto**, constrói options vazias |
 | `ToActionResult(resolver, culture?, options)` | explícita ou `Accept-Language` | objeto |
 
 Cada linha existe para `Result` e `Result<T>`, com uma exceção: **não existe `ToActionResult(resolver, exposeExceptionDetails?)` para o `Result` não genérico.** A forma genérica tem; a unitária não. Passe uma cultura explicitamente, ou passe `null` pela sobrecarga com options para cair no `Accept-Language`.

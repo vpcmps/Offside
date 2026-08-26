@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Microsoft.Extensions.Logging;
 using Xunit;
 
 namespace Offside.OpenTelemetry.Tests;
@@ -53,6 +54,20 @@ public class ActivityAndMetricTests
     }
 
     [Fact]
+    public void ServerErrors_marks_only_5xx_kinds()
+    {
+        using var notFound = TelemetryHarness.Create(options =>
+            options.ActivityFailure = ActivityFailurePolicy.ServerErrors);
+        notFound.Recorder.Record(Error.NotFound("order", 42));
+        Assert.Equal(ActivityStatusCode.Unset, notFound.Activity!.Status);
+
+        using var outage = TelemetryHarness.Create(options =>
+            options.ActivityFailure = ActivityFailurePolicy.ServerErrors);
+        outage.Recorder.Record(Error.ServiceUnavailable("otp"));
+        Assert.Equal(ActivityStatusCode.Error, outage.Activity!.Status);
+    }
+
+    [Fact]
     public void The_counter_is_incremented_once_per_error()
     {
         using var harness = TelemetryHarness.Create();
@@ -99,6 +114,20 @@ public class ActivityAndMetricTests
         Assert.Equal(log ? 1 : 0, harness.Logs.Entries.Count);
         Assert.Equal(activityEvent ? 1 : 0, harness.Activity!.Events.Count());
         Assert.Equal(metric ? 1 : 0, harness.Measurements.Count);
+    }
+
+    [Fact]
+    public void A_meter_with_no_listener_is_warned_once()
+    {
+        using var harness = TelemetryHarness.Create(withMeterListener: false);
+
+        harness.Recorder.Record(Error.NotFound("order", 42));
+        harness.Recorder.Record(Error.NotFound("order", 43));
+
+        var warnings = harness.Logs.Entries.Where(entry => entry.Level == LogLevel.Warning).ToArray();
+        var warning = Assert.Single(warnings);
+        Assert.Contains("AddMeter", warning.Message, StringComparison.Ordinal);
+        Assert.Contains(OffsideTelemetry.MeterName, warning.Message, StringComparison.Ordinal);
     }
 
     private static string? Tag(ActivityEvent recorded, string key) =>

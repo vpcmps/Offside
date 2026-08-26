@@ -6,6 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-08-26
+
+### Added
+
+- `IDomainErrorRecorder`, `DomainErrorSeverity`, and `DomainErrorMessageFormat` now live in the core `Offside` package. `Result.RecordTo` / `Result<T>.RecordTo` sit on the result types. HTTP hosts that call `ToHttpResult` or `SendOffsideAsync` do not need `RecordTo` — the problem pipeline records when a recorder is registered.
+- `DomainErrorSeverityMap.Library` (the previous default) and `.Operations` (refusals including 404/400 as Warning; Unexpected as Error).
+- `ActivityFailurePolicy.ServerErrors` on OpenTelemetry: mark the span for Unexpected / ServiceUnavailable / Timeout only. Default remains `None`.
+- `OffsideRefitOptions.InboundStatus`. The default, `CollapseClientErrors`, folds every 4xx kind into `ServiceUnavailable` after status or problem-body mapping. `Mirror` is the 0.4.0 behaviour, opt-in for a BFF or two Offside services speaking of the same resource.
+- `OffsideAspNetCoreOptions.LegacyAliases` (`MessageReasonAndTechnicalDetail`) for brownfield `message` / `reason` / `name` / `technicalDetail` fields.
+- `OffsideAspNetCoreOptions.TelemetryProperties` for extra HTTP dimensions such as an operation name. The pipeline always writes `HttpStatus`.
+- `IncludeArgumentKeys` on both telemetry option types. `IncludeArguments = true` still sends every argument and ignores the list. Arguments never reach the counter.
+- A one-time warning under category `Offside` when `EmitMetric` is on and the meter has no listener, asking for `AddMeter(OffsideTelemetry.MeterName)`.
+- Bilingual Kusto cookbook under `docs/queries.md` and `docs/pt-BR/queries.md`.
+
+### Changed
+
+- Breaking (pre-1.0): `IDomainErrorRecorder`, `DomainErrorSeverity`, and `DomainErrorMessageFormat` leave the `Offside.OpenTelemetry` and `Offside.ApplicationInsights` namespaces. Import `Offside`.
+- Breaking (pre-1.0): Refit no longer mirrors 4xx by default. A raw 404 or an Offside problem body with `NotFound` becomes `external_api.service_unavailable`. Set `InboundStatus = Mirror` to restore 0.4.0.
+- Breaking (pre-1.0): `ToHttpResult(HttpContext)` / `ToActionResult` that resolve options from DI throw `InvalidOperationException` naming `AddOffsideAspNetCore` when the singleton is missing. They no longer fall back to `new OffsideAspNetCoreOptions()`.
+- Overloads that take `bool exposeExceptionDetails` and build empty options are `[Obsolete]`. Pass `HttpContext` or an explicit options object.
+- `LogUnexpected` defaults off when a recorder is registered, so a 500 is not logged twice. Set it to `true` to keep both.
+
 ## [0.4.0] - 2026-08-26
 
 ### Added
@@ -62,7 +84,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Initial `Offside`, `Offside.AspNetCore`, and `Offside.Tool` packages.
 
-[Unreleased]: https://github.com/vpcmps/Offside/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/vpcmps/Offside/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/vpcmps/Offside/compare/v0.4.0...v0.5.0
+[0.4.0]: https://github.com/vpcmps/Offside/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/vpcmps/Offside/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/vpcmps/Offside/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/vpcmps/Offside/releases/tag/v0.1.0

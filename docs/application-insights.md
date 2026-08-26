@@ -22,18 +22,25 @@ builder.Services.AddApplicationInsightsTelemetry();
 builder.Services.AddOffsideApplicationInsights();
 ```
 
-`AddOffsideApplicationInsights` registers `IDomainErrorRecorder` over the host's `TelemetryClient`. It never reads a connection string or calls `AddApplicationInsightsTelemetry` itself.
+`AddOffsideApplicationInsights` registers `IDomainErrorRecorder` (namespace `Offside`) over the host's `TelemetryClient`. It never reads a connection string or calls `AddApplicationInsightsTelemetry` itself.
 
 The trace message is the resolved catalog message, taken from the `IErrorMessageResolver` that `AddOffside` registered. Without one, the error's `Code` is written instead.
 
+Do not register this package and `Offside.OpenTelemetry` in the same host — they are alternatives, and they share the same `IDomainErrorRecorder` interface.
+
 ## Record a result
 
+On an HTTP host, register the recorder and call `ToHttpResult` / `SendOffsideAsync`. The pipeline records each error once. `RecordTo` at the endpoint is redundant.
+
 ```csharp
-public async Task<IResult> Cancel(string id)
-{
-    var result = _orders.Cancel(id).RecordTo(_recorder);
-    return result.ToHttpResult();
-}
+app.MapPost("/orders/{id}/cancel", (string id, HttpContext http) =>
+    _orders.Cancel(id).ToHttpResult(http));
+```
+
+Workers, MediatR handlers, and any path without `HttpContext` still call `RecordTo`:
+
+```csharp
+var result = _orders.Cancel(id).RecordTo(_recorder);
 ```
 
 `RecordTo` writes one trace per error, in result order, and returns the result unchanged so it can sit in a chain. A successful result records nothing. Extra dimensions are merged in:
@@ -42,7 +49,7 @@ public async Task<IResult> Cancel(string id)
 result.RecordTo(_recorder, new Dictionary<string, string> { ["tenant"] = tenantId });
 ```
 
-Offside dimensions always win over supplied ones, so a tenant key can never rewrite `offside.kind`.
+HTTP extra dimensions come from `OffsideAspNetCoreOptions.TelemetryProperties` instead. Offside dimensions always win over supplied ones, so a tenant key can never rewrite `offside.kind`. See [Querying domain errors](queries.md) for Kusto.
 
 ## What a trace looks like
 
@@ -62,15 +69,16 @@ Severity comes from the kind:
 | `Unauthorized`, `Forbidden`, `TooManyRequests`, `Conflict`, `PreconditionFailed`, `Gone`, `Unprocessable` | `Warning` |
 | `NotFound`, `Validation`, `BadRequest` | `Information` |
 
-The point of the split: a validation failure is the system working, and should not page anyone; a 500 or a dependency outage should. Replace the whole map with `options.SeverityFor` when your operations team draws the line elsewhere.
+The point of the split: a validation failure is the system working, and should not page anyone; a 500 or a dependency outage should. That map is `DomainErrorSeverityMap.Library`, the default. An operations view that still wants 404/400 in Warning uses the other preset:
 
-A Kusto query over the result:
-
-```kusto
-traces
-| where customDimensions["offside.kind"] == "Conflict"
-| summarize count() by tostring(customDimensions["offside.errorCode"])
+```csharp
+builder.Services.AddOffsideApplicationInsights(options =>
+    options.SeverityFor = DomainErrorSeverityMap.Operations);
 ```
+
+`Operations` raises NotFound / Validation / BadRequest to Warning and drops Unexpected from Critical to Error. Outages stay Error. Replace the whole map with `options.SeverityFor` when your team draws the line elsewhere.
+
+A Kusto query over the result is in [Querying domain errors](queries.md).
 
 ## The trace text
 
@@ -115,14 +123,24 @@ builder.Services.AddOffsideApplicationInsights(options => options.IncludeArgumen
 
 They then appear as `offside.arg.{name}`; null arguments are skipped.
 
+Prefer an allowlist when only a few keys are safe:
+
+```csharp
+builder.Services.AddOffsideApplicationInsights(options =>
+    options.IncludeArgumentKeys = ["rejectionReason"]);
+```
+
+`IncludeArguments = true` ignores the list and writes every argument.
+
 ## Options
 
 | Option | Default | What it does |
 |---|---|---|
 | `PropertyPrefix` | `offside.` | Prefix of every Offside dimension |
-| `IncludeArguments` | `false` | Writes `Error.Arguments` as dimensions |
+| `IncludeArguments` | `false` | Writes every `Error.Arguments` value as a dimension |
+| `IncludeArgumentKeys` | empty | Writes only the named arguments; ignored when `IncludeArguments` is true |
 | `Culture` | `InvariantCulture` | Culture the trace message is resolved in — deliberately not the request culture, so logs stay in one language |
-| `SeverityFor` | The table above | Chooses the severity for a kind |
+| `SeverityFor` | `DomainErrorSeverityMap.Library` | Chooses the severity for a kind |
 | `FormatMessage` | `MessageOnly` | Builds the trace text from the error and its resolved message |
 
 ## With MediatR

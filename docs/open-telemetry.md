@@ -25,22 +25,29 @@ builder.Services.AddOpenTelemetry()
 builder.Services.AddOffsideOpenTelemetry();
 ```
 
-`AddOffsideOpenTelemetry` registers `IDomainErrorRecorder` over the host's `ILoggerFactory`. It configures neither OpenTelemetry nor an exporter, and never reads a connection string.
+`AddOffsideOpenTelemetry` registers `IDomainErrorRecorder` (namespace `Offside`) over the host's `ILoggerFactory`. It configures neither OpenTelemetry nor an exporter, and never reads a connection string.
 
-**`AddMeter(OffsideTelemetry.MeterName)` is not optional if you want the counter.** A meter no pipeline listens to is silently discarded — the most common reason for "I registered it and see nothing".
+**`AddMeter(OffsideTelemetry.MeterName)` is not optional if you want the counter.** A meter no pipeline listens to is silently discarded — the most common reason for "I registered it and see nothing". On the first emission with `EmitMetric` on and no listener, Offside writes one warning under category `Offside` asking for that `AddMeter` call.
 
 There is no activity source to register: the package never starts a span of its own. It attaches an event to whichever activity the host's instrumentation already has in scope, so ASP.NET Core instrumentation is enough.
 
 The log message is the resolved catalog message, taken from the `IErrorMessageResolver` that `AddOffside` registered. Without one, the error's `Code` is written instead.
 
+Do not register this package and `Offside.ApplicationInsights` in the same host — they are alternatives, and they share the same `IDomainErrorRecorder` interface.
+
 ## Record a result
 
+On an HTTP host, register the recorder and call `ToHttpResult` / `SendOffsideAsync`. The pipeline records each error once. `RecordTo` at the endpoint is redundant.
+
 ```csharp
-public async Task<IResult> Cancel(string id)
-{
-    var result = _orders.Cancel(id).RecordTo(_recorder);
-    return result.ToHttpResult();
-}
+app.MapPost("/orders/{id}/cancel", (string id, HttpContext http) =>
+    _orders.Cancel(id).ToHttpResult(http));
+```
+
+Workers, MediatR handlers, and any path without `HttpContext` still call `RecordTo`:
+
+```csharp
+var result = _orders.Cancel(id).RecordTo(_recorder);
 ```
 
 `RecordTo` records one error at a time, in result order, and returns the result unchanged so it can sit in a chain. A successful result records nothing. Extra dimensions are merged in:
@@ -49,7 +56,7 @@ public async Task<IResult> Cancel(string id)
 result.RecordTo(_recorder, new Dictionary<string, string> { ["tenant"] = tenantId });
 ```
 
-Offside dimensions always win over supplied ones, so a tenant key can never rewrite `offside.kind`.
+HTTP extra dimensions come from `OffsideAspNetCoreOptions.TelemetryProperties` instead. Offside dimensions always win over supplied ones, so a tenant key can never rewrite `offside.kind`. See [Querying domain errors](queries.md) for Kusto.
 
 ## The three signals
 
@@ -114,33 +121,43 @@ Severity comes from the kind, and maps onto `LogLevel`:
 | `Unauthorized`, `Forbidden`, `TooManyRequests`, `Conflict`, `PreconditionFailed`, `Gone`, `Unprocessable` | `Warning` | `Warning` |
 | `NotFound`, `Validation`, `BadRequest` | `Information` | `Information` |
 
-The point of the split: a validation failure is the system working, and should not page anyone; a 500 or a dependency outage should. Replace the whole map with `options.SeverityFor` when your operations team draws the line elsewhere.
+The point of the split: a validation failure is the system working, and should not page anyone; a 500 or a dependency outage should. That map is `DomainErrorSeverityMap.Library`, the default. An operations view that still wants 404/400 in Warning uses the other preset:
+
+```csharp
+builder.Services.AddOffsideOpenTelemetry(options =>
+    options.SeverityFor = DomainErrorSeverityMap.Operations);
+```
+
+`Operations` raises NotFound / Validation / BadRequest to Warning and drops Unexpected from Critical to Error. Outages stay Error. Replace the whole map with `options.SeverityFor` when your team draws the line elsewhere.
 
 This table is identical to the one in `Offside.ApplicationInsights`, and a test in the repository fails if the two ever drift. Moving a host from the classic SDK to OpenTelemetry does not change what its alerts fire on.
 
-A Kusto query over the result:
-
-```kusto
-traces
-| where customDimensions["offside.kind"] == "Conflict"
-| summarize count() by tostring(customDimensions["offside.errorCode"])
-```
+A Kusto query over the result is in [Querying domain errors](queries.md).
 
 ## Span status
 
-Recording an error leaves the span's status alone by default. A domain failure is often a perfectly successful request — a 404 answered correctly is not a broken operation, and marking it failed distorts your error rate.
+Recording an error leaves the span's status alone by default (`ActivityFailurePolicy.None`). A domain failure is often a perfectly successful request — a 404 answered correctly is not a broken operation, and marking it failed distorts your error rate.
 
-Where a recorded error really does mean the span failed:
+Hosts migrating from exceptions, who still want 503s in the span error rate:
+
+```csharp
+builder.Services.AddOffsideOpenTelemetry(options =>
+    options.ActivityFailure = ActivityFailurePolicy.ServerErrors);
+```
+
+`ServerErrors` marks the span for `Unexpected`, `ServiceUnavailable`, and `Timeout` only. It does not follow `SeverityFor`.
+
+Where severity should drive the span instead:
 
 ```csharp
 builder.Services.AddOffsideOpenTelemetry(options =>
 {
-    options.SetActivityStatusOnError = true;
+    options.ActivityFailure = ActivityFailurePolicy.FromSeverity;
     options.MinimumSeverityForActivityFailure = DomainErrorSeverity.Error; // the default
 });
 ```
 
-Only errors at or above that severity mark the activity. With the default threshold, a `NotFound` still leaves the span successful while an `Unexpected` does not.
+`SetActivityStatusOnError` still works as the previous on/off switch and is equivalent to `FromSeverity` when true.
 
 ## Arguments and PII
 
@@ -152,20 +169,31 @@ builder.Services.AddOffsideOpenTelemetry(options => options.IncludeArguments = t
 
 They then appear as `offside.arg.{name}` on the log entry and the span event; null arguments are skipped. They never reach the counter, whatever this is set to.
 
+Prefer an allowlist when only a few keys are safe:
+
+```csharp
+builder.Services.AddOffsideOpenTelemetry(options =>
+    options.IncludeArgumentKeys = ["rejectionReason"]);
+```
+
+`IncludeArguments = true` ignores the list and writes every argument.
+
 ## Options
 
 | Option | Default | What it does |
 |---|---|---|
 | `PropertyPrefix` | `offside.` | Prefix of every Offside dimension |
-| `IncludeArguments` | `false` | Writes `Error.Arguments` as dimensions |
+| `IncludeArguments` | `false` | Writes every `Error.Arguments` value as a dimension |
+| `IncludeArgumentKeys` | empty | Writes only the named arguments; ignored when `IncludeArguments` is true |
 | `Culture` | `InvariantCulture` | Culture the message is resolved in — deliberately not the request culture, so logs stay in one language |
-| `SeverityFor` | The table above | Chooses the severity for a kind |
+| `SeverityFor` | `DomainErrorSeverityMap.Library` | Chooses the severity for a kind |
 | `FormatMessage` | `MessageOnly` | Builds the log line from the error and its resolved message |
 | `EmitLog` | `true` | Writes the log entry |
 | `EmitActivityEvent` | `true` | Adds the event to the activity in scope |
-| `EmitMetric` | `true` | Increments the counter |
-| `SetActivityStatusOnError` | `false` | Marks the activity failed for severe errors |
-| `MinimumSeverityForActivityFailure` | `Error` | The severity that counts as severe, when the above is on |
+| `EmitMetric` | `true` | Increments the counter; warns once if the meter has no listener |
+| `ActivityFailure` | `None` | When a recorded error marks the current activity failed |
+| `SetActivityStatusOnError` | `false` | Legacy on/off for marking the activity; prefer `ActivityFailure` |
+| `MinimumSeverityForActivityFailure` | `Error` | The severity that counts as severe for `FromSeverity` |
 
 Each of the three `Emit*` switches is independent — turning one off leaves the other two untouched.
 

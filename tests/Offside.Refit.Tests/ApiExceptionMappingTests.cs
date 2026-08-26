@@ -6,11 +6,18 @@ namespace Offside.Refit.Tests;
 
 public class ApiExceptionMappingTests
 {
+    private static OffsideRefitOptions Mirror(Action<OffsideRefitOptions>? configure = null)
+    {
+        var options = new OffsideRefitOptions { InboundStatus = InboundStatusMapping.Mirror };
+        configure?.Invoke(options);
+        return options;
+    }
+
     [Fact]
     public void Without_a_body_the_status_decides()
     {
         ApiExceptionFactory.Create(HttpStatusCode.NotFound)
-            .ToResult()
+            .ToResult(Mirror())
             .ShouldHaveOnlyError("external_api.not_found")
             .WithKind(ErrorKind.NotFound)
             .WithErrorCode("NOT_FOUND")
@@ -48,7 +55,7 @@ public class ApiExceptionMappingTests
         """;
 
         var result = ApiExceptionFactory.Create(HttpStatusCode.Conflict, body)
-            .ToResult()
+            .ToResult(Mirror())
             .ShouldHaveErrorsInOrder("external_api.order.already_shipped", "external_api.order.locked");
 
         result.ShouldHaveError("external_api.order.already_shipped")
@@ -69,7 +76,7 @@ public class ApiExceptionMappingTests
         const string body = """{ "errors": [ { "code": "weird", "kind": "Teleported" } ] }""";
 
         ApiExceptionFactory.Create(HttpStatusCode.Conflict, body)
-            .ToResult()
+            .ToResult(Mirror())
             .ShouldHaveOnlyError("external_api.weird")
             .WithKind(ErrorKind.Conflict);
     }
@@ -85,7 +92,7 @@ public class ApiExceptionMappingTests
         """;
 
         var result = ApiExceptionFactory.Create(HttpStatusCode.BadRequest, body)
-            .ToResult()
+            .ToResult(Mirror())
             .ShouldHaveErrorCount(2);
 
         Assert.All(result.Errors, error => Assert.Equal(ErrorKind.Validation, error.Kind));
@@ -99,7 +106,7 @@ public class ApiExceptionMappingTests
         const string body = """{ "detail": "Rate limit reached.", "errorCode": "PARTNER_QUOTA" }""";
 
         ApiExceptionFactory.Create(HttpStatusCode.TooManyRequests, body)
-            .ToResult()
+            .ToResult(Mirror())
             .ShouldHaveOnlyError("external_api.too_many_requests")
             .WithKind(ErrorKind.TooManyRequests)
             .WithErrorCode("PARTNER_QUOTA")
@@ -123,7 +130,7 @@ public class ApiExceptionMappingTests
     public void The_body_is_ignored_when_reading_problem_details_is_off()
     {
         const string body = """{ "detail": "Order already shipped.", "errorCode": "ORDER_ALREADY_SHIPPED" }""";
-        var options = new OffsideRefitOptions { ReadProblemDetails = false };
+        var options = Mirror(o => o.ReadProblemDetails = false);
 
         ApiExceptionFactory.Create(HttpStatusCode.Conflict, body)
             .ToResult(options)
@@ -135,7 +142,7 @@ public class ApiExceptionMappingTests
     public void The_generic_overload_carries_the_same_errors()
     {
         ApiExceptionFactory.Create(HttpStatusCode.NotFound)
-            .ToResult<string>()
+            .ToResult<string>(Mirror())
             .ShouldBeFailure()
             .ShouldHaveOnlyError("external_api.not_found");
     }
@@ -143,7 +150,7 @@ public class ApiExceptionMappingTests
     [Fact]
     public void ToError_returns_the_primary_error()
     {
-        var error = ApiExceptionFactory.Create(HttpStatusCode.Forbidden).ToError();
+        var error = ApiExceptionFactory.Create(HttpStatusCode.Forbidden).ToError(Mirror());
 
         Assert.Equal(ErrorKind.Forbidden, error.Kind);
         Assert.Equal("external_api.forbidden", error.Code);
@@ -152,7 +159,7 @@ public class ApiExceptionMappingTests
     [Fact]
     public void The_api_name_reaches_the_arguments()
     {
-        var options = new OffsideRefitOptions { ApiName = "payments" };
+        var options = Mirror(o => o.ApiName = "payments");
 
         ApiExceptionFactory.Create(HttpStatusCode.Forbidden)
             .ToResult(options)

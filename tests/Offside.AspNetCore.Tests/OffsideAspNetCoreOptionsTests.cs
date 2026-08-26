@@ -96,5 +96,21 @@ public sealed class OffsideAspNetCoreOptionsTests
         Assert.Equal(500, payload!.Status);
         Assert.Equal("secret-stack", payload.Debug);
     }
+
+    [Fact]
+    public void ToHttpResult_HttpContext_throws_when_options_are_missing()
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton<IErrorMessageResolver>(ProblemHttpHarness.Resolver);
+        var httpContext = new DefaultHttpContext
+        {
+            RequestServices = services.BuildServiceProvider()
+        };
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            Result.Failure(Error.NotFound("order", 1)).ToHttpResult(httpContext));
+
+        Assert.Contains("AddOffsideAspNetCore", exception.Message, StringComparison.Ordinal);
+    }
 }
 

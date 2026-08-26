@@ -1,8 +1,8 @@
-namespace Offside.OpenTelemetry;
+namespace Offside;
 
 /// <summary>
 /// How loud a recorded failure is. Deliberately mirrors the severity names of the classic
-/// Application Insights SDK, so a host reading both integrations sees the same vocabulary.
+/// Application Insights SDK, so a host reading either integration sees the same vocabulary.
 /// </summary>
 public enum DomainErrorSeverity
 {

@@ -14,6 +14,8 @@ internal sealed class OpenTelemetryDomainErrorRecorder : IDomainErrorRecorder
         unit: "{error}",
         description: "Domain errors recorded through Offside.");
 
+    private int _meterWarned;
+
     private readonly ILogger _logger;
     private readonly OffsideOpenTelemetryOptions _options;
     private readonly IErrorMessageResolver? _resolver;
@@ -43,10 +45,13 @@ internal sealed class OpenTelemetryDomainErrorRecorder : IDomainErrorRecorder
             EmitLog(error, severity, dimensions);
 
         if (_options.EmitActivityEvent)
-            EmitActivityEvent(severity, dimensions);
+            EmitActivityEvent(error, severity, dimensions);
 
         if (_options.EmitMetric)
+        {
+            WarnIfMetricHasNoListener();
             EmitMetric(error);
+        }
     }
 
     /// <summary>
@@ -68,17 +73,11 @@ internal sealed class OpenTelemetryDomainErrorRecorder : IDomainErrorRecorder
         if (error.Field is not null)
             dimensions.Add(new KeyValuePair<string, object?>(_options.Property("field"), error.Field));
 
-        if (_options.IncludeArguments)
+        foreach (var argument in ErrorArgumentFilter.Select(error, _options.IncludeArguments, _options.IncludeArgumentKeys))
         {
-            foreach (var argument in error.Arguments)
-            {
-                if (argument.Value is null)
-                    continue;
-
-                dimensions.Add(new KeyValuePair<string, object?>(
-                    _options.Property("arg." + argument.Key),
-                    Convert.ToString(argument.Value, CultureInfo.InvariantCulture) ?? string.Empty));
-            }
+            dimensions.Add(new KeyValuePair<string, object?>(
+                _options.Property("arg." + argument.Key),
+                Convert.ToString(argument.Value, CultureInfo.InvariantCulture) ?? string.Empty));
         }
 
         if (properties is not null)
@@ -110,7 +109,10 @@ internal sealed class OpenTelemetryDomainErrorRecorder : IDomainErrorRecorder
             formatter: static (state, _) => state.ToString());
     }
 
-    private void EmitActivityEvent(DomainErrorSeverity severity, KeyValuePair<string, object?>[] dimensions)
+    private void EmitActivityEvent(
+        Error error,
+        DomainErrorSeverity severity,
+        KeyValuePair<string, object?>[] dimensions)
     {
         var activity = Activity.Current;
 
@@ -121,8 +123,22 @@ internal sealed class OpenTelemetryDomainErrorRecorder : IDomainErrorRecorder
             OffsideTelemetry.ErrorEventName,
             tags: new ActivityTagsCollection(dimensions)));
 
-        if (_options.SetActivityStatusOnError && severity >= _options.MinimumSeverityForActivityFailure)
+        if (ShouldFailActivity(error.Kind, severity))
             activity.SetStatus(ActivityStatusCode.Error);
+    }
+
+    private bool ShouldFailActivity(ErrorKind kind, DomainErrorSeverity severity)
+    {
+        if (_options.ActivityFailure == ActivityFailurePolicy.ServerErrors
+            && kind is ErrorKind.Unexpected or ErrorKind.ServiceUnavailable or ErrorKind.Timeout)
+            return true;
+
+        if (_options.ActivityFailure == ActivityFailurePolicy.FromSeverity
+            && severity >= _options.MinimumSeverityForActivityFailure)
+            return true;
+
+        return _options.SetActivityStatusOnError
+            && severity >= _options.MinimumSeverityForActivityFailure;
     }
 
     /// <summary>
@@ -135,6 +151,20 @@ internal sealed class OpenTelemetryDomainErrorRecorder : IDomainErrorRecorder
             1,
             new KeyValuePair<string, object?>(_options.Property("kind"), error.Kind.ToString()),
             new KeyValuePair<string, object?>(_options.Property("code"), error.Code));
+
+    private void WarnIfMetricHasNoListener()
+    {
+        if (ErrorCounter.Enabled)
+            return;
+
+        if (Interlocked.CompareExchange(ref _meterWarned, 1, 0) != 0)
+            return;
+
+        _logger.LogWarning(
+            "{Counter} is being discarded: call AddMeter({MeterName}).",
+            OffsideTelemetry.ErrorCounterName,
+            OffsideTelemetry.MeterName);
+    }
 
     private string Message(Error error) =>
         _resolver is null ? error.Code : _resolver.GetMessage(error, _options.Culture);

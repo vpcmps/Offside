@@ -48,7 +48,11 @@ Severity (high → low): Unexpected → Unauthorized/Forbidden → TooManyReques
 
 ## 500
 
-Winning Kind `Unexpected`: generic `detail` (JSON template `unexpected`, no secret args). `errorCode` is forced to `UNEXPECTED`. Optional `debug` only when `ExposeExceptionDetails` is true (default `IsDevelopment()`). Log the real detail via `ILogger` when `LogUnexpected` is true (default). Use `OnProblem` for host telemetry.
+Winning Kind `Unexpected`: generic `detail` (JSON template `unexpected`, no secret args). `errorCode` is forced to `UNEXPECTED`. Optional `debug` only when `ExposeExceptionDetails` is true (default `IsDevelopment()`). `LogUnexpected` logs the real detail via `ILogger` when true; it defaults off if `IDomainErrorRecorder` is registered. Use `OnProblem` for host-specific work — it is not telemetry. The pipeline records each error when a recorder is registered; do not call `RecordTo` at the HTTP endpoint.
+
+Brownfield clients: `options.LegacyAliases = LegacyProblemAliases.MessageReasonAndTechnicalDetail` adds `message`, `errors[].name`, `errors[].reason`, and `technicalDetail`.
+
+Obsolete: `ToHttpResult(resolver, bool)` and the other overloads that take only `exposeExceptionDetails`. Use `ToHttpResult(HttpContext)`. That overload throws if `AddOffsideAspNetCore` was not called.
 
 ## Do not
 

@@ -27,7 +27,7 @@ internal sealed class ApplicationInsightsDomainErrorRecorder : IDomainErrorRecor
 
         var telemetry = new TraceTelemetry(
             _options.FormatMessage(error, Message(error)),
-            _options.SeverityFor(error.Kind));
+            (SeverityLevel)(int)_options.SeverityFor(error.Kind));
 
         if (properties is not null)
         {
@@ -42,16 +42,10 @@ internal sealed class ApplicationInsightsDomainErrorRecorder : IDomainErrorRecor
         if (error.Field is not null)
             telemetry.Properties[_options.Property("field")] = error.Field;
 
-        if (_options.IncludeArguments)
+        foreach (var argument in ErrorArgumentFilter.Select(error, _options.IncludeArguments, _options.IncludeArgumentKeys))
         {
-            foreach (var argument in error.Arguments)
-            {
-                if (argument.Value is null)
-                    continue;
-
-                telemetry.Properties[_options.Property("arg." + argument.Key)] =
-                    Convert.ToString(argument.Value, CultureInfo.InvariantCulture) ?? string.Empty;
-            }
+            telemetry.Properties[_options.Property("arg." + argument.Key)] =
+                Convert.ToString(argument.Value, CultureInfo.InvariantCulture) ?? string.Empty;
         }
 
         _client.TrackTrace(telemetry);

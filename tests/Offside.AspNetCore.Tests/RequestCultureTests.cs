@@ -47,7 +47,7 @@ public sealed class RequestCultureTests
             httpContext.Request.Headers.AcceptLanguage = acceptLanguage;
             httpContext.Response.Body = new MemoryStream();
 
-            var httpResult = result.ToHttpResult(resolver);
+            var httpResult = result.ToHttpResult(resolver, culture: null, new OffsideAspNetCoreOptions());
             await httpResult.ExecuteAsync(httpContext);
 
             httpContext.Response.Body.Seek(0, SeekOrigin.Begin);

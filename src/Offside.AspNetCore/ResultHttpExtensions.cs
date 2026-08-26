@@ -39,6 +39,7 @@ public static class ResultHttpExtensions
     /// <param name="exposeExceptionDetails">When <see langword="true"/>, unexpected errors also report their diagnostic detail in <c>debug</c>.</param>
     /// <returns><c>204 No Content</c> on success; otherwise a Problem Details response.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="resolver"/> is <see langword="null"/>.</exception>
+    [Obsolete("Pass HttpContext or OffsideAspNetCoreOptions so CustomizeProblem, telemetry, and legacy aliases apply. This overload builds empty options.")]
     public static IResult ToHttpResult(
         this Result result,
         IErrorMessageResolver resolver,
@@ -52,6 +53,7 @@ public static class ResultHttpExtensions
     /// <param name="exposeExceptionDetails">When <see langword="true"/>, unexpected errors also report their diagnostic detail in <c>debug</c>.</param>
     /// <returns><c>204 No Content</c> on success; otherwise a Problem Details response.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="resolver"/> is <see langword="null"/>.</exception>
+    [Obsolete("Pass HttpContext or OffsideAspNetCoreOptions so CustomizeProblem, telemetry, and legacy aliases apply. This overload builds empty options.")]
     public static IResult ToHttpResult(
         this Result result,
         IErrorMessageResolver resolver,
@@ -112,6 +114,7 @@ public static class ResultHttpExtensions
     /// <param name="exposeExceptionDetails">When <see langword="true"/>, unexpected errors also report their diagnostic detail in <c>debug</c>.</param>
     /// <returns><c>200 OK</c> with the value on success; otherwise a Problem Details response.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="resolver"/> is <see langword="null"/>.</exception>
+    [Obsolete("Pass HttpContext or OffsideAspNetCoreOptions so CustomizeProblem, telemetry, and legacy aliases apply. This overload builds empty options.")]
     public static IResult ToHttpResult<T>(
         this Result<T> result,
         IErrorMessageResolver resolver,
@@ -126,6 +129,7 @@ public static class ResultHttpExtensions
     /// <param name="exposeExceptionDetails">When <see langword="true"/>, unexpected errors also report their diagnostic detail in <c>debug</c>.</param>
     /// <returns><c>200 OK</c> with the value on success; otherwise a Problem Details response.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="resolver"/> is <see langword="null"/>.</exception>
+    [Obsolete("Pass HttpContext or OffsideAspNetCoreOptions so CustomizeProblem, telemetry, and legacy aliases apply. This overload builds empty options.")]
     public static IResult ToHttpResult<T>(
         this Result<T> result,
         IErrorMessageResolver resolver,
@@ -193,6 +197,7 @@ public static class ResultHttpExtensions
     /// culture explicitly, or pass <see langword="null"/> through the options overload to fall
     /// back to <c>Accept-Language</c>.
     /// </remarks>
+    [Obsolete("Pass OffsideAspNetCoreOptions so CustomizeProblem, telemetry, and legacy aliases apply. This overload builds empty options.")]
     public static IActionResult ToActionResult(
         this Result result,
         IErrorMessageResolver resolver,
@@ -228,6 +233,7 @@ public static class ResultHttpExtensions
     /// <param name="exposeExceptionDetails">When <see langword="true"/>, unexpected errors also report their diagnostic detail in <c>debug</c>.</param>
     /// <returns><c>200 OK</c> with the value on success; otherwise a Problem Details response.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="resolver"/> is <see langword="null"/>.</exception>
+    [Obsolete("Pass OffsideAspNetCoreOptions so CustomizeProblem, telemetry, and legacy aliases apply. This overload builds empty options.")]
     public static IActionResult ToActionResult<T>(
         this Result<T> result,
         IErrorMessageResolver resolver,
@@ -248,6 +254,7 @@ public static class ResultHttpExtensions
     /// public IActionResult Get(string id) => _orders.Get(id).ToActionResult(_resolver, CultureInfo.CurrentUICulture);
     /// </code>
     /// </example>
+    [Obsolete("Pass OffsideAspNetCoreOptions so CustomizeProblem, telemetry, and legacy aliases apply. This overload builds empty options.")]
     public static IActionResult ToActionResult<T>(
         this Result<T> result,
         IErrorMessageResolver resolver,
@@ -282,7 +289,8 @@ public static class ResultHttpExtensions
 
     private static OffsideAspNetCoreOptions ResolveOptions(HttpContext httpContext) =>
         httpContext.RequestServices.GetService<OffsideAspNetCoreOptions>()
-        ?? new OffsideAspNetCoreOptions();
+        ?? throw new InvalidOperationException(
+            "OffsideAspNetCoreOptions is not registered. Call AddOffsideAspNetCore at startup.");
 
     private sealed class OffsideProblemResult : IResult, IActionResult
     {

@@ -81,6 +81,56 @@ public class DomainErrorRecorderTests
     }
 
     [Fact]
+    public void An_argument_allowlist_writes_only_the_named_keys()
+    {
+        var error = Error.Custom(
+            "access.rejected",
+            ErrorKind.Unauthorized,
+            new { rejectionReason = "missing-header", document = "12345678900" });
+
+        using var harness = TelemetryHarness.Create(options =>
+            options.IncludeArgumentKeys = new[] { "rejectionReason" });
+
+        harness.Recorder.Record(error);
+
+        var log = harness.SingleLog();
+        Assert.Equal("missing-header", log.Dimension("offside.arg.rejectionReason"));
+        Assert.False(log.Has("offside.arg.document"));
+    }
+
+    [Fact]
+    public void IncludeArguments_writes_every_key_and_ignores_the_allowlist()
+    {
+        var error = Error.Custom(
+            "access.rejected",
+            ErrorKind.Unauthorized,
+            new { rejectionReason = "missing-header", document = "12345678900" });
+
+        using var harness = TelemetryHarness.Create(options =>
+        {
+            options.IncludeArguments = true;
+            options.IncludeArgumentKeys = new[] { "rejectionReason" };
+        });
+
+        harness.Recorder.Record(error);
+
+        var log = harness.SingleLog();
+        Assert.Equal("missing-header", log.Dimension("offside.arg.rejectionReason"));
+        Assert.Equal("12345678900", log.Dimension("offside.arg.document"));
+    }
+
+    [Fact]
+    public void Operations_severity_logs_not_found_as_warning()
+    {
+        using var harness = TelemetryHarness.Create(options =>
+            options.SeverityFor = DomainErrorSeverityMap.Operations);
+
+        harness.Recorder.Record(Error.NotFound("order", 42));
+
+        Assert.Equal(LogLevel.Warning, harness.SingleLog().Level);
+    }
+
+    [Fact]
     public void Caller_dimensions_are_merged_but_never_shadow_an_offside_one()
     {
         using var harness = TelemetryHarness.Create();

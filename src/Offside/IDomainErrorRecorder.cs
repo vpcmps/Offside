@@ -1,13 +1,14 @@
-namespace Offside.ApplicationInsights;
+namespace Offside;
 
 /// <summary>
 /// Records an Offside <see cref="Error"/> as telemetry, so a domain failure that never became an
 /// exception is still visible in the logs.
 /// </summary>
 /// <remarks>
-/// Use the extension methods in <see cref="ResultTelemetryExtensions"/> to record a whole
-/// <see cref="Result"/>. Implementations must not throw: recording telemetry is never a reason
-/// to fail a request.
+/// Use <see cref="Result.RecordTo"/> / <see cref="Result{T}.RecordTo"/> to record a whole
+/// result. HTTP hosts do not need to call those: <c>ToHttpResult</c> and <c>SendOffsideAsync</c>
+/// record through this interface when it is registered. Implementations must not throw: recording
+/// telemetry is never a reason to fail a request.
 /// </remarks>
 public interface IDomainErrorRecorder
 {
