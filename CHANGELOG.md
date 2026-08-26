@@ -8,15 +8,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Optional `Offside.OpenTelemetry` package: records `Error` and `Result` failures through OpenTelemetry primitives — a structured `ILogger` entry, an `offside.error` event on the activity in scope, and an `offside.errors` counter — for hosts instrumented with `Azure.Monitor.OpenTelemetry` or any OTLP exporter, where no `TelemetryClient` exists. It references no OpenTelemetry or Azure package itself. Severity is kept identical to `Offside.ApplicationInsights`, enforced by a parity test. The counter carries only `offside.kind` and `offside.code`, to keep its cardinality bounded.
+- Optional `Offside.OpenTelemetry.MediatR` package: the OpenTelemetry counterpart of the MediatR telemetry bridge.
+- `OffsideApplicationInsightsOptions.FormatMessage` and `DomainErrorMessageFormat`, shaping the trace text from the error and its resolved message. `MessageOnly` (the default, and the previous behaviour), `CodePrefixed`, and `ErrorCodePrefixed` ship ready to use. It affects the trace text only, never the dimensions. `Offside.OpenTelemetry` offers the same formats under the same names.
+- Bilingual OpenTelemetry guide under `docs/open-telemetry.md` and `docs/pt-BR/open-telemetry.md`.
+
+## [0.3.0] - 2026-08-26
+
+### Added
+
 - Optional `Offside.Testing` package: fluent assertions over `Result`, `Result<T>`, `Error`, and JSON message catalogs, with no test-framework dependency (failures throw `OffsideAssertionException`, which xUnit, NUnit, MSTest and TUnit all report as a failed test). Entry points are named `ShouldHaveError` rather than `Should()` so the package coexists with FluentAssertions and Shouldly. `OffsideCatalog` reads catalogs directly, making a missing code distinguishable from a template equal to the code, and detecting `{token}` values no argument fills.
 - An `offside-testing` agent skill installed by `offside init` alongside the existing skills.
 - Bilingual testing guide under `docs/testing.md` and `docs/pt-BR/testing.md`.
 - Optional `Offside.Refit` package: maps a failed Refit call to Offside errors, mirroring the dependency's HTTP status onto `ErrorKind` and restoring an `application/problem+json` body when the dependency is itself an Offside service. Ships `IExternalApiCaller` (no `try`/`catch` at the call site), the `ApiException` mapping extensions, and `OffsideRefitDiagnosticsHandler` with an `IExternalApiErrorObserver` seam.
-- Optional `Offside.ApplicationInsights` package: records `Error` and `Result` failures as Application Insights traces, with severity derived from `ErrorKind` and `offside.*` dimensions. `Error.Arguments` stay out of telemetry unless `IncludeArguments` is enabled. The trace text is shaped by `FormatMessage`, with `DomainErrorMessageFormat.MessageOnly` (default), `CodePrefixed`, and `ErrorCodePrefixed` ready to use — it affects the trace text only, never the dimensions.
+- Optional `Offside.ApplicationInsights` package: records `Error` and `Result` failures as Application Insights traces, with severity derived from `ErrorKind` and `offside.*` dimensions. `Error.Arguments` stay out of telemetry unless `IncludeArguments` is enabled.
 - Optional `Offside.ApplicationInsights.MediatR` package: records published `DomainNotification` values as telemetry, alongside the existing scoped collector.
-- Optional `Offside.OpenTelemetry` package: records `Error` and `Result` failures through OpenTelemetry primitives — a structured `ILogger` entry, an `offside.error` event on the activity in scope, and an `offside.errors` counter — for hosts instrumented with `Azure.Monitor.OpenTelemetry` or any OTLP exporter, where no `TelemetryClient` exists. It references no OpenTelemetry or Azure package itself. Severity is kept identical to `Offside.ApplicationInsights`, enforced by a parity test. The log line is shaped by `FormatMessage`, with `DomainErrorMessageFormat.MessageOnly` (default), `CodePrefixed`, and `ErrorCodePrefixed` ready to use — it affects the log text only, never the dimensions.
-- Optional `Offside.OpenTelemetry.MediatR` package: the OpenTelemetry counterpart of the MediatR telemetry bridge.
-- Bilingual guides for all integrations under `docs/` and `docs/pt-BR/`.
+- Bilingual guides for both integrations under `docs/` and `docs/pt-BR/`.
 
 ### Changed
 
@@ -53,6 +60,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Initial `Offside`, `Offside.AspNetCore`, and `Offside.Tool` packages.
 
-[Unreleased]: https://github.com/vpcmps/Offside/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/vpcmps/Offside/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/vpcmps/Offside/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/vpcmps/Offside/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/vpcmps/Offside/releases/tag/v0.1.0

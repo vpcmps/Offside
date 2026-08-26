@@ -5,6 +5,7 @@
     <AssemblyName>Offside.AzureAppConfiguration</AssemblyName>
     <PackageId>Offside.AzureAppConfiguration</PackageId>
     <Description>Azure App Configuration-backed error message resolution for Offside. Catch it before the whistle.</Description>
+    <PackageTags>$(PackageTags);azure;app-configuration;localization;messages</PackageTags>
     <IsPackable>true</IsPackable>
   </PropertyGroup>
   <ItemGroup>

@@ -6,6 +6,7 @@
     <PackageId>Offside.OpenTelemetry.MediatR</PackageId>
     <Description>Bridge that records Offside MediatR domain notifications through OpenTelemetry. Catch it before the whistle.</Description>
     <IsPackable>true</IsPackable>
+    <PackageTags>$(PackageTags);opentelemetry;telemetry;observability;mediatr</PackageTags>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="MediatR" Version="[12.0.1,15.0.0)" />

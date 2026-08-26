@@ -5,6 +5,7 @@
     <AssemblyName>Offside.Refit</AssemblyName>
     <PackageId>Offside.Refit</PackageId>
     <Description>Refit external API failure mapping for Offside Results. Catch it before the whistle.</Description>
+    <PackageTags>$(PackageTags);refit;http;api-client;external-api</PackageTags>
     <IsPackable>true</IsPackable>
   </PropertyGroup>
   <ItemGroup>

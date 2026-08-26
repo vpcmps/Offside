@@ -5,6 +5,7 @@
     <AssemblyName>Offside.FluentValidation</AssemblyName>
     <PackageId>Offside.FluentValidation</PackageId>
     <Description>Maps FluentValidation failures to Offside Errors. The domain called offside.</Description>
+    <PackageTags>$(PackageTags);fluentvalidation;validation</PackageTags>
     <IsPackable>true</IsPackable>
   </PropertyGroup>
   <ItemGroup>
