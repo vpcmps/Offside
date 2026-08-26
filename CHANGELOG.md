@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-08-26
+
 ### Added
 
 - Optional `Offside.OpenTelemetry` package: records `Error` and `Result` failures through OpenTelemetry primitives — a structured `ILogger` entry, an `offside.error` event on the activity in scope, and an `offside.errors` counter — for hosts instrumented with `Azure.Monitor.OpenTelemetry` or any OTLP exporter, where no `TelemetryClient` exists. It references no OpenTelemetry or Azure package itself. Severity is kept identical to `Offside.ApplicationInsights`, enforced by a parity test. The counter carries only `offside.kind` and `offside.code`, to keep its cardinality bounded.

@@ -29,8 +29,6 @@ dotnet add package Offside.ApplicationInsights      # domain errors as telemetry
 dotnet add package Offside.OpenTelemetry            # domain errors as telemetry (OpenTelemetry)
 ```
 
-`Offside.OpenTelemetry` and `Offside.OpenTelemetry.MediatR` are not published to NuGet yet. Their source and local packages remain available; see [Pack locally](#pack-locally) to use them before publication.
-
 Agent skills + catalog templates:
 
 ```bash
@@ -60,8 +58,8 @@ The project is pre-1.0. Minor releases may include breaking changes. Releases fo
 | `Offside.Refit` | [![NuGet](https://img.shields.io/nuget/v/Offside.Refit?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside.Refit) | Maps external API failures to `Error` / `Result`, with a call wrapper and a diagnostics handler |
 | `Offside.ApplicationInsights` | [![NuGet](https://img.shields.io/nuget/v/Offside.ApplicationInsights?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside.ApplicationInsights) | Records domain errors as traces via the classic Application Insights SDK |
 | `Offside.ApplicationInsights.MediatR` | [![NuGet](https://img.shields.io/nuget/v/Offside.ApplicationInsights.MediatR?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside.ApplicationInsights.MediatR) | Records published domain notifications through the classic SDK |
-| `Offside.OpenTelemetry` | Publication pending | Records domain errors as a log, a span event, and a counter, for `Azure.Monitor.OpenTelemetry` or any OTLP exporter |
-| `Offside.OpenTelemetry.MediatR` | Publication pending | Records published domain notifications through OpenTelemetry |
+| `Offside.OpenTelemetry` | [![NuGet](https://img.shields.io/nuget/v/Offside.OpenTelemetry?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside.OpenTelemetry) | Records domain errors as a log, a span event, and a counter, for `Azure.Monitor.OpenTelemetry` or any OTLP exporter |
+| `Offside.OpenTelemetry.MediatR` | [![NuGet](https://img.shields.io/nuget/v/Offside.OpenTelemetry.MediatR?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside.OpenTelemetry.MediatR) | Records published domain notifications through OpenTelemetry |
 | `Offside.Tool` | [![NuGet](https://img.shields.io/nuget/v/Offside.Tool?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside.Tool) | `offside init` — skills and catalog templates |
 
 The Core package has no ASP.NET, MediatR, Refit, or Application Insights dependency.
