@@ -25,8 +25,11 @@ dotnet add package Offside.AzureAppConfiguration    # Azure App Configuration ca
 dotnet add package Offside.MediatR                  # domain notifications for failed results
 dotnet add package Offside.Testing                  # assertions for unit tests
 dotnet add package Offside.Refit                    # Refit clients calling external APIs
-dotnet add package Offside.ApplicationInsights      # domain errors as telemetry
+dotnet add package Offside.ApplicationInsights      # domain errors as telemetry (classic SDK)
+dotnet add package Offside.OpenTelemetry            # domain errors as telemetry (OpenTelemetry)
 ```
+
+`Offside.OpenTelemetry` and `Offside.OpenTelemetry.MediatR` are not published to NuGet yet. Their source and local packages remain available; see [Pack locally](#pack-locally) to use them before publication.
 
 Agent skills + catalog templates:
 
@@ -39,7 +42,7 @@ offside init
 
 ## Compatibility and status
 
-`Offside`, `Offside.FluentValidation`, `Offside.AzureAppConfiguration`, `Offside.MediatR`, `Offside.Testing`, `Offside.Refit`, `Offside.ApplicationInsights`, and `Offside.ApplicationInsights.MediatR` support `netstandard2.0`, `net8.0`, and `net10.0`. `Offside.AspNetCore` and `Offside.FastEndpoint` support `net8.0` and `net10.0`; `Offside.Tool` runs on `net8.0`. `Offside.MediatR` and `Offside.ApplicationInsights.MediatR` support MediatR `12.0.1` through `14.x`; `Offside.Refit` supports Refit `8.x` through `15.x`.
+`Offside`, `Offside.FluentValidation`, `Offside.AzureAppConfiguration`, `Offside.MediatR`, `Offside.Testing`, `Offside.Refit`, `Offside.ApplicationInsights`, `Offside.ApplicationInsights.MediatR`, `Offside.OpenTelemetry`, and `Offside.OpenTelemetry.MediatR` support `netstandard2.0`, `net8.0`, and `net10.0`. `Offside.AspNetCore` and `Offside.FastEndpoint` support `net8.0` and `net10.0`; `Offside.Tool` runs on `net8.0`. `Offside.MediatR`, `Offside.ApplicationInsights.MediatR`, and `Offside.OpenTelemetry.MediatR` support MediatR `12.0.1` through `14.x`; `Offside.Refit` supports Refit `8.x` through `15.x`.
 
 The project is pre-1.0. Minor releases may include breaking changes. Releases follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html), and notable changes are recorded in [CHANGELOG.md](CHANGELOG.md).
 
@@ -55,8 +58,10 @@ The project is pre-1.0. Minor releases may include breaking changes. Releases fo
 | `Offside.MediatR` | [![NuGet](https://img.shields.io/nuget/v/Offside.MediatR?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside.MediatR) | Publishes failed results as domain notifications and provides a scoped collector |
 | `Offside.Testing` | [![NuGet](https://img.shields.io/nuget/v/Offside.Testing?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside.Testing) | Fluent assertions for `Result`, `Error`, and message catalogs, with no test-framework dependency |
 | `Offside.Refit` | [![NuGet](https://img.shields.io/nuget/v/Offside.Refit?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside.Refit) | Maps external API failures to `Error` / `Result`, with a call wrapper and a diagnostics handler |
-| `Offside.ApplicationInsights` | [![NuGet](https://img.shields.io/nuget/v/Offside.ApplicationInsights?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside.ApplicationInsights) | Records domain errors as traces, with severity and stable dimensions |
-| `Offside.ApplicationInsights.MediatR` | [![NuGet](https://img.shields.io/nuget/v/Offside.ApplicationInsights.MediatR?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside.ApplicationInsights.MediatR) | Records published domain notifications as telemetry |
+| `Offside.ApplicationInsights` | [![NuGet](https://img.shields.io/nuget/v/Offside.ApplicationInsights?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside.ApplicationInsights) | Records domain errors as traces via the classic Application Insights SDK |
+| `Offside.ApplicationInsights.MediatR` | [![NuGet](https://img.shields.io/nuget/v/Offside.ApplicationInsights.MediatR?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside.ApplicationInsights.MediatR) | Records published domain notifications through the classic SDK |
+| `Offside.OpenTelemetry` | Publication pending | Records domain errors as a log, a span event, and a counter, for `Azure.Monitor.OpenTelemetry` or any OTLP exporter |
+| `Offside.OpenTelemetry.MediatR` | Publication pending | Records published domain notifications through OpenTelemetry |
 | `Offside.Tool` | [![NuGet](https://img.shields.io/nuget/v/Offside.Tool?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside.Tool) | `offside init` — skills and catalog templates |
 
 The Core package has no ASP.NET, MediatR, Refit, or Application Insights dependency.
@@ -126,7 +131,7 @@ Full guides: [getting started](https://github.com/vpcmps/Offside/blob/master/doc
 dotnet pack -c Release -o artifacts
 ```
 
-Produces `Offside`, `Offside.AspNetCore`, `Offside.FluentValidation`, `Offside.FastEndpoint`, `Offside.AzureAppConfiguration`, `Offside.MediatR`, `Offside.Testing`, `Offside.Refit`, `Offside.ApplicationInsights`, `Offside.ApplicationInsights.MediatR`, and `Offside.Tool` nupkgs (plus snupkgs).
+Produces `Offside`, `Offside.AspNetCore`, `Offside.FluentValidation`, `Offside.FastEndpoint`, `Offside.AzureAppConfiguration`, `Offside.MediatR`, `Offside.Testing`, `Offside.Refit`, `Offside.ApplicationInsights`, `Offside.ApplicationInsights.MediatR`, `Offside.OpenTelemetry`, `Offside.OpenTelemetry.MediatR`, and `Offside.Tool` nupkgs (plus snupkgs).
 
 ## CI and publish
 

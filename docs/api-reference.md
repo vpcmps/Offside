@@ -539,6 +539,14 @@ public sealed class OffsideApplicationInsightsOptions
     public bool IncludeArguments { get; set; }              // false
     public CultureInfo Culture { get; set; }                // InvariantCulture
     public Func<ErrorKind, SeverityLevel> SeverityFor { get; set; }
+    public Func<Error, string, string> FormatMessage { get; set; }  // MessageOnly
+}
+
+public static class DomainErrorMessageFormat
+{
+    public static readonly Func<Error, string, string> MessageOnly;
+    public static readonly Func<Error, string, string> CodePrefixed;
+    public static readonly Func<Error, string, string> ErrorCodePrefixed;
 }
 
 public static class ResultTelemetryExtensions
@@ -553,7 +561,7 @@ public static class OffsideApplicationInsightsServiceCollectionExtensions
 }
 ```
 
-Each error becomes one `TraceTelemetry` carrying `offside.code`, `offside.errorCode`, `offside.kind`, and `offside.field`. Offside dimensions win over supplied properties. `Error.Arguments` are written as `offside.arg.{name}` only when `IncludeArguments` is on. See [Application Insights](application-insights.md).
+Each error becomes one `TraceTelemetry` carrying `offside.code`, `offside.errorCode`, `offside.kind`, and `offside.field`. Offside dimensions win over supplied properties. `Error.Arguments` are written as `offside.arg.{name}` only when `IncludeArguments` is on. `FormatMessage` shapes the trace text only — the dimensions are unaffected by it. See [Application Insights](application-insights.md).
 
 ## Offside.ApplicationInsights.MediatR
 
@@ -569,6 +577,82 @@ public sealed class DomainNotificationTelemetryHandler : INotificationHandler<Do
 public static class OffsideApplicationInsightsMediatRServiceCollectionExtensions
 {
     public static IServiceCollection AddOffsideApplicationInsightsMediatR(this IServiceCollection services);
+}
+```
+
+Idempotent, and independent of the scoped collector registered by `AddOffsideMediatR`.
+
+## Offside.OpenTelemetry
+
+Namespace `Offside.OpenTelemetry`. Targets `netstandard2.0`, `net8.0`, `net10.0`.
+
+```csharp
+public interface IDomainErrorRecorder
+{
+    void Record(Error error, IReadOnlyDictionary<string, string>? properties = null);
+}
+
+public enum DomainErrorSeverity { Verbose, Information, Warning, Error, Critical }
+
+public static class DomainErrorMessageFormat
+{
+    public static readonly Func<Error, string, string> MessageOnly;
+    public static readonly Func<Error, string, string> CodePrefixed;
+    public static readonly Func<Error, string, string> ErrorCodePrefixed;
+}
+
+public static class OffsideTelemetry
+{
+    public const string MeterName;         // "Offside"
+    public const string LoggerCategory;    // "Offside"
+    public const string ErrorCounterName;  // "offside.errors"
+    public const string ErrorEventName;    // "offside.error"
+}
+
+public sealed class OffsideOpenTelemetryOptions
+{
+    public string PropertyPrefix { get; set; }                                  // "offside."
+    public bool IncludeArguments { get; set; }                                   // false
+    public CultureInfo Culture { get; set; }                                     // InvariantCulture
+    public Func<ErrorKind, DomainErrorSeverity> SeverityFor { get; set; }
+    public Func<Error, string, string> FormatMessage { get; set; }             // MessageOnly
+    public bool EmitLog { get; set; }                                            // true
+    public bool EmitActivityEvent { get; set; }                                  // true
+    public bool EmitMetric { get; set; }                                         // true
+    public bool SetActivityStatusOnError { get; set; }                           // false
+    public DomainErrorSeverity MinimumSeverityForActivityFailure { get; set; }   // Error
+}
+
+public static class ResultTelemetryExtensions
+{
+    public static Result RecordTo(this Result result, IDomainErrorRecorder recorder, IReadOnlyDictionary<string, string>? properties = null);
+    public static Result<T> RecordTo<T>(this Result<T> result, IDomainErrorRecorder recorder, IReadOnlyDictionary<string, string>? properties = null);
+}
+
+public static class OffsideOpenTelemetryServiceCollectionExtensions
+{
+    public static IServiceCollection AddOffsideOpenTelemetry(this IServiceCollection services, Action<OffsideOpenTelemetryOptions>? configure = null);
+}
+```
+
+Each error becomes up to three signals: an `ILogger` entry under category `Offside` whose state is a list of key/value pairs, an `offside.error` event on `Activity.Current`, and an increment of the `offside.errors` counter. The first two carry `offside.code`, `offside.errorCode`, `offside.kind`, and `offside.field`; the counter carries only `offside.kind` and `offside.code`, to keep its cardinality bounded. Offside dimensions win over supplied properties. `Error.Arguments` are written as `offside.arg.{name}` only when `IncludeArguments` is on, and never on the counter. `FormatMessage` shapes the log line only — the dimensions, the span event, and the counter are unaffected by it.
+
+The package references no OpenTelemetry or Azure assembly — it emits through `Microsoft.Extensions.Logging`, `System.Diagnostics.Activity`, and `System.Diagnostics.Metrics`, which the host's pipeline collects. Severity is identical to `Offside.ApplicationInsights`. See [OpenTelemetry](open-telemetry.md).
+
+## Offside.OpenTelemetry.MediatR
+
+Namespace `Offside.OpenTelemetry.MediatR`. Targets `netstandard2.0`, `net8.0`, `net10.0`.
+
+```csharp
+public sealed class DomainNotificationTelemetryHandler : INotificationHandler<DomainNotification>
+{
+    public DomainNotificationTelemetryHandler(IDomainErrorRecorder recorder);
+    public Task Handle(DomainNotification notification, CancellationToken cancellationToken);
+}
+
+public static class OffsideOpenTelemetryMediatRServiceCollectionExtensions
+{
+    public static IServiceCollection AddOffsideOpenTelemetryMediatR(this IServiceCollection services);
 }
 ```
 

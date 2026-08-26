@@ -4,6 +4,8 @@
 
 Uma falha de domínio que vira Problem Details não deixa rastro nos seus logs — ela nunca foi uma exceção. `Offside.ApplicationInsights` registra valores `Error` como traces do Application Insights, com severidade derivada do `ErrorKind` e dimensões estáveis para filtrar no Kusto.
 
+Este pacote fala com o SDK clássico `Microsoft.ApplicationInsights` e precisa do `TelemetryClient` do host. Se o seu host estiver instrumentado com `Azure.Monitor.OpenTelemetry.AspNetCore`, não existe `TelemetryClient` para resolver — use o [`Offside.OpenTelemetry`](open-telemetry.md). Os dois são alternativas, não camadas, e concordam na severidade kind a kind.
+
 ## Instalar e registrar
 
 ```bash
@@ -70,6 +72,39 @@ traces
 | summarize count() by tostring(customDimensions["offside.errorCode"])
 ```
 
+## O texto do trace
+
+Por padrão o texto do trace é só a mensagem resolvida do catálogo. Código, kind e campo viajam como dimensões, então nada se perde — e no Kusto essas dimensões são consultáveis sem lotar cada linha renderizada.
+
+O trade-off se inverte quando alguém lê as linhas cruas — um console, o log de um container, um `kubectl logs` — onde nada renderiza as dimensões:
+
+```csharp
+builder.Services.AddOffsideApplicationInsights(options =>
+    options.FormatMessage = DomainErrorMessageFormat.CodePrefixed);
+```
+
+```
+[order.already_shipped] Pedido já enviado.
+```
+
+Três formatos vêm prontos:
+
+| Formato | Linha |
+|---|---|
+| `MessageOnly` (padrão) | `Pedido já enviado.` |
+| `CodePrefixed` | `[order.already_shipped] Pedido já enviado.` |
+| `ErrorCodePrefixed` | `[ORDER_ALREADY_SHIPPED] Pedido já enviado.` |
+
+O `ErrorCodePrefixed` se justifica quando o suporte lê o log pelo identificador que o usuário informa a partir da tela.
+
+Qualquer `Func<Error, string, string>` serve — o erro, e a mensagem já resolvida:
+
+```csharp
+options.FormatMessage = (error, message) => $"{error.Kind}/{error.Code}: {message}";
+```
+
+O formato molda o texto do trace e nada mais: as dimensões não são afetadas, então uma linha mais curta nunca custa um filtro. O `Offside.OpenTelemetry` oferece os mesmos três formatos com os mesmos nomes, e um teste falha se os dois passarem a renderizar diferente.
+
 ## Argumentos e PII
 
 `Error.Arguments` **não** são escritos por padrão. Eles carregam o que o domínio colocou neles — identificadores, valores tentados, um motivo vindo de uma dependência — e telemetria sobrevive à requisição por meses. Ligue apenas quando souber que todo argumento é seguro:
@@ -88,6 +123,7 @@ Eles aparecem como `offside.arg.{nome}`; argumentos nulos são ignorados.
 | `IncludeArguments` | `false` | Escreve `Error.Arguments` como dimensões |
 | `Culture` | `InvariantCulture` | Cultura em que a mensagem do trace é resolvida — deliberadamente não é a cultura da requisição, para o log ficar num idioma só |
 | `SeverityFor` | A tabela acima | Escolhe a severidade de um kind |
+| `FormatMessage` | `MessageOnly` | Monta o texto do trace a partir do erro e da mensagem resolvida |
 
 ## Com MediatR
 

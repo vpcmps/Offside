@@ -38,5 +38,16 @@ public sealed class OffsideApplicationInsightsOptions
     /// </summary>
     public Func<ErrorKind, SeverityLevel> SeverityFor { get; set; } = ErrorKindSeverity.Default;
 
+    /// <summary>
+    /// Gets or sets the text of the trace, from the error and its resolved message. Defaults to
+    /// <see cref="DomainErrorMessageFormat.MessageOnly"/>.
+    /// </summary>
+    /// <remarks>
+    /// Pick <see cref="DomainErrorMessageFormat.CodePrefixed"/> when a human reads these lines raw,
+    /// or supply your own. This shapes the trace text only: the code, kind, and field always travel
+    /// as dimensions, whatever the format.
+    /// </remarks>
+    public Func<Error, string, string> FormatMessage { get; set; } = DomainErrorMessageFormat.MessageOnly;
+
     internal string Property(string name) => PropertyPrefix + name;
 }

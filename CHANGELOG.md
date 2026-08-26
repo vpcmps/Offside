@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Optional `Offside.OpenTelemetry` package: records `Error` and `Result` failures through OpenTelemetry primitives — a structured `ILogger` entry, an `offside.error` event on the activity in scope, and an `offside.errors` counter — for hosts instrumented with `Azure.Monitor.OpenTelemetry` or any OTLP exporter, where no `TelemetryClient` exists. It references no OpenTelemetry or Azure package itself. Severity is kept identical to `Offside.ApplicationInsights`, enforced by a parity test. The counter carries only `offside.kind` and `offside.code`, to keep its cardinality bounded.
+- Optional `Offside.OpenTelemetry.MediatR` package: the OpenTelemetry counterpart of the MediatR telemetry bridge.
+- `OffsideApplicationInsightsOptions.FormatMessage` and `DomainErrorMessageFormat`, shaping the trace text from the error and its resolved message. `MessageOnly` (the default, and the previous behaviour), `CodePrefixed`, and `ErrorCodePrefixed` ship ready to use. It affects the trace text only, never the dimensions. `Offside.OpenTelemetry` offers the same formats under the same names.
+- Bilingual OpenTelemetry guide under `docs/open-telemetry.md` and `docs/pt-BR/open-telemetry.md`.
+
 ## [0.3.0] - 2026-08-26
 
 ### Added

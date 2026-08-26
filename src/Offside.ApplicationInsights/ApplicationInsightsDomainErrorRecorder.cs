@@ -25,7 +25,9 @@ internal sealed class ApplicationInsightsDomainErrorRecorder : IDomainErrorRecor
         if (error is null)
             throw new ArgumentNullException(nameof(error));
 
-        var telemetry = new TraceTelemetry(Message(error), _options.SeverityFor(error.Kind));
+        var telemetry = new TraceTelemetry(
+            _options.FormatMessage(error, Message(error)),
+            _options.SeverityFor(error.Kind));
 
         if (properties is not null)
         {
