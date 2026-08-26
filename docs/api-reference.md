@@ -70,6 +70,7 @@ public readonly struct Result
 | `static Result Failure(IEnumerable<Error> errors)` | Failure from a sequence, copied immediately |
 | `static Result Combine(params Result[] results)` | Merge, concatenating errors in argument order |
 | `static Result Combine<T>(params Result<T>[] results)` | Merge value results, discarding the values |
+| `Result RecordTo(IDomainErrorRecorder recorder, IReadOnlyDictionary<string, string>? properties = null)` | Records each error; success is a no-op. HTTP hosts that call `ToHttpResult` do not need this |
 
 `default(Result)` is a success.
 
@@ -91,8 +92,65 @@ public readonly struct Result<T>
 | `static Result<T> Success(T value)` | Success |
 | `static Result<T> Failure(params Error[] errors)` | Failure. Throws `ArgumentException` if empty |
 | `static Result<T> Failure(IEnumerable<Error> errors)` | Failure from a sequence, copied immediately |
+| `Result<T> RecordTo(IDomainErrorRecorder recorder, IReadOnlyDictionary<string, string>? properties = null)` | Same as `Result.RecordTo` |
 
 No implicit conversion from `T`, and no `Apply` — see [deliberate omissions](domain-guide.md#deliberate-omissions).
+
+### IDomainErrorRecorder
+
+```csharp
+public interface IDomainErrorRecorder
+{
+    void Record(Error error, IReadOnlyDictionary<string, string>? properties = null);
+}
+```
+
+Implemented by `AddOffsideOpenTelemetry` and `AddOffsideApplicationInsights`. HTTP hosts do not call `RecordTo` — the problem pipeline records when this is registered. Implementations must not throw.
+
+### DomainErrorSeverity
+
+```csharp
+public enum DomainErrorSeverity { Verbose, Information, Warning, Error, Critical }
+```
+
+Mirrors classic Application Insights severity names.
+
+### DomainErrorSeverityMap
+
+```csharp
+public static class DomainErrorSeverityMap
+{
+    public static DomainErrorSeverity Library(ErrorKind kind);
+    public static DomainErrorSeverity Operations(ErrorKind kind);
+}
+```
+
+`Library` is the default on both telemetry packages (404/400 = Information, Unexpected = Critical). `Operations` raises refusals including NotFound/Validation/BadRequest to Warning and drops Unexpected to Error.
+
+### DomainErrorMessageFormat
+
+```csharp
+public static class DomainErrorMessageFormat
+{
+    public static readonly Func<Error, string, string> MessageOnly;
+    public static readonly Func<Error, string, string> CodePrefixed;
+    public static readonly Func<Error, string, string> ErrorCodePrefixed;
+}
+```
+
+Shapes the log or trace line only. Dimensions are unaffected.
+
+### ErrorArgumentFilter
+
+```csharp
+public static class ErrorArgumentFilter
+{
+    public static IEnumerable<KeyValuePair<string, object?>> Select(
+        Error error, bool includeAll, IReadOnlyCollection<string>? keys);
+}
+```
+
+Used by both recorders. `includeAll: true` ignores `keys`. Null argument values are skipped.
 
 ### DomainException
 
@@ -263,15 +321,23 @@ Namespace `Offside.AspNetCore`.
 public sealed class OffsideAspNetCoreOptions
 {
     public bool ExposeExceptionDetails { get; set; }
-    public bool LogUnexpected { get; set; } = true;
+    public bool LogUnexpected { get; set; }            // true when no recorder; false when one is registered, unless set explicitly
     public Action<OffsideProblem, IReadOnlyList<Error>>? CustomizeProblem { get; set; }
     public Action<OffsideProblem, IReadOnlyList<Error>, HttpContext>? OnProblem { get; set; }
+    public Func<OffsideProblem, IReadOnlyList<Error>, HttpContext, IReadOnlyDictionary<string, string>>? TelemetryProperties { get; set; }
+    public LegacyProblemAliases LegacyAliases { get; set; }  // None
     public Func<HttpContext, string>? ResolveTraceId { get; set; }
     public static OffsideAspNetCoreOptions FromEnvironment(IHostEnvironment environment);
 }
+
+public enum LegacyProblemAliases
+{
+    None = 0,
+    MessageReasonAndTechnicalDetail = 1
+}
 ```
 
-`ExposeExceptionDetails` gates the `debug` field only; the client-facing `detail` of a 500 is always the generic message. `LogUnexpected` controls the built-in `ILogger` line for `Unexpected` failures. `CustomizeProblem` may add flattened JSON members via `Extensions`; reserved keys are stripped. `OnProblem` is the observability hook — do not write the response body. `ResolveTraceId` replaces the default 32-hex `Activity.TraceId`. The `bool exposeExceptionDetails` overloads construct options without these callbacks; hooks require the `HttpContext` / DI path or an explicit options object.
+`ExposeExceptionDetails` gates the `debug` field only; the client-facing `detail` of a 500 is always the generic message. `LogUnexpected` controls the built-in `ILogger` line for `Unexpected` failures and defaults off when an `IDomainErrorRecorder` is registered. `TelemetryProperties` is merged into every pipeline recording (`HttpStatus` is always written). `LegacyAliases.MessageReasonAndTechnicalDetail` adds `message`, `errors[].name`, `errors[].reason`, and `technicalDetail`. `CustomizeProblem` may add flattened JSON members via `Extensions`; reserved keys are stripped. `OnProblem` is a host hook — it does not emit telemetry, and must not write the response body. `ResolveTraceId` replaces the default 32-hex `Activity.TraceId`. The `bool exposeExceptionDetails` overloads are obsolete and construct options without these callbacks; hooks require the `HttpContext` / DI path or an explicit options object. `ToHttpResult(HttpContext)` throws `InvalidOperationException` naming `AddOffsideAspNetCore` when the singleton is missing.
 
 ### OffsideAspNetCoreServiceCollectionExtensions
 
@@ -365,7 +431,7 @@ IActionResult ToActionResult<T>(this Result<T> result, IErrorMessageResolver res
 
 Note the asymmetry: there is **no** `ToActionResult(this Result, IErrorMessageResolver, bool)` for the unit `Result`. Pass a culture, or pass `null` through the options overload.
 
-A `null` culture means "derive it from `Accept-Language`". All overloads throw `ArgumentNullException` on a null resolver, options, or `HttpContext`.
+The `bool exposeExceptionDetails` overloads are obsolete. A `null` culture means "derive it from `Accept-Language`". All overloads throw `ArgumentNullException` on a null resolver, options, or `HttpContext`. The `HttpContext` overloads also throw `InvalidOperationException` when `OffsideAspNetCoreOptions` is not registered.
 
 ## Offside.FluentValidation
 
@@ -487,7 +553,10 @@ public sealed class OffsideRefitOptions
     public string ApiName { get; set; }              // "external api"
     public string CodePrefix { get; set; }           // "external_api"
     public bool ReadProblemDetails { get; set; }     // true
+    public InboundStatusMapping InboundStatus { get; set; }  // CollapseClientErrors
 }
+
+public enum InboundStatusMapping { CollapseClientErrors, Mirror }
 
 public static class RefitOffsideExtensions
 {
@@ -521,38 +590,21 @@ public static class OffsideRefitServiceCollectionExtensions
 }
 ```
 
-The status mapping mirrors the dependency: 404 → `NotFound`, 502/503 → `ServiceUnavailable`, 504 → `Timeout`, other 5xx → `Unexpected`, other 4xx → `BadRequest`. `CallAsync` converts `ApiException`, timeouts, and transport failures only; a cancellation the caller requested is rethrown. Problem-body parsing never throws. See [Refit integration](refit.md).
+The status mapping is 404 → `NotFound`, 502/503 → `ServiceUnavailable`, 504 → `Timeout`, other 5xx → `Unexpected`, other 4xx → `BadRequest`. After that mapping (or after restoring a problem body), `InboundStatus` defaults to folding every 4xx kind into `ServiceUnavailable`. `Mirror` keeps the dependency's kind. `CallAsync` converts `ApiException`, timeouts, and transport failures only; a cancellation the caller requested is rethrown. Problem-body parsing never throws. See [Refit integration](refit.md).
 
 ## Offside.ApplicationInsights
 
-Namespace `Offside.ApplicationInsights`. Targets `netstandard2.0`, `net8.0`, `net10.0`.
+Namespace `Offside.ApplicationInsights`. Targets `netstandard2.0`, `net8.0`, `net10.0`. `IDomainErrorRecorder`, `DomainErrorSeverity`, and `DomainErrorMessageFormat` live in `Offside`.
 
 ```csharp
-public interface IDomainErrorRecorder
-{
-    void Record(Error error, IReadOnlyDictionary<string, string>? properties = null);
-}
-
 public sealed class OffsideApplicationInsightsOptions
 {
     public string PropertyPrefix { get; set; }              // "offside."
     public bool IncludeArguments { get; set; }              // false
+    public IReadOnlyCollection<string> IncludeArgumentKeys { get; set; }  // empty
     public CultureInfo Culture { get; set; }                // InvariantCulture
-    public Func<ErrorKind, SeverityLevel> SeverityFor { get; set; }
+    public Func<ErrorKind, DomainErrorSeverity> SeverityFor { get; set; }  // Library
     public Func<Error, string, string> FormatMessage { get; set; }  // MessageOnly
-}
-
-public static class DomainErrorMessageFormat
-{
-    public static readonly Func<Error, string, string> MessageOnly;
-    public static readonly Func<Error, string, string> CodePrefixed;
-    public static readonly Func<Error, string, string> ErrorCodePrefixed;
-}
-
-public static class ResultTelemetryExtensions
-{
-    public static Result RecordTo(this Result result, IDomainErrorRecorder recorder, IReadOnlyDictionary<string, string>? properties = null);
-    public static Result<T> RecordTo<T>(this Result<T> result, IDomainErrorRecorder recorder, IReadOnlyDictionary<string, string>? properties = null);
 }
 
 public static class OffsideApplicationInsightsServiceCollectionExtensions
@@ -561,7 +613,7 @@ public static class OffsideApplicationInsightsServiceCollectionExtensions
 }
 ```
 
-Each error becomes one `TraceTelemetry` carrying `offside.code`, `offside.errorCode`, `offside.kind`, and `offside.field`. Offside dimensions win over supplied properties. `Error.Arguments` are written as `offside.arg.{name}` only when `IncludeArguments` is on. `FormatMessage` shapes the trace text only — the dimensions are unaffected by it. See [Application Insights](application-insights.md).
+Each error becomes one `TraceTelemetry` carrying `offside.code`, `offside.errorCode`, `offside.kind`, and `offside.field`. Offside dimensions win over supplied properties. `Error.Arguments` are written as `offside.arg.{name}` for keys in `IncludeArgumentKeys`, or for every key when `IncludeArguments` is on. `FormatMessage` shapes the trace text only. See [Application Insights](application-insights.md).
 
 ## Offside.ApplicationInsights.MediatR
 
@@ -584,23 +636,9 @@ Idempotent, and independent of the scoped collector registered by `AddOffsideMed
 
 ## Offside.OpenTelemetry
 
-Namespace `Offside.OpenTelemetry`. Targets `netstandard2.0`, `net8.0`, `net10.0`.
+Namespace `Offside.OpenTelemetry`. Targets `netstandard2.0`, `net8.0`, `net10.0`. `IDomainErrorRecorder`, `DomainErrorSeverity`, and `DomainErrorMessageFormat` live in `Offside`.
 
 ```csharp
-public interface IDomainErrorRecorder
-{
-    void Record(Error error, IReadOnlyDictionary<string, string>? properties = null);
-}
-
-public enum DomainErrorSeverity { Verbose, Information, Warning, Error, Critical }
-
-public static class DomainErrorMessageFormat
-{
-    public static readonly Func<Error, string, string> MessageOnly;
-    public static readonly Func<Error, string, string> CodePrefixed;
-    public static readonly Func<Error, string, string> ErrorCodePrefixed;
-}
-
 public static class OffsideTelemetry
 {
     public const string MeterName;         // "Offside"
@@ -609,24 +647,22 @@ public static class OffsideTelemetry
     public const string ErrorEventName;    // "offside.error"
 }
 
+public enum ActivityFailurePolicy { None, ServerErrors, FromSeverity }
+
 public sealed class OffsideOpenTelemetryOptions
 {
     public string PropertyPrefix { get; set; }                                  // "offside."
     public bool IncludeArguments { get; set; }                                   // false
+    public IReadOnlyCollection<string> IncludeArgumentKeys { get; set; }         // empty
     public CultureInfo Culture { get; set; }                                     // InvariantCulture
-    public Func<ErrorKind, DomainErrorSeverity> SeverityFor { get; set; }
+    public Func<ErrorKind, DomainErrorSeverity> SeverityFor { get; set; }        // Library
     public Func<Error, string, string> FormatMessage { get; set; }             // MessageOnly
     public bool EmitLog { get; set; }                                            // true
     public bool EmitActivityEvent { get; set; }                                  // true
     public bool EmitMetric { get; set; }                                         // true
+    public ActivityFailurePolicy ActivityFailure { get; set; }                   // None
     public bool SetActivityStatusOnError { get; set; }                           // false
     public DomainErrorSeverity MinimumSeverityForActivityFailure { get; set; }   // Error
-}
-
-public static class ResultTelemetryExtensions
-{
-    public static Result RecordTo(this Result result, IDomainErrorRecorder recorder, IReadOnlyDictionary<string, string>? properties = null);
-    public static Result<T> RecordTo<T>(this Result<T> result, IDomainErrorRecorder recorder, IReadOnlyDictionary<string, string>? properties = null);
 }
 
 public static class OffsideOpenTelemetryServiceCollectionExtensions
@@ -635,9 +671,9 @@ public static class OffsideOpenTelemetryServiceCollectionExtensions
 }
 ```
 
-Each error becomes up to three signals: an `ILogger` entry under category `Offside` whose state is a list of key/value pairs, an `offside.error` event on `Activity.Current`, and an increment of the `offside.errors` counter. The first two carry `offside.code`, `offside.errorCode`, `offside.kind`, and `offside.field`; the counter carries only `offside.kind` and `offside.code`, to keep its cardinality bounded. Offside dimensions win over supplied properties. `Error.Arguments` are written as `offside.arg.{name}` only when `IncludeArguments` is on, and never on the counter. `FormatMessage` shapes the log line only — the dimensions, the span event, and the counter are unaffected by it.
+Each error becomes up to three signals: an `ILogger` entry under category `Offside` whose state is a list of key/value pairs, an `offside.error` event on `Activity.Current`, and an increment of the `offside.errors` counter. The first two carry `offside.code`, `offside.errorCode`, `offside.kind`, and `offside.field`; the counter carries only `offside.kind` and `offside.code`. `IncludeArgumentKeys` / `IncludeArguments` apply to the log and the span event, never the counter. `ActivityFailure.ServerErrors` marks the span for Unexpected / ServiceUnavailable / Timeout. The first emission with `EmitMetric` and no meter listener logs a warning asking for `AddMeter(OffsideTelemetry.MeterName)`.
 
-The package references no OpenTelemetry or Azure assembly — it emits through `Microsoft.Extensions.Logging`, `System.Diagnostics.Activity`, and `System.Diagnostics.Metrics`, which the host's pipeline collects. Severity is identical to `Offside.ApplicationInsights`. See [OpenTelemetry](open-telemetry.md).
+The package references no OpenTelemetry or Azure assembly. Severity defaults match `Offside.ApplicationInsights`. See [OpenTelemetry](open-telemetry.md).
 
 ## Offside.OpenTelemetry.MediatR
 

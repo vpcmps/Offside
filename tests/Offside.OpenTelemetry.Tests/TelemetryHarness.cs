@@ -17,6 +17,7 @@ internal sealed class TelemetryHarness : IDisposable
 
     private readonly ActivityListener _activityListener;
     private readonly MeterListener _meterListener;
+    private readonly List<Instrument> _enabledInstruments = new();
     private readonly ServiceProvider _provider;
     private Activity? _activity;
 
@@ -44,7 +45,8 @@ internal sealed class TelemetryHarness : IDisposable
     public static TelemetryHarness Create(
         Action<OffsideOpenTelemetryOptions>? configure = null,
         IErrorMessageResolver? resolver = null,
-        bool withActivity = true)
+        bool withActivity = true,
+        bool withMeterListener = true)
     {
         var logs = new RecordingLoggerProvider();
 
@@ -70,14 +72,20 @@ internal sealed class TelemetryHarness : IDisposable
         var meterListener = new MeterListener();
         var harness = new TelemetryHarness(provider, logs, activityListener, meterListener);
 
-        meterListener.InstrumentPublished = (instrument, listener) =>
+        if (withMeterListener)
         {
-            if (instrument.Meter.Name == OffsideTelemetry.MeterName)
+            meterListener.InstrumentPublished = (instrument, listener) =>
+            {
+                if (instrument.Meter.Name != OffsideTelemetry.MeterName)
+                    return;
+
                 listener.EnableMeasurementEvents(instrument);
-        };
-        meterListener.SetMeasurementEventCallback<long>((instrument, value, tags, _) =>
-            harness.Measurements.Add(new Measurement(instrument.Name, value, tags.ToArray())));
-        meterListener.Start();
+                harness._enabledInstruments.Add(instrument);
+            };
+            meterListener.SetMeasurementEventCallback<long>((instrument, value, tags, _) =>
+                harness.Measurements.Add(new Measurement(instrument.Name, value, tags.ToArray())));
+            meterListener.Start();
+        }
 
         if (withActivity)
             harness._activity = Source.StartActivity("test");
@@ -94,6 +102,8 @@ internal sealed class TelemetryHarness : IDisposable
     public void Dispose()
     {
         _activity?.Dispose();
+        foreach (var instrument in _enabledInstruments)
+            _meterListener.DisableMeasurementEvents(instrument);
         _meterListener.Dispose();
         _activityListener.Dispose();
         _provider.Dispose();

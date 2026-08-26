@@ -29,8 +29,9 @@ public class ExternalApiCallerTests
             _ => throw ApiExceptionFactory.Create(HttpStatusCode.NotFound));
 
         result.ShouldBeFailure()
-            .ShouldHaveOnlyError("external_api.not_found")
-            .WithKind(ErrorKind.NotFound);
+            .ShouldHaveOnlyError("external_api.service_unavailable")
+            .WithKind(ErrorKind.ServiceUnavailable)
+            .WithArgument("originalKind", "NotFound");
     }
 
     [Fact]
@@ -88,7 +89,9 @@ public class ExternalApiCallerTests
             _ => throw ApiExceptionFactory.Create(HttpStatusCode.Conflict));
 
         success.ShouldBeSuccess();
-        failure.ShouldHaveOnlyError("external_api.conflict").WithKind(ErrorKind.Conflict);
+        failure.ShouldHaveOnlyError("external_api.service_unavailable")
+            .WithKind(ErrorKind.ServiceUnavailable)
+            .WithArgument("originalKind", "Conflict");
     }
 
     [Fact]
@@ -99,7 +102,7 @@ public class ExternalApiCallerTests
         var result = await caller.CallAsync<string>(
             _ => throw ApiExceptionFactory.Create(HttpStatusCode.NotFound));
 
-        result.ShouldHaveOnlyError("external_api.not_found").WithArgument("api", "payments");
+        result.ShouldHaveOnlyError("external_api.service_unavailable").WithArgument("api", "payments");
     }
 
     [Fact]
@@ -111,7 +114,7 @@ public class ExternalApiCallerTests
             _ => throw ApiExceptionFactory.Create(HttpStatusCode.NotFound),
             new OffsideRefitOptions { ApiName = "shipping" });
 
-        result.ShouldHaveOnlyError("external_api.not_found").WithArgument("api", "shipping");
+        result.ShouldHaveOnlyError("external_api.service_unavailable").WithArgument("api", "shipping");
     }
 
     [Fact]

@@ -63,19 +63,18 @@ The mapping mirrors what the dependency said — the inverse of the kind-to-stat
 
 `OffsideRefit.Kind(statusCode)` exposes it directly.
 
-**A mirrored 404 is not automatically your 404.** If the caller of *your* API should not learn that a dependency was missing something, fold the failure at your boundary:
+**A mirrored 404 is not automatically your 404.** The default, `InboundStatusMapping.CollapseClientErrors`, folds every 4xx kind — including a restored Offside problem body — into `ServiceUnavailable` with catalog code `external_api.service_unavailable`. The original kind, code, and errorCode stay in arguments. `Timeout`, `ServiceUnavailable`, and `Unexpected` are left alone.
+
+Two Offside services in the same product, or a BFF that should surface the dependency's status, opt in to the 0.4.0 behaviour:
 
 ```csharp
-var order = await _api.CallAsync(token => _payments.GetOrderAsync(id, token), cancellationToken: ct);
-
-return order.IsFailure && order.Errors[0].Kind == ErrorKind.NotFound
-    ? Result<Order>.Failure(Error.ServiceUnavailable("payments"))
-    : order;
+builder.Services.AddOffsideRefit(options =>
+    options.InboundStatus = InboundStatusMapping.Mirror);
 ```
 
 ## Catalog codes
 
-Each mapped error gets `external_api.` in front of its catalog code — `external_api.not_found`, `external_api.timeout` — so a dependency failure is never confused with your own rule in the message catalog. Add the entries you use:
+Each mapped error gets `external_api.` in front of its catalog code — `external_api.not_found` before collapse, `external_api.service_unavailable` after, `external_api.timeout` for a 504 — so a dependency failure is never confused with your own rule in the message catalog. Add the entries you use:
 
 ```json
 {
@@ -91,7 +90,7 @@ Available tokens: `{api}`, `{status}`, `{requestUri}`, `{reason}`. Set `CodePref
 
 With `ReadProblemDetails` on — the default — an `application/problem+json` body is read before the status is considered:
 
-- **The dependency is an Offside service.** Its `errors` array is restored error for error, keeping each `code`, `errorCode`, `kind`, and `field`. Two services speaking Offside lose nothing across the wire.
+- **The dependency is an Offside service.** Its `errors` array is restored error for error, keeping each `code`, `errorCode`, `kind`, and `field`. `InboundStatus` then runs: with the default, those 4xx kinds still become `ServiceUnavailable`. With `Mirror`, two services speaking Offside lose nothing across the wire.
 - **An ASP.NET validation body** (`"errors": { "email": ["…"] }`) becomes one `ErrorKind.Validation` error per field.
 - **A plain problem document** contributes its `detail` and `errorCode`.
 
@@ -138,5 +137,6 @@ The handler reads the status code only — it leaves the response body untouched
 | `ApiName` | `external api` | Exposed to templates as `{api}` |
 | `CodePrefix` | `external_api` | Prefix for catalog codes; empty falls back to the core codes |
 | `ReadProblemDetails` | `true` | Reads an `application/problem+json` body before falling back to the status |
+| `InboundStatus` | `CollapseClientErrors` | Folds 4xx kinds into `ServiceUnavailable` after mapping; `Mirror` keeps the dependency's kind |
 
 Options passed to a single `CallAsync` win over the registered defaults.

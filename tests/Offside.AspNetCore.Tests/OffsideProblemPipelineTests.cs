@@ -216,6 +216,151 @@ public sealed class OffsideProblemPipelineTests
         Assert.Empty(logger.Entries);
     }
 
+    [Fact]
+    public async Task Pipeline_records_without_RecordTo_at_the_call_site()
+    {
+        var recorder = new RecordingRecorder();
+        var services = new ServiceCollection().AddSingleton<IDomainErrorRecorder>(recorder).BuildServiceProvider();
+
+        await ProblemHttpHarness.Execute(
+            Result.Failure(Error.NotFound("order", 1)),
+            new OffsideAspNetCoreOptions(),
+            http => http.RequestServices = services);
+
+        var recorded = Assert.Single(recorder.Entries);
+        Assert.Equal("not_found", recorded.Error.Code);
+        Assert.Equal("404", recorded.Properties!["HttpStatus"]);
+    }
+
+    [Fact]
+    public async Task Pipeline_merges_TelemetryProperties()
+    {
+        var recorder = new RecordingRecorder();
+        var services = new ServiceCollection().AddSingleton<IDomainErrorRecorder>(recorder).BuildServiceProvider();
+        var options = new OffsideAspNetCoreOptions
+        {
+            TelemetryProperties = (_, _, _) => new Dictionary<string, string> { ["Operation"] = "GetOrder" }
+        };
+
+        await ProblemHttpHarness.Execute(
+            Result.Failure(Error.Conflict("order")),
+            options,
+            http => http.RequestServices = services);
+
+        var recorded = Assert.Single(recorder.Entries);
+        Assert.Equal("409", recorded.Properties!["HttpStatus"]);
+        Assert.Equal("GetOrder", recorded.Properties["Operation"]);
+    }
+
+    [Fact]
+    public async Task Pipeline_does_not_record_twice_for_one_failure()
+    {
+        var recorder = new RecordingRecorder();
+        var services = new ServiceCollection().AddSingleton<IDomainErrorRecorder>(recorder).BuildServiceProvider();
+
+        await ProblemHttpHarness.Execute(
+            Result.Failure(Error.Validation("email"), Error.Validation("name")),
+            new OffsideAspNetCoreOptions(),
+            http => http.RequestServices = services);
+
+        Assert.Equal(2, recorder.Entries.Count);
+    }
+
+    [Fact]
+    public async Task LogUnexpected_stays_off_when_a_recorder_is_registered()
+    {
+        var logger = new RecordingLoggerFactory();
+        var recorder = new RecordingRecorder();
+        var services = new ServiceCollection()
+            .AddSingleton<ILoggerFactory>(logger)
+            .AddSingleton<IDomainErrorRecorder>(recorder)
+            .BuildServiceProvider();
+
+        await ProblemHttpHarness.Execute(
+            Result.Failure(Error.Unexpected("boom")),
+            new OffsideAspNetCoreOptions(),
+            http => http.RequestServices = services);
+
+        Assert.Empty(logger.Entries);
+        Assert.Single(recorder.Entries);
+    }
+
+    [Fact]
+    public async Task LogUnexpected_explicit_true_still_logs_with_a_recorder()
+    {
+        var logger = new RecordingLoggerFactory();
+        var recorder = new RecordingRecorder();
+        var services = new ServiceCollection()
+            .AddSingleton<ILoggerFactory>(logger)
+            .AddSingleton<IDomainErrorRecorder>(recorder)
+            .BuildServiceProvider();
+
+        await ProblemHttpHarness.Execute(
+            Result.Failure(Error.Unexpected("boom")),
+            new OffsideAspNetCoreOptions { LogUnexpected = true },
+            http => http.RequestServices = services);
+
+        Assert.Contains(logger.Entries, entry => entry.Contains("boom", StringComparison.Ordinal));
+        Assert.Single(recorder.Entries);
+    }
+
+    [Fact]
+    public async Task LegacyAliases_add_message_reason_and_technicalDetail()
+    {
+        var options = new OffsideAspNetCoreOptions
+        {
+            ExposeExceptionDetails = true,
+            LegacyAliases = LegacyProblemAliases.MessageReasonAndTechnicalDetail
+        };
+
+        var (_, body) = await ProblemHttpHarness.ExecuteRaw(
+            Result.Failure(Error.Unexpected("secret-stack")),
+            options);
+
+        using var doc = JsonDocument.Parse(body);
+        Assert.Equal("An unexpected error occurred.", doc.RootElement.GetProperty("message").GetString());
+        Assert.Equal("secret-stack", doc.RootElement.GetProperty("technicalDetail").GetString());
+        Assert.Equal("An unexpected error occurred.", doc.RootElement.GetProperty("errors")[0].GetProperty("reason").GetString());
+    }
+
+    [Fact]
+    public async Task LegacyAliases_none_omits_the_fields()
+    {
+        var (_, body) = await ProblemHttpHarness.ExecuteRaw(
+            Result.Failure(Error.NotFound("order", 1)),
+            new OffsideAspNetCoreOptions());
+
+        using var doc = JsonDocument.Parse(body);
+        Assert.False(doc.RootElement.TryGetProperty("message", out _));
+        Assert.False(doc.RootElement.TryGetProperty("technicalDetail", out _));
+        Assert.False(doc.RootElement.GetProperty("errors")[0].TryGetProperty("reason", out _));
+    }
+
+    [Fact]
+    public async Task LegacyAliases_copy_field_to_name()
+    {
+        var options = new OffsideAspNetCoreOptions
+        {
+            LegacyAliases = LegacyProblemAliases.MessageReasonAndTechnicalDetail
+        };
+
+        var (_, body) = await ProblemHttpHarness.ExecuteRaw(
+            Result.Failure(Error.Validation("email")),
+            options);
+
+        using var doc = JsonDocument.Parse(body);
+        Assert.Equal("email", doc.RootElement.GetProperty("errors")[0].GetProperty("name").GetString());
+        Assert.Equal("email", doc.RootElement.GetProperty("errors")[0].GetProperty("reason").GetString());
+    }
+
+    private sealed class RecordingRecorder : IDomainErrorRecorder
+    {
+        public List<(Error Error, IReadOnlyDictionary<string, string>? Properties)> Entries { get; } = [];
+
+        public void Record(Error error, IReadOnlyDictionary<string, string>? properties = null) =>
+            Entries.Add((error, properties));
+    }
+
     private sealed class RecordingLoggerFactory : ILoggerFactory, ILogger
     {
         public List<string> Entries { get; } = [];

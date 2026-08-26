@@ -46,6 +46,8 @@ public override Task HandleAsync(CancellationToken ct) =>
     orders.Get(id).SendOffsideAsync(HttpContext, ct);
 ```
 
+`SendOffsideAsync` reuses `ToHttpResult`. If `IDomainErrorRecorder` is registered, the pipeline records the failure — do not call `RecordTo` at the endpoint.
+
 FluentValidation `.WithErrorCode` values are catalog keys (`Error.Code`). Screen routing uses `errorCode` (`VALIDATION`, `NOT_FOUND`, …).
 
 ## Do not

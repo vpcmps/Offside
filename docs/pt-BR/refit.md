@@ -63,19 +63,18 @@ O mapeamento espelha o que a dependência disse — o inverso do mapeamento kind
 
 `OffsideRefit.Kind(statusCode)` expõe a tabela diretamente.
 
-**Um 404 espelhado não é automaticamente o seu 404.** Se quem chama a *sua* API não deve descobrir que faltou algo numa dependência, converta a falha na sua fronteira:
+**Um 404 espelhado não é automaticamente o seu 404.** O padrão, `InboundStatusMapping.CollapseClientErrors`, dobra todo kind 4xx — inclusive um problem body Offside restaurado — em `ServiceUnavailable` com código de catálogo `external_api.service_unavailable`. O kind, o code e o errorCode originais ficam nos arguments. `Timeout`, `ServiceUnavailable` e `Unexpected` permanecem.
+
+Dois serviços Offside no mesmo produto, ou um BFF que deve expor o status da dependência, optam pelo comportamento 0.4.0:
 
 ```csharp
-var order = await _api.CallAsync(token => _payments.GetOrderAsync(id, token), cancellationToken: ct);
-
-return order.IsFailure && order.Errors[0].Kind == ErrorKind.NotFound
-    ? Result<Order>.Failure(Error.ServiceUnavailable("payments"))
-    : order;
+builder.Services.AddOffsideRefit(options =>
+    options.InboundStatus = InboundStatusMapping.Mirror);
 ```
 
 ## Códigos de catálogo
 
-Cada erro mapeado recebe o prefixo `external_api.` no código de catálogo — `external_api.not_found`, `external_api.timeout` — para que uma falha de dependência nunca se confunda com uma regra sua. Adicione as entradas que usar:
+Cada erro mapeado recebe o prefixo `external_api.` no código de catálogo — `external_api.not_found` antes do collapse, `external_api.service_unavailable` depois, `external_api.timeout` para um 504 — para que uma falha de dependência nunca se confunda com uma regra sua. Adicione as entradas que usar:
 
 ```json
 {
@@ -91,7 +90,7 @@ Tokens disponíveis: `{api}`, `{status}`, `{requestUri}`, `{reason}`. Deixe `Cod
 
 Com `ReadProblemDetails` ligado — o padrão — um corpo `application/problem+json` é lido antes de o status ser considerado:
 
-- **A dependência é um serviço Offside.** O array `errors` é restaurado erro a erro, preservando `code`, `errorCode`, `kind` e `field`. Dois serviços que falam Offside não perdem nada na travessia.
+- **A dependência é um serviço Offside.** O array `errors` é restaurado erro a erro, preservando `code`, `errorCode`, `kind` e `field`. `InboundStatus` roda depois: com o padrão, esses kinds 4xx ainda viram `ServiceUnavailable`. Com `Mirror`, dois serviços que falam Offside não perdem nada na travessia.
 - **Um corpo de validação do ASP.NET** (`"errors": { "email": ["…"] }`) vira um erro `ErrorKind.Validation` por campo.
 - **Um problem document simples** contribui com `detail` e `errorCode`.
 
@@ -138,5 +137,6 @@ O handler lê apenas o status — ele não toca no corpo da resposta, então o q
 | `ApiName` | `external api` | Exposto aos templates como `{api}` |
 | `CodePrefix` | `external_api` | Prefixo dos códigos de catálogo; vazio cai nos códigos do Core |
 | `ReadProblemDetails` | `true` | Lê um corpo `application/problem+json` antes de cair no status |
+| `InboundStatus` | `CollapseClientErrors` | Dobra kinds 4xx em `ServiceUnavailable` depois do mapeamento; `Mirror` preserva o kind da dependência |
 
 Opções passadas a um `CallAsync` específico vencem as registradas.

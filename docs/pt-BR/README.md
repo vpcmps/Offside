@@ -28,6 +28,7 @@ Erros de domínio como `Result`, não como exceções. O domínio devolve um `Er
 | [Integração com Refit](refit.md) | Transformar a falha de uma API externa em `Error`, sem `try`/`catch` em cada chamada |
 | [Application Insights](application-insights.md) | Registrar erros de domínio como traces, com severidade e dimensões estáveis |
 | [OpenTelemetry](open-telemetry.md) | Registrar erros de domínio via OpenTelemetry, para hosts com `Azure.Monitor.OpenTelemetry` ou exporter OTLP |
+| [Consultar erros de domínio](queries.md) | Filtros Kusto em `offside.code` / `offside.errorCode` / `offside.kind` — não há `{OriginalFormat}` |
 | [Mensagens e culturas](messages.md) | Formato do catálogo, fallback de cultura, interpolação de `{token}` |
 | [Guia de testes](testing.md) | Asserções sobre `Result`, `Error` e catálogos de mensagens em testes |
 | [CLI](cli.md) | `offside init` — skills de agente e templates de catálogo |

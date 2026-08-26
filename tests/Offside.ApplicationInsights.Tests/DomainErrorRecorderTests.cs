@@ -52,7 +52,7 @@ public class DomainErrorRecorderTests
     [Fact]
     public void The_severity_map_can_be_replaced()
     {
-        using var harness = TelemetryHarness.Create(options => options.SeverityFor = _ => SeverityLevel.Verbose);
+        using var harness = TelemetryHarness.Create(options => options.SeverityFor = _ => DomainErrorSeverity.Verbose);
 
         harness.Recorder.Record(Error.Unexpected("boom"));
 
@@ -79,6 +79,45 @@ public class DomainErrorRecorderTests
         var trace = harness.SingleTrace();
         Assert.Equal("order", trace.Properties["offside.arg.resource"]);
         Assert.Equal("42", trace.Properties["offside.arg.id"]);
+    }
+
+    [Fact]
+    public void An_argument_allowlist_writes_only_the_named_keys()
+    {
+        var error = Error.Custom(
+            "access.rejected",
+            ErrorKind.Unauthorized,
+            new { rejectionReason = "missing-header", document = "12345678900" });
+
+        using var harness = TelemetryHarness.Create(options =>
+            options.IncludeArgumentKeys = new[] { "rejectionReason" });
+
+        harness.Recorder.Record(error);
+
+        var trace = harness.SingleTrace();
+        Assert.Equal("missing-header", trace.Properties["offside.arg.rejectionReason"]);
+        Assert.False(trace.Properties.ContainsKey("offside.arg.document"));
+    }
+
+    [Fact]
+    public void IncludeArguments_writes_every_key_and_ignores_the_allowlist()
+    {
+        var error = Error.Custom(
+            "access.rejected",
+            ErrorKind.Unauthorized,
+            new { rejectionReason = "missing-header", document = "12345678900" });
+
+        using var harness = TelemetryHarness.Create(options =>
+        {
+            options.IncludeArguments = true;
+            options.IncludeArgumentKeys = new[] { "rejectionReason" };
+        });
+
+        harness.Recorder.Record(error);
+
+        var trace = harness.SingleTrace();
+        Assert.Equal("missing-header", trace.Properties["offside.arg.rejectionReason"]);
+        Assert.Equal("12345678900", trace.Properties["offside.arg.document"]);
     }
 
     [Fact]

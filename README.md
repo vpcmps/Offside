@@ -84,6 +84,8 @@ app.MapGet("/orders/{id}", (string id, HttpContext http) =>
     GetOrder(id).ToHttpResult(http));
 ```
 
+With `AddOffsideOpenTelemetry` or `AddOffsideApplicationInsights` registered, that one line also records the failure. There is no `RecordTo` at the HTTP endpoint.
+
 MediatR hosts can publish every error in a failed result, in order, and read them back from a scoped collector:
 
 ```csharp

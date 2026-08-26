@@ -16,10 +16,13 @@ builder.Services.AddOffsideAspNetCore();
 ```csharp
 builder.Services.AddOffsideAspNetCore(options =>
 {
-    options.LogUnexpected = false;
-    options.OnProblem = (problem, errors, http) => { /* your telemetry */ };
+    options.LegacyAliases = LegacyProblemAliases.MessageReasonAndTechnicalDetail;
+    options.TelemetryProperties = (problem, errors, http) =>
+        new Dictionary<string, string> { ["Operation"] = http.Request.Path };
 });
 ```
+
+When `IDomainErrorRecorder` is registered (`AddOffsideOpenTelemetry` or `AddOffsideApplicationInsights`), every failure that goes through this pipeline is recorded once. `OnProblem` is not telemetry.
 
 ## Minimal APIs
 
@@ -162,7 +165,7 @@ When the winning kind is `Unexpected`:
 1. Every unexpected error's `detail` is replaced with the generic `unexpected` message from the catalog — both the top-level `detail` and the entries in `errors`.
 2. Every unexpected error's `errorCode` is forced to `UNEXPECTED`.
 3. The real detail appears in `debug` **only** when `ExposeExceptionDetails` is enabled.
-4. The failure is logged through `ILoggerFactory` under the category `Offside.AspNetCore`, together with the `traceId`, unless `LogUnexpected` is `false`.
+4. The failure is logged through `ILoggerFactory` under the category `Offside.AspNetCore`, together with the `traceId`, unless `LogUnexpected` is `false`. When a recorder is registered, this line defaults off so a 500 is not duplicated. Set `LogUnexpected = true` to keep both.
 
 ```csharp
 return Result.Failure(Error.Unexpected(ex.ToString()));
@@ -208,28 +211,44 @@ Or construct it directly at the call site (this form has no DI hooks unless you 
 result.ToHttpResult(resolver, culture: null, new OffsideAspNetCoreOptions { ExposeExceptionDetails = false });
 ```
 
+## Recording failures
+
+The host configures the recorder once. `ToHttpResult`, `ToActionResult`, and `SendOffsideAsync` do the rest — there is no `RecordTo` at the HTTP call site. Workers and MediatR handlers without `HttpContext` still call `RecordTo`.
+
+Extra dimensions (an operation name, a tenant) come from `TelemetryProperties`. The pipeline always writes `HttpStatus`. Offside dimensions still win inside the recorder.
+
+`OnProblem` does not emit telemetry. It remains a host hook for anything else that should run after the document is built.
+
+## Legacy aliases
+
+Hosts that cannot change the client yet can flatten the old field names onto the document:
+
+```csharp
+builder.Services.AddOffsideAspNetCore(options =>
+    options.LegacyAliases = LegacyProblemAliases.MessageReasonAndTechnicalDetail);
+```
+
+That adds `message` (= `detail`), per-item `name` (= `field`) and `reason` (= `detail`), and `technicalDetail` when diagnostic detail is already being exposed (`debug`, or the resolved detail under `ExposeExceptionDetails`). `CustomizeProblem` stays for rarer extensions.
+
 ## Customizing the document and observing failures
 
-`CustomizeProblem` runs after the document is built. Core properties stay init-only; add legacy or host-specific fields through `Extensions` (and `Item.Extensions`). Keep values JSON-safe. A throwing callback is logged under `Offside.AspNetCore` and the problem document is still written.
-
-`OnProblem` runs next, with the `HttpContext`. Use it for a single host telemetry event. Set `LogUnexpected` to `false` when this callback owns logging, otherwise a 500 is logged twice. Leaving both `LogUnexpected` false and `OnProblem` unset means a 500 is silent. 503 and 504 are not logged by Offside; observe them in `OnProblem` if you need to.
+`CustomizeProblem` runs after the document is built. Core properties stay init-only; add host-specific fields through `Extensions` (and `Item.Extensions`). Keep values JSON-safe. A throwing callback is logged under `Offside.AspNetCore` and the problem document is still written.
 
 ```csharp
 builder.Services.AddOffsideAspNetCore(options =>
 {
-    options.LogUnexpected = false;
     options.CustomizeProblem = (problem, errors) =>
     {
-        problem.Extensions["message"] = problem.Detail;
+        problem.Extensions["correlation"] = "…";
     };
     options.OnProblem = (problem, errors, http) =>
     {
-        // one event, constant template
+        // host-specific work — not domain-error telemetry
     };
 });
 ```
 
-The FastEndpoints validation `ResponseBuilder` uses the same pipeline, so hooks and the 32-hex `traceId` apply there too.
+The FastEndpoints validation `ResponseBuilder` uses the same pipeline, so hooks, aliases, and the 32-hex `traceId` apply there too.
 
 ## Cultures
 
@@ -243,11 +262,11 @@ See [Messages and cultures](messages.md) for catalog resolution.
 
 | Method | Culture | Options |
 |---|---|---|
-| `ToHttpResult(resolver, exposeExceptionDetails?)` | `CurrentUICulture` | flag |
-| `ToHttpResult(resolver, culture, exposeExceptionDetails?)` | explicit | flag |
+| `ToHttpResult(resolver, exposeExceptionDetails?)` | `CurrentUICulture` | flag — **obsolete**, builds empty options |
+| `ToHttpResult(resolver, culture, exposeExceptionDetails?)` | explicit | flag — **obsolete**, builds empty options |
 | `ToHttpResult(resolver, culture?, options)` | explicit or `Accept-Language` | object |
-| `ToHttpResult(httpContext)` | `Accept-Language` | from DI |
-| `ToActionResult(resolver, culture, exposeExceptionDetails?)` | explicit | flag |
+| `ToHttpResult(httpContext)` | `Accept-Language` | from DI; throws if `AddOffsideAspNetCore` was not called |
+| `ToActionResult(resolver, culture, exposeExceptionDetails?)` | explicit | flag — **obsolete**, builds empty options |
 | `ToActionResult(resolver, culture?, options)` | explicit or `Accept-Language` | object |
 
 Each row exists for both `Result` and `Result<T>`, with one exception: **there is no `ToActionResult(resolver, exposeExceptionDetails?)` for the non-generic `Result`.** The generic form has it; the unit form does not. Pass a culture explicitly, or pass `null` through the options overload to fall back to `Accept-Language`.

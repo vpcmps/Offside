@@ -8,8 +8,9 @@ namespace Offside.Refit;
 /// </summary>
 /// <remarks>
 /// The mapping mirrors what the dependency said — a 404 from the dependency becomes
-/// <see cref="ErrorKind.NotFound"/>. Deciding whether that should surface to your own caller,
-/// or be folded into <see cref="ErrorKind.ServiceUnavailable"/>, is the calling code's job.
+/// <see cref="ErrorKind.NotFound"/>. Whether that surfaces to your own caller is
+/// <see cref="OffsideRefitOptions.InboundStatus"/>: the default folds 4xx kinds into
+/// <see cref="ErrorKind.ServiceUnavailable"/>.
 /// </remarks>
 public static class OffsideRefit
 {

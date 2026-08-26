@@ -33,10 +33,12 @@ public static class RefitOffsideExtensions
         {
             var fromBody = ProblemDetailsReader.Read(exception.Content, exception.StatusCode, requestUri, resolved);
             if (fromBody is { Count: > 0 })
-                return fromBody;
+                return ApplyInboundStatus(fromBody, resolved);
         }
 
-        return new[] { FromStatus(exception.StatusCode, requestUri, exception.ReasonPhrase, resolved) };
+        return ApplyInboundStatus(
+            new[] { FromStatus(exception.StatusCode, requestUri, exception.ReasonPhrase, resolved) },
+            resolved);
     }
 
     /// <summary>Maps a failed Refit call to its primary error — the first one reported.</summary>
@@ -78,10 +80,15 @@ public static class RefitOffsideExtensions
             throw new ArgumentNullException(nameof(exception));
 
         var resolved = options ?? OffsideRefitOptions.Default;
-        return Error.Custom(
-            resolved.Code(OffsideRefit.CodeSuffix(ErrorKind.ServiceUnavailable)),
-            ErrorKind.ServiceUnavailable,
-            new { api = resolved.ApiName, reason = exception.Message });
+        return ApplyInboundStatus(
+            new[]
+            {
+                Error.Custom(
+                    resolved.Code(OffsideRefit.CodeSuffix(ErrorKind.ServiceUnavailable)),
+                    ErrorKind.ServiceUnavailable,
+                    new { api = resolved.ApiName, reason = exception.Message })
+            },
+            resolved)[0];
     }
 
     internal static Error Timeout(OffsideRefitOptions options, Uri? requestUri, string? reason) =>
@@ -108,4 +115,42 @@ public static class RefitOffsideExtensions
                 reason
             });
     }
+
+    internal static IReadOnlyList<Error> ApplyInboundStatus(
+        IReadOnlyList<Error> errors,
+        OffsideRefitOptions options)
+    {
+        if (options.InboundStatus != InboundStatusMapping.CollapseClientErrors)
+            return errors;
+
+        var collapsed = new Error[errors.Count];
+        for (var index = 0; index < errors.Count; index++)
+        {
+            var error = errors[index];
+            collapsed[index] = IsClientError(error.Kind) ? Collapse(error, options) : error;
+        }
+
+        return collapsed;
+    }
+
+    private static Error Collapse(Error error, OffsideRefitOptions options)
+    {
+        var arguments = new Dictionary<string, object?>();
+        foreach (var pair in error.Arguments)
+            arguments[pair.Key] = pair.Value;
+
+        arguments["originalKind"] = error.Kind.ToString();
+        arguments["originalCode"] = error.Code;
+        arguments["originalErrorCode"] = error.ErrorCode;
+
+        return Error.Custom(
+            options.Code(OffsideRefit.CodeSuffix(ErrorKind.ServiceUnavailable)),
+            ErrorKind.ServiceUnavailable,
+            arguments,
+            error.Field,
+            Error.DefaultErrorCode(ErrorKind.ServiceUnavailable));
+    }
+
+    private static bool IsClientError(ErrorKind kind) => kind is not (
+        ErrorKind.Unexpected or ErrorKind.ServiceUnavailable or ErrorKind.Timeout);
 }

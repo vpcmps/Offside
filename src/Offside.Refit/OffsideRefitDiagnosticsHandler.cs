@@ -40,11 +40,16 @@ public sealed class OffsideRefitDiagnosticsHandler : DelegatingHandler
 
             if (!response.IsSuccessStatusCode)
             {
-                _observer.Observe(RefitOffsideExtensions.FromStatus(
-                    response.StatusCode,
-                    request.RequestUri,
-                    response.ReasonPhrase,
-                    _options));
+                _observer.Observe(RefitOffsideExtensions.ApplyInboundStatus(
+                    new[]
+                    {
+                        RefitOffsideExtensions.FromStatus(
+                            response.StatusCode,
+                            request.RequestUri,
+                            response.ReasonPhrase,
+                            _options)
+                    },
+                    _options)[0]);
             }
 
             return response;

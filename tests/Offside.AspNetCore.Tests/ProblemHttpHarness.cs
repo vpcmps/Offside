@@ -17,7 +17,7 @@ internal static class ProblemHttpHarness
     };
 
     internal static Task<ProblemPayload> Execute(Result result, bool expose = false) =>
-        Execute(result.ToHttpResult(Resolver, CultureInfo.InvariantCulture, exposeExceptionDetails: expose));
+        Execute(result, new OffsideAspNetCoreOptions { ExposeExceptionDetails = expose });
 
     internal static Task<ProblemPayload> Execute(Result result, OffsideAspNetCoreOptions options) =>
         Execute(result, options, configure: null);

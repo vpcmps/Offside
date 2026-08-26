@@ -100,7 +100,10 @@ public sealed class ProblemDetailsTests
     public async Task ToActionResult_writes_problem_json()
     {
         var result = Result.Failure(Error.NotFound("order", 1));
-        var action = result.ToActionResult(ProblemHttpHarness.Resolver, CultureInfo.InvariantCulture);
+        var action = result.ToActionResult(
+            ProblemHttpHarness.Resolver,
+            CultureInfo.InvariantCulture,
+            new OffsideAspNetCoreOptions());
 
         var httpContext = new DefaultHttpContext();
         httpContext.Response.Body = new MemoryStream();
@@ -114,7 +117,10 @@ public sealed class ProblemDetailsTests
     public async Task ToActionResultT_writes_problem_json_on_failure()
     {
         var result = Result<int>.Failure(Error.NotFound("order", 1));
-        var action = result.ToActionResult(ProblemHttpHarness.Resolver, CultureInfo.InvariantCulture);
+        var action = result.ToActionResult(
+            ProblemHttpHarness.Resolver,
+            CultureInfo.InvariantCulture,
+            new OffsideAspNetCoreOptions());
 
         var httpContext = new DefaultHttpContext();
         httpContext.Response.Body = new MemoryStream();
@@ -129,7 +135,10 @@ public sealed class ProblemDetailsTests
     public void ToActionResultT_returns_Ok_on_success()
     {
         var result = Result<int>.Success(42);
-        var action = result.ToActionResult(ProblemHttpHarness.Resolver, CultureInfo.InvariantCulture);
+        var action = result.ToActionResult(
+            ProblemHttpHarness.Resolver,
+            CultureInfo.InvariantCulture,
+            new OffsideAspNetCoreOptions());
 
         var ok = Assert.IsType<OkObjectResult>(action);
         Assert.Equal(42, ok.Value);

@@ -89,6 +89,28 @@ public readonly struct Result
         return errors.Count == 0 ? Success() : Failure(errors);
     }
 
+    /// <summary>
+    /// Records one entry per error, in result order. A successful result records nothing.
+    /// HTTP hosts that already call <c>ToHttpResult</c> or <c>SendOffsideAsync</c> do not need
+    /// this — the pipeline records when an <see cref="IDomainErrorRecorder"/> is registered.
+    /// </summary>
+    /// <param name="recorder">The recorder to write to.</param>
+    /// <param name="properties">Extra dimensions merged into every entry.</param>
+    /// <returns>The original result, so this can sit in a chain.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="recorder"/> is <see langword="null"/>.</exception>
+    public Result RecordTo(
+        IDomainErrorRecorder recorder,
+        IReadOnlyDictionary<string, string>? properties = null)
+    {
+        if (recorder is null)
+            throw new ArgumentNullException(nameof(recorder));
+
+        foreach (var error in Errors)
+            recorder.Record(error, properties);
+
+        return this;
+    }
+
     internal static IReadOnlyList<Error> SnapshotErrors(IEnumerable<Error> errors)
     {
         var copy = errors.ToArray();
