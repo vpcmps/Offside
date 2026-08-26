@@ -5,6 +5,7 @@
     <AssemblyName>Offside.ApplicationInsights</AssemblyName>
     <PackageId>Offside.ApplicationInsights</PackageId>
     <Description>Application Insights telemetry for Offside domain errors. Catch it before the whistle.</Description>
+    <PackageTags>$(PackageTags);application-insights;telemetry;observability;azure-monitor;logging</PackageTags>
     <IsPackable>true</IsPackable>
   </PropertyGroup>
   <ItemGroup>

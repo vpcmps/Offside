@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-08-26
+
 ### Added
 
 - Optional `Offside.Testing` package: fluent assertions over `Result`, `Result<T>`, `Error`, and JSON message catalogs, with no test-framework dependency (failures throw `OffsideAssertionException`, which xUnit, NUnit, MSTest and TUnit all report as a failed test). Entry points are named `ShouldHaveError` rather than `Should()` so the package coexists with FluentAssertions and Shouldly. `OffsideCatalog` reads catalogs directly, making a missing code distinguishable from a template equal to the code, and detecting `{token}` values no argument fills.
@@ -51,6 +53,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Initial `Offside`, `Offside.AspNetCore`, and `Offside.Tool` packages.
 
-[Unreleased]: https://github.com/vpcmps/Offside/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/vpcmps/Offside/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/vpcmps/Offside/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/vpcmps/Offside/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/vpcmps/Offside/releases/tag/v0.1.0

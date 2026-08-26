@@ -4,6 +4,7 @@
     <RootNamespace>Offside.AspNetCore</RootNamespace>
     <PackageId>Offside.AspNetCore</PackageId>
     <Description>ASP.NET Core Problem Details mapping for Offside Results. Catch it before the whistle.</Description>
+    <PackageTags>$(PackageTags);aspnetcore;problem-details;minimal-api;mvc</PackageTags>
     <IsPackable>true</IsPackable>
   </PropertyGroup>
   <ItemGroup>

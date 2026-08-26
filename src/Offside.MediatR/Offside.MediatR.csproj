@@ -5,6 +5,7 @@
     <AssemblyName>Offside.MediatR</AssemblyName>
     <PackageId>Offside.MediatR</PackageId>
     <Description>MediatR domain notification integration for Offside Results. Catch it before the whistle.</Description>
+    <PackageTags>$(PackageTags);mediatr;notifications;cqrs</PackageTags>
     <IsPackable>true</IsPackable>
   </PropertyGroup>
   <ItemGroup>

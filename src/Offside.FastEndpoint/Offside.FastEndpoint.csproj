@@ -5,6 +5,7 @@
     <AssemblyName>Offside.FastEndpoint</AssemblyName>
     <PackageId>Offside.FastEndpoint</PackageId>
     <Description>FastEndpoints integration for Offside Problem Details. The domain called offside.</Description>
+    <PackageTags>$(PackageTags);fastendpoints;problem-details;openapi</PackageTags>
     <IsPackable>true</IsPackable>
   </PropertyGroup>
   <ItemGroup>

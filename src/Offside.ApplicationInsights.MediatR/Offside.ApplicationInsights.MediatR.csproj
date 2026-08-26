@@ -5,6 +5,7 @@
     <AssemblyName>Offside.ApplicationInsights.MediatR</AssemblyName>
     <PackageId>Offside.ApplicationInsights.MediatR</PackageId>
     <Description>Bridge that records Offside MediatR domain notifications in Application Insights. Catch it before the whistle.</Description>
+    <PackageTags>$(PackageTags);application-insights;telemetry;observability;mediatr</PackageTags>
     <IsPackable>true</IsPackable>
   </PropertyGroup>
   <ItemGroup>
