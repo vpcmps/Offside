@@ -29,11 +29,6 @@
         "resolved": "3.0.2",
         "contentHash": "oXbusR6iPq0xlqoikjdLvzh+wQDkMv9If58myz9MEzldS4nIcp442Btgs2sWbYWV+caEluMe2pQCZ0hUZgPiow=="
       },
-      "FluentValidation": {
-        "type": "Transitive",
-        "resolved": "11.11.0",
-        "contentHash": "cyIVdQBwSipxWG8MA3Rqox7iNbUNUTK5bfJi9tIdm4CAfH71Oo5ABLP4/QyrUwuakqpUEPGtE43BDddvEehuYw=="
-      },
       "Microsoft.Bcl.HashCode": {
         "type": "Transitive",
         "resolved": "6.0.0",
@@ -113,13 +108,6 @@
         "dependencies": {
           "Microsoft.Bcl.HashCode": "[6.0.0, )",
           "Microsoft.Extensions.DependencyInjection.Abstractions": "[8.0.2, )"
-        }
-      },
-      "offside.fluentvalidation": {
-        "type": "Project",
-        "dependencies": {
-          "FluentValidation": "[11.11.0, )",
-          "Offside": "[0.2.0, )"
         }
       },
       "offside.testing": {
@@ -157,11 +145,6 @@
         "resolved": "3.0.2",
         "contentHash": "oXbusR6iPq0xlqoikjdLvzh+wQDkMv9If58myz9MEzldS4nIcp442Btgs2sWbYWV+caEluMe2pQCZ0hUZgPiow=="
       },
-      "FluentValidation": {
-        "type": "Transitive",
-        "resolved": "11.11.0",
-        "contentHash": "cyIVdQBwSipxWG8MA3Rqox7iNbUNUTK5bfJi9tIdm4CAfH71Oo5ABLP4/QyrUwuakqpUEPGtE43BDddvEehuYw=="
-      },
       "Microsoft.Bcl.HashCode": {
         "type": "Transitive",
         "resolved": "6.0.0",
@@ -241,13 +224,6 @@
         "dependencies": {
           "Microsoft.Bcl.HashCode": "[6.0.0, )",
           "Microsoft.Extensions.DependencyInjection.Abstractions": "[8.0.2, )"
-        }
-      },
-      "offside.fluentvalidation": {
-        "type": "Project",
-        "dependencies": {
-          "FluentValidation": "[11.11.0, )",
-          "Offside": "[0.2.0, )"
         }
       },
       "offside.testing": {

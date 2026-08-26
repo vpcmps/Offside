@@ -25,7 +25,8 @@ public sealed class SkillInstaller
         "offside-fastendpoint",
         "offside-implementation",
         "offside-refactoring",
-        "offside-azure-app-configuration"
+        "offside-azure-app-configuration",
+        "offside-testing"
     ];
 
     private static readonly string[] AgentRoots =

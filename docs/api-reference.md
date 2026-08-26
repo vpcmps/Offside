@@ -403,6 +403,75 @@ public static class OffsideResultSendExtensions
 
 `UseOffside` sets the validation `ResponseBuilder` to `OffsideProblem`, `ProducesMetadataType` to `typeof(OffsideProblem)`, content type `application/problem+json`, and registers `Produces<OffsideProblem>` for every `OffsideHttp.StatusCodes` value. `SendOffsideAsync` reuses `ToHttpResult`. See [FastEndpoints](fastendpoints.md).
 
+## Offside.Testing
+
+Namespace `Offside.Testing`. Targets `netstandard2.0`, `net8.0`, `net10.0`. No test-framework dependency.
+
+```csharp
+public sealed class OffsideAssertionException : Exception;
+
+public static class ResultAssertions
+{
+    public static Result ShouldBeSuccess(this Result result);
+    public static Result ShouldBeFailure(this Result result);
+    public static ErrorAssertion<Result> ShouldHaveError(this Result result, string code);
+    public static ErrorAssertion<Result> ShouldHaveOnlyError(this Result result, string code);
+    public static Result ShouldHaveErrorsInOrder(this Result result, params string[] codes);
+    public static Result ShouldHaveErrorCount(this Result result, int count);
+}
+
+public static class ResultOfTAssertions
+{
+    public static SuccessAssertion<T> ShouldBeSuccess<T>(this Result<T> result);
+    public static Result<T> ShouldBeFailure<T>(this Result<T> result);
+    public static ErrorAssertion<Result<T>> ShouldHaveError<T>(this Result<T> result, string code);
+    public static ErrorAssertion<Result<T>> ShouldHaveOnlyError<T>(this Result<T> result, string code);
+    public static Result<T> ShouldHaveErrorsInOrder<T>(this Result<T> result, params string[] codes);
+    public static Result<T> ShouldHaveErrorCount<T>(this Result<T> result, int count);
+}
+
+public sealed class ErrorAssertion<TResult>
+{
+    public Error Subject { get; }
+    public TResult And { get; }
+
+    public ErrorAssertion<TResult> WithKind(ErrorKind kind);
+    public ErrorAssertion<TResult> WithErrorCode(string errorCode);
+    public ErrorAssertion<TResult> ForField(string? field);
+    public ErrorAssertion<TResult> WithArgument(string name, object? value);
+    public ErrorAssertion<TResult> WithMessage(IErrorMessageResolver resolver, string message);
+    public ErrorAssertion<TResult> WithMessage(IErrorMessageResolver resolver, CultureInfo culture, string message);
+}
+
+public sealed class SuccessAssertion<T>
+{
+    public T Subject { get; }
+    public Result<T> And { get; }
+
+    public SuccessAssertion<T> WithValue(T value);
+    public SuccessAssertion<T> WithValue(Func<T, bool> predicate, string? description = null);
+}
+
+public sealed class OffsideCatalog
+{
+    public string Source { get; }
+    public IReadOnlyCollection<string> Codes { get; }
+
+    public static OffsideCatalog FromFile(string path);
+    public static OffsideCatalog FromJson(string json, string? source = null);
+    public static OffsideCatalog FromStream(Stream json, string? source = null);
+    public static OffsideCatalog FromAssembly(Assembly assembly, string resourceName);
+
+    public OffsideCatalog ShouldDefine(string code);
+    public OffsideCatalog ShouldDefineAll(params string[] codes);
+    public OffsideCatalog ShouldResolve(Error error);
+    public OffsideCatalog ShouldResolveAll(params Error[] errors);
+    public OffsideCatalog ShouldDefineSameCodesAs(OffsideCatalog other);
+}
+```
+
+Every assertion throws `OffsideAssertionException` carrying the actual contents of the subject. `ShouldHaveError` is the default choice; `ShouldHaveOnlyError` also fails on an extra error, and `ShouldHaveErrorsInOrder` pins ordering that comes from `Result.Combine` argument order or FluentValidation rule declaration order. `OffsideCatalog` reads the JSON directly, so a missing code is distinguishable from a template equal to the code. See the [Testing guide](testing.md).
+
 ## Offside.Tool
 
 Namespace `Offside.Tool`.

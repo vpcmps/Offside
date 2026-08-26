@@ -1,6 +1,7 @@
 using FluentValidation;
 using FluentValidation.Results;
 using Offside.FluentValidation;
+using Offside.Testing;
 using Xunit;
 
 namespace Offside.FluentValidation.Tests;
@@ -75,7 +76,7 @@ public sealed class FluentValidationMappingTests
         var result = new ValidationResult();
 
         Assert.Empty(result.ToOffsideErrors());
-        Assert.True(result.ToResult().IsSuccess);
+        result.ToResult().ShouldBeSuccess();
     }
 
     [Fact]
@@ -88,7 +89,7 @@ public sealed class FluentValidationMappingTests
 
         var mapped = result.ToResult();
 
-        Assert.True(mapped.IsFailure);
+        mapped.ShouldBeFailure();
         Assert.Equal("email.taken", mapped.Errors[0].Code);
     }
 

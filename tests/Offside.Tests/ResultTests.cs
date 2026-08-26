@@ -1,4 +1,5 @@
 using Offside;
+using Offside.Testing;
 using Xunit;
 
 namespace Offside.Tests;
@@ -30,7 +31,7 @@ public sealed class ResultTests
     {
         var result = default(Result);
 
-        Assert.True(result.IsSuccess);
+        result.ShouldBeSuccess();
         Assert.Empty(result.Errors);
     }
 
@@ -39,7 +40,7 @@ public sealed class ResultTests
     {
         var result = default(Result<int>);
 
-        Assert.True(result.IsSuccess);
+        result.ShouldBeSuccess();
         Assert.Equal(0, result.Value);
         Assert.True(result.TryGetValue(out var value));
         Assert.Equal(0, value);
@@ -50,7 +51,7 @@ public sealed class ResultTests
     {
         var result = Result<int>.Failure(Error.NotFound("order", 1));
 
-        Assert.True(result.IsFailure);
+        result.ShouldBeFailure();
         Assert.Throws<InvalidOperationException>(() => _ = result.Value);
     }
 
@@ -68,7 +69,7 @@ public sealed class ResultTests
     {
         var result = Result<int>.Success(7);
 
-        Assert.True(result.IsSuccess);
+        result.ShouldBeSuccess();
         Assert.Empty(result.Errors);
         Assert.True(result.TryGetValue(out var value));
         Assert.Equal(7, value);

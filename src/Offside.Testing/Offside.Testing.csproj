@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net8.0;net10.0</TargetFrameworks>
+    <RootNamespace>Offside.Testing</RootNamespace>
+    <AssemblyName>Offside.Testing</AssemblyName>
+    <PackageId>Offside.Testing</PackageId>
+    <Description>Fluent assertions for Offside Results, Errors and message catalogs. No test-framework dependency. Catch it before the whistle.</Description>
+    <PackageTags>$(PackageTags);testing;assertions;unit-testing</PackageTags>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Offside\Offside.csproj" />
+  </ItemGroup>
+</Project>

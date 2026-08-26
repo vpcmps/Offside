@@ -10,5 +10,6 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
     <PackageReference Include="MediatR" Version="12.0.1" />
     <ProjectReference Include="..\..\src\Offside.MediatR\Offside.MediatR.csproj" />
+    <ProjectReference Include="..\..\src\Offside.Testing\Offside.Testing.csproj" />
   </ItemGroup>
 </Project>

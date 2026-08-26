@@ -22,6 +22,7 @@ dotnet add package Offside.AspNetCore               # ASP.NET hosts only
 dotnet add package Offside.FluentValidation         # FluentValidation → Error
 dotnet add package Offside.FastEndpoint             # FastEndpoints hosts only
 dotnet add package Offside.AzureAppConfiguration    # Azure App Configuration catalogs
+dotnet add package Offside.Testing                  # assertions for unit tests
 ```
 
 `Offside.MediatR` is not published to NuGet yet. Its source and local package remain available; see [Pack locally](#pack-locally) when using MediatR before publication.
@@ -33,11 +34,11 @@ dotnet tool install -g Offside.Tool
 offside init
 ```
 
-`offside init` copies nine skills into `.cursor/skills`, `.agents/skills`, and `.claude/skills`, and writes `errors/errors.json` plus `errors/errors.pt-BR.json`. The setup, implementation, and refactoring skills ask the user to select a message source (JSON, Azure, or custom), an exposure mode (domain only, ASP.NET Core, or FastEndpoints), and optional FluentValidation. Setup also offers optional MediatR domain notifications. Use `--dir <path>` and `--force` as needed.
+`offside init` copies ten skills into `.cursor/skills`, `.agents/skills`, and `.claude/skills`, and writes `errors/errors.json` plus `errors/errors.pt-BR.json`. The setup, implementation, and refactoring skills ask the user to select a message source (JSON, Azure, or custom), an exposure mode (domain only, ASP.NET Core, or FastEndpoints), and optional FluentValidation. Setup also offers optional MediatR domain notifications. Use `--dir <path>` and `--force` as needed.
 
 ## Compatibility and status
 
-`Offside`, `Offside.FluentValidation`, `Offside.AzureAppConfiguration`, and `Offside.MediatR` support `netstandard2.0`, `net8.0`, and `net10.0`. `Offside.AspNetCore` and `Offside.FastEndpoint` support `net8.0` and `net10.0`; `Offside.Tool` runs on `net8.0`. `Offside.MediatR` supports MediatR `12.0.1` through `14.x`.
+`Offside`, `Offside.FluentValidation`, `Offside.AzureAppConfiguration`, `Offside.MediatR`, and `Offside.Testing` support `netstandard2.0`, `net8.0`, and `net10.0`. `Offside.AspNetCore` and `Offside.FastEndpoint` support `net8.0` and `net10.0`; `Offside.Tool` runs on `net8.0`. `Offside.MediatR` supports MediatR `12.0.1` through `14.x`.
 
 The project is pre-1.0. Minor releases may include breaking changes. Releases follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html), and notable changes are recorded in [CHANGELOG.md](CHANGELOG.md).
 
@@ -51,6 +52,7 @@ The project is pre-1.0. Minor releases may include breaking changes. Releases fo
 | `Offside.FastEndpoint` | [![NuGet](https://img.shields.io/nuget/v/Offside.FastEndpoint?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside.FastEndpoint) | `UseOffside`, `SendOffsideAsync`, OpenAPI expected errors |
 | `Offside.AzureAppConfiguration` | [![NuGet](https://img.shields.io/nuget/v/Offside.AzureAppConfiguration?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside.AzureAppConfiguration) | Dynamic resolver for catalogs loaded by Azure App Configuration |
 | `Offside.MediatR` | Publication pending | Publishes failed results as domain notifications and provides a scoped collector |
+| `Offside.Testing` | Publication pending | Fluent assertions for `Result`, `Error`, and message catalogs, with no test-framework dependency |
 | `Offside.Tool` | [![NuGet](https://img.shields.io/nuget/v/Offside.Tool?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside.Tool) | `offside init` — skills and catalog templates |
 
 The Core package has no ASP.NET or MediatR dependency.
@@ -120,7 +122,7 @@ Full guides: [getting started](https://github.com/vpcmps/Offside/blob/master/doc
 dotnet pack -c Release -o artifacts
 ```
 
-Produces `Offside`, `Offside.AspNetCore`, `Offside.FluentValidation`, `Offside.FastEndpoint`, `Offside.AzureAppConfiguration`, `Offside.MediatR`, and `Offside.Tool` nupkgs (plus snupkgs).
+Produces `Offside`, `Offside.AspNetCore`, `Offside.FluentValidation`, `Offside.FastEndpoint`, `Offside.AzureAppConfiguration`, `Offside.MediatR`, `Offside.Testing`, and `Offside.Tool` nupkgs (plus snupkgs).
 
 ## CI and publish
 

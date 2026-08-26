@@ -9,6 +9,7 @@
       <PackageReference Include="xunit.runner.visualstudio" Version="3.0.2" />
       <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
       <ProjectReference Include="..\..\src\Offside\Offside.csproj" />
+      <ProjectReference Include="..\..\src\Offside.Testing\Offside.Testing.csproj" />
       <EmbeddedResource Include="test-catalog.json" />
       <None Include="..\..\src\Offside\errors.json" CopyToOutputDirectory="PreserveNewest" Link="default-errors.json" />
     </ItemGroup>

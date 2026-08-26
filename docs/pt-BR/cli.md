@@ -27,7 +27,7 @@ offside init [--dir <caminho>] [--force]
 
 ## O que ele escreve
 
-Nove skills, em cada um dos três diretórios de agente:
+Dez skills, em cada um dos três diretórios de agente:
 
 ```
 .cursor/skills/offside-setup/              .agents/skills/offside-setup/              .claude/skills/offside-setup/
@@ -38,6 +38,7 @@ Nove skills, em cada um dos três diretórios de agente:
 .cursor/skills/offside-fastendpoint/       .agents/skills/offside-fastendpoint/       .claude/skills/offside-fastendpoint/
 .cursor/skills/offside-implementation/     .agents/skills/offside-implementation/     .claude/skills/offside-implementation/
 .cursor/skills/offside-refactoring/        .agents/skills/offside-refactoring/        .claude/skills/offside-refactoring/
+.cursor/skills/offside-testing/            .agents/skills/offside-testing/            .claude/skills/offside-testing/
 .cursor/skills/offside-azure-app-configuration/  .agents/skills/offside-azure-app-configuration/  .claude/skills/offside-azure-app-configuration/
 ```
 
@@ -51,6 +52,7 @@ Nove skills, em cada um dos três diretórios de agente:
 | `offside-fastendpoint` | `UseOffside`, `SendOffsideAsync`, `DontProduceOffside` |
 | `offside-implementation` | Implementação de features ponta a ponta com as integrações Offside selecionadas |
 | `offside-refactoring` | Migração incremental para Offside preservando o comportamento público |
+| `offside-testing` | Asserções sobre `Result`, `Error` e catálogos de mensagens em testes |
 | `offside-azure-app-configuration` | Catálogos dinâmicos e refresh pelo Azure App Configuration |
 
 ### Seleção de capacidades

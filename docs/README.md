@@ -26,6 +26,7 @@ Domain errors as `Result`, not exceptions. The domain returns an `Error`; ASP.NE
 | [FastEndpoints](fastendpoints.md) | `UseOffside`, `SendOffsideAsync`, OpenAPI expected errors |
 | [MediatR integration](mediatr-guide.md) | Publish result errors as notifications, collect them per scope, and handle retries safely |
 | [Messages and cultures](messages.md) | Catalog format, culture fallback, `{token}` interpolation |
+| [Testing guide](testing.md) | Assert `Result`, `Error`, and message catalogs in unit tests |
 | [CLI](cli.md) | `offside init` — agent skills and catalog templates |
 | [API reference](api-reference.md) | Every public type and member, in one page |
 | [FAQ](faq.md) | Design decisions and common pitfalls |
@@ -73,6 +74,7 @@ app.MapGet("/orders/{id}", (string id, HttpContext http) => _orders.Get(id).ToHt
 | `Offside.FastEndpoint` | [![NuGet](https://img.shields.io/nuget/v/Offside.FastEndpoint?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside.FastEndpoint) | `net8.0`, `net10.0` | `UseOffside`, `SendOffsideAsync`, OpenAPI expected errors |
 | `Offside.AzureAppConfiguration` | [![NuGet](https://img.shields.io/nuget/v/Offside.AzureAppConfiguration?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside.AzureAppConfiguration) | `netstandard2.0`, `net8.0`, `net10.0` | Dynamic resolver for catalogs loaded by Azure App Configuration |
 | `Offside.MediatR` | [![NuGet](https://img.shields.io/nuget/v/Offside.MediatR?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside.MediatR) | `netstandard2.0`, `net8.0`, `net10.0` | MediatR notifications for failed results and a scoped collector |
+| `Offside.Testing` | Publication pending | `netstandard2.0`, `net8.0`, `net10.0` | Assertions for `Result`, `Error`, and message catalogs, with no test-framework dependency |
 | `Offside.Tool` | [![NuGet](https://img.shields.io/nuget/v/Offside.Tool?label=%20&logo=nuget)](https://www.nuget.org/packages/Offside.Tool) | `net8.0` | `offside init` — agent skills and catalog templates |
 
 The core package has no ASP.NET or MediatR dependency, so domain projects can reference it freely.

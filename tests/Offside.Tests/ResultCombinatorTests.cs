@@ -1,4 +1,5 @@
 using Offside;
+using Offside.Testing;
 using Xunit;
 
 namespace Offside.Tests;
@@ -16,7 +17,7 @@ public sealed class ResultCombinatorTests
                 return Result<string>.Success("x");
             });
 
-        Assert.True(result.IsFailure);
+        result.ShouldBeFailure();
         Assert.False(called);
         Assert.Equal("not_found", Assert.Single(result.Errors).Code);
     }
@@ -37,7 +38,7 @@ public sealed class ResultCombinatorTests
 
         var combined = Result.Combine(left, right);
 
-        Assert.True(combined.IsFailure);
+        combined.ShouldBeFailure();
         Assert.Equal(2, combined.Errors.Count);
         Assert.Equal("email", combined.Errors[0].Field);
         Assert.Equal("name", combined.Errors[1].Field);
@@ -50,6 +51,6 @@ public sealed class ResultCombinatorTests
             Result<int>.Success(1),
             Result<int>.Success(2));
 
-        Assert.True(combined.IsSuccess);
+        combined.ShouldBeSuccess();
     }
 }
