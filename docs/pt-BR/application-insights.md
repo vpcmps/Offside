@@ -30,7 +30,7 @@ Não registre este pacote e `Offside.OpenTelemetry` no mesmo host — são alter
 
 ## Registrar um result
 
-Num host HTTP, registre o recorder e chame `ToHttpResult` / `SendOffsideAsync`. O pipeline grava cada erro uma vez. `RecordTo` no endpoint é redundante.
+Num host HTTP, registre o recorder e chame `ToHttpResult` / `SendOffsideAsync`. O pipeline grava segundo `RecordMode` (um evento por erro por padrão). `RecordTo` no endpoint é redundante. Hosts que alertam por falha de requisição, não por cada campo, definem `RecordMode = ProblemRecordMode.PrimaryErrorOnly` no `AddOffsideAspNetCore`. `RecordTo` em worker ou handler MediatR é sempre um evento por erro.
 
 ```csharp
 app.MapPost("/orders/{id}/cancel", (string id, HttpContext http) =>

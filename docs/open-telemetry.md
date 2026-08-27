@@ -37,7 +37,7 @@ Do not register this package and `Offside.ApplicationInsights` in the same host 
 
 ## Record a result
 
-On an HTTP host, register the recorder and call `ToHttpResult` / `SendOffsideAsync`. The pipeline records each error once. `RecordTo` at the endpoint is redundant.
+On an HTTP host, register the recorder and call `ToHttpResult` / `SendOffsideAsync`. The pipeline records according to `RecordMode` (one event per error by default). `RecordTo` at the endpoint is redundant. Hosts that alert on request failure, not on each field, set `RecordMode = ProblemRecordMode.PrimaryErrorOnly` on `AddOffsideAspNetCore`. `RecordTo` on a worker or MediatR handler is always one event per error.
 
 ```csharp
 app.MapPost("/orders/{id}/cancel", (string id, HttpContext http) =>

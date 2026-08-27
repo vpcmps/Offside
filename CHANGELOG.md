@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- `OffsideAspNetCoreOptions.LegacyGeneralErrorName` (default `"generalErrors"`) for the brownfield `errors[].name` of a field-less error.
+- `OffsideAspNetCoreOptions.RecordMode` (`PerError` | `PrimaryErrorOnly`) so the HTTP pipeline can record one event per request failure instead of one per error.
+
+### Changed
+
+- With `LegacyAliases` on, a field-less error now writes `errors[].name` as `"generalErrors"` instead of omitting it. `Field` stays null.
+- `technicalDetail` no longer copies the business `detail`. It echoes `debug` only (Unexpected + `ExposeExceptionDetails`).
+- FastEndpoints `GeneralErrorsField` (`AddError`/`ThrowError` without a property) maps to `Field` null, so the alias emits `"generalErrors"` rather than `"GeneralErrors"`.
+- Documented dependency floors as a decision: `Offside.Refit` requires Refit `8.0` or later (`[8.0.0,16.0.0)`; Refit 5.x is unsupported). `Offside.FastEndpoint` requires FastEndpoints `8.3` or later. The FastEndpoints guide no longer says 7.x.
+
 ## [0.5.0] - 2026-08-26
 
 ### Added

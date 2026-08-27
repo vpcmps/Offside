@@ -48,7 +48,7 @@ public override Task HandleAsync(CancellationToken ct) =>
 
 `SendOffsideAsync` reuses `ToHttpResult`. If `IDomainErrorRecorder` is registered, the pipeline records the failure — do not call `RecordTo` at the endpoint.
 
-FluentValidation `.WithErrorCode` values are catalog keys (`Error.Code`). Screen routing uses `errorCode` (`VALIDATION`, `NOT_FOUND`, …).
+FluentValidation `.WithErrorCode` values are catalog keys (`Error.Code`). Screen routing uses `errorCode` (`VALIDATION`, `NOT_FOUND`, …). FastEndpoints `AddError`/`ThrowError` without a property set `PropertyName` to `"GeneralErrors"`; Offside maps that to `field: null`. With legacy aliases on, `errors[].name` is `"generalErrors"`.
 
 ## Do not
 

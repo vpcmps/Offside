@@ -114,13 +114,13 @@ internal static class OffsideProblemPipeline
 
         if (problem.Debug is not null)
             problem.Extensions["technicalDetail"] = problem.Debug;
-        else if (options.ExposeExceptionDetails)
-            problem.Extensions["technicalDetail"] = problem.Detail;
 
         foreach (var item in problem.Errors)
         {
             if (item.Field is not null)
                 item.Extensions["name"] = item.Field;
+            else if (!string.IsNullOrWhiteSpace(options.LegacyGeneralErrorName))
+                item.Extensions["name"] = options.LegacyGeneralErrorName;
             item.Extensions["reason"] = item.Detail;
         }
     }
@@ -149,8 +149,21 @@ internal static class OffsideProblemPipeline
                 problem.TraceId);
         }
 
-        foreach (var error in errors)
-            recorder.Record(error, extras);
+        switch (options.RecordMode)
+        {
+            case ProblemRecordMode.PrimaryErrorOnly:
+                recorder.Record(OffsideHttp.SelectPrimary(errors), extras);
+                break;
+            case ProblemRecordMode.PerError:
+                foreach (var error in errors)
+                    recorder.Record(error, extras);
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(
+                    nameof(options),
+                    options.RecordMode,
+                    "Unknown ProblemRecordMode.");
+        }
     }
 
     private static IReadOnlyDictionary<string, string> MergeTelemetryProperties(

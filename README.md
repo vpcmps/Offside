@@ -40,7 +40,7 @@ offside init
 
 ## Compatibility and status
 
-`Offside`, `Offside.FluentValidation`, `Offside.AzureAppConfiguration`, `Offside.MediatR`, `Offside.Testing`, `Offside.Refit`, `Offside.ApplicationInsights`, `Offside.ApplicationInsights.MediatR`, `Offside.OpenTelemetry`, and `Offside.OpenTelemetry.MediatR` support `netstandard2.0`, `net8.0`, and `net10.0`. `Offside.AspNetCore` and `Offside.FastEndpoint` support `net8.0` and `net10.0`; `Offside.Tool` runs on `net8.0`. `Offside.MediatR`, `Offside.ApplicationInsights.MediatR`, and `Offside.OpenTelemetry.MediatR` support MediatR `12.0.1` through `14.x`; `Offside.Refit` supports Refit `8.x` through `15.x`.
+`Offside`, `Offside.FluentValidation`, `Offside.AzureAppConfiguration`, `Offside.MediatR`, `Offside.Testing`, `Offside.Refit`, `Offside.ApplicationInsights`, `Offside.ApplicationInsights.MediatR`, `Offside.OpenTelemetry`, and `Offside.OpenTelemetry.MediatR` support `netstandard2.0`, `net8.0`, and `net10.0`. `Offside.AspNetCore` and `Offside.FastEndpoint` support `net8.0` and `net10.0`; `Offside.Tool` runs on `net8.0`. `Offside.MediatR`, `Offside.ApplicationInsights.MediatR`, and `Offside.OpenTelemetry.MediatR` support MediatR `12.0.1` through `14.x`; `Offside.Refit` supports Refit `8.x` through `15.x` (`[8.0.0,16.0.0)`; Refit 5.x is not supported); `Offside.FastEndpoint` requires FastEndpoints `8.3` or later.
 
 The project is pre-1.0. Minor releases may include breaking changes. Releases follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html), and notable changes are recorded in [CHANGELOG.md](CHANGELOG.md).
 

@@ -1,4 +1,3 @@
-using System.Globalization;
 using FluentValidation.Results;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,7 +28,7 @@ public static class OffsideValidationResponse
         ArgumentNullException.ThrowIfNull(failures);
         ArgumentNullException.ThrowIfNull(httpContext);
 
-        var errors = failures.ToOffsideErrors();
+        var errors = StripGeneralErrorsSentinel(failures, failures.ToOffsideErrors());
         if (errors.Count == 0)
             errors = [Error.Validation("request")];
 
@@ -39,4 +38,38 @@ public static class OffsideValidationResponse
 
         return OffsideProblemPipeline.Render(errors, resolver, httpContext, options);
     }
+
+    /// <summary>
+    /// FastEndpoints <c>AddError</c>/<c>ThrowError</c> without a property set
+    /// <c>PropertyName</c> to <c>GeneralErrors</c>. That is a sentinel, not a field.
+    /// </summary>
+    private static IReadOnlyList<Error> StripGeneralErrorsSentinel(
+        IReadOnlyList<ValidationFailure> failures,
+        IReadOnlyList<Error> errors)
+    {
+        if (errors.Count == 0)
+            return errors;
+
+        Error[]? copy = null;
+        for (var i = 0; i < errors.Count; i++)
+        {
+            if (!IsGeneralErrorsField(failures[i].PropertyName) || errors[i].Field is null)
+                continue;
+
+            copy ??= errors.ToArray();
+            var error = errors[i];
+            error.Arguments.TryGetValue("attemptedValue", out var attempted);
+            copy[i] = Error.Custom(
+                error.Code,
+                error.Kind,
+                new { attemptedValue = attempted },
+                field: null,
+                error.ErrorCode);
+        }
+
+        return copy ?? errors;
+    }
+
+    private static bool IsGeneralErrorsField(string? propertyName) =>
+        string.Equals(propertyName, "GeneralErrors", StringComparison.OrdinalIgnoreCase);
 }

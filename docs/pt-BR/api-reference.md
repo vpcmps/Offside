@@ -326,6 +326,8 @@ public sealed class OffsideAspNetCoreOptions
     public Action<OffsideProblem, IReadOnlyList<Error>, HttpContext>? OnProblem { get; set; }
     public Func<OffsideProblem, IReadOnlyList<Error>, HttpContext, IReadOnlyDictionary<string, string>>? TelemetryProperties { get; set; }
     public LegacyProblemAliases LegacyAliases { get; set; }  // None
+    public string? LegacyGeneralErrorName { get; set; }      // "generalErrors"
+    public ProblemRecordMode RecordMode { get; set; }        // PerError
     public Func<HttpContext, string>? ResolveTraceId { get; set; }
     public static OffsideAspNetCoreOptions FromEnvironment(IHostEnvironment environment);
 }
@@ -335,9 +337,15 @@ public enum LegacyProblemAliases
     None = 0,
     MessageReasonAndTechnicalDetail = 1
 }
+
+public enum ProblemRecordMode
+{
+    PerError = 0,
+    PrimaryErrorOnly = 1
+}
 ```
 
-`ExposeExceptionDetails` controla apenas o campo `debug`; o `detail` visível ao cliente em um 500 é sempre a mensagem genérica. `LogUnexpected` controla a linha built-in de `ILogger` para falhas `Unexpected` e assume desligada quando há um `IDomainErrorRecorder` registrado. `TelemetryProperties` é mesclado em toda gravação do pipeline (`HttpStatus` é sempre escrito). `LegacyAliases.MessageReasonAndTechnicalDetail` acrescenta `message`, `errors[].name`, `errors[].reason` e `technicalDetail`. `CustomizeProblem` pode acrescentar membros JSON achatados via `Extensions`; chaves reservadas são removidas. `OnProblem` é um gancho do host — não emite telemetria e não deve escrever no body da resposta. `ResolveTraceId` substitui o default de 32 hex de `Activity.TraceId`. As sobrecargas `bool exposeExceptionDetails` estão obsoletas e constroem options sem esses callbacks; os ganchos exigem o caminho `HttpContext` / DI ou um objeto de options explícito. `ToHttpResult(HttpContext)` lança `InvalidOperationException` nomeando `AddOffsideAspNetCore` quando o singleton está ausente.
+`ExposeExceptionDetails` controla apenas o campo `debug`; o `detail` visível ao cliente em um 500 é sempre a mensagem genérica. `LogUnexpected` controla a linha built-in de `ILogger` para falhas `Unexpected` e assume desligada quando há um `IDomainErrorRecorder` registrado. `TelemetryProperties` é mesclado em toda gravação do pipeline (`HttpStatus` é sempre escrito). `RecordMode` controla quantas vezes o pipeline chama `IDomainErrorRecorder` (`PerError` por padrão; `PrimaryErrorOnly` usa `SelectPrimary`). `LegacyAliases.MessageReasonAndTechnicalDetail` acrescenta `message`, `errors[].name`, `errors[].reason` e `technicalDetail`. `name` é `field` quando o erro tem um, senão `LegacyGeneralErrorName` (default `"generalErrors"`; null ou vazio omite `name`). `technicalDetail` só ecoa `debug`. `CustomizeProblem` pode acrescentar membros JSON achatados via `Extensions`; chaves reservadas são removidas. `OnProblem` é um gancho do host — não emite telemetria e não deve escrever no body da resposta. `ResolveTraceId` substitui o default de 32 hex de `Activity.TraceId`. As sobrecargas `bool exposeExceptionDetails` estão obsoletas e constroem options sem esses callbacks; os ganchos exigem o caminho `HttpContext` / DI ou um objeto de options explícito. `ToHttpResult(HttpContext)` lança `InvalidOperationException` nomeando `AddOffsideAspNetCore` quando o singleton está ausente.
 
 ### OffsideAspNetCoreServiceCollectionExtensions
 
@@ -451,7 +459,7 @@ public static class FluentValidationOffsideExtensions
 
 ## Offside.FastEndpoint
 
-Namespace `Offside.FastEndpoint`. Targets `net8.0`, `net10.0`.
+Namespace `Offside.FastEndpoint`. Targets `net8.0`, `net10.0`. Exige FastEndpoints `8.3` ou superior.
 
 ```csharp
 public static class OffsideFastEndpointExtensions
@@ -467,11 +475,11 @@ public static class OffsideResultSendExtensions
 }
 ```
 
-`UseOffside` define o `ResponseBuilder` de validação para `OffsideProblem`, `ProducesMetadataType` para `typeof(OffsideProblem)`, content type `application/problem+json`, e registra `Produces<OffsideProblem>` para cada valor de `OffsideHttp.StatusCodes`. `SendOffsideAsync` reusa `ToHttpResult`. Veja [FastEndpoints](fastendpoints.md).
+`UseOffside` define o `ResponseBuilder` de validação para `OffsideProblem`, `ProducesMetadataType` para `typeof(OffsideProblem)`, content type `application/problem+json`, e registra `Produces<OffsideProblem>` para cada valor de `OffsideHttp.StatusCodes`. `SendOffsideAsync` reusa `ToHttpResult`. `AddError`/`ThrowError` sem propriedade no FastEndpoints usam `GeneralErrorsField` (default `"GeneralErrors"`); o Offside trata isso como erro sem campo (`field: null`). Com aliases ligados, `errors[].name` é `"generalErrors"`. Veja [FastEndpoints](fastendpoints.md).
 
 ## Offside.Refit
 
-Namespace `Offside.Refit`. Alvos `netstandard2.0`, `net8.0`, `net10.0`.
+Namespace `Offside.Refit`. Alvos `netstandard2.0`, `net8.0`, `net10.0`. Suporta Refit `8.x` até `15.x` (`[8.0.0,16.0.0)`).
 
 ```csharp
 public static class OffsideRefit

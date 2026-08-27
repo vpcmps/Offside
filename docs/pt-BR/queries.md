@@ -31,6 +31,8 @@ traces
 | summarize count() by tostring(customDimensions["offside.kind"])
 ```
 
+Com o default `RecordMode.PerError` do pipeline HTTP, `count()` é erros, não requisições. Uma validação em cinco campos incrementa cinco vezes. `PrimaryErrorOnly` alinha a contagem a uma falha HTTP.
+
 ## Alertar em falhas inesperadas
 
 Dispare em `Unexpected`, não em todo erro gravado. Um 404 respondido corretamente é Information no mapa da biblioteca.

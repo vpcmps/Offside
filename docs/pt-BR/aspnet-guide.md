@@ -22,7 +22,7 @@ builder.Services.AddOffsideAspNetCore(options =>
 });
 ```
 
-Quando um `IDomainErrorRecorder` está registrado (`AddOffsideOpenTelemetry` ou `AddOffsideApplicationInsights`), toda falha que passa por este pipeline é gravada uma vez. `OnProblem` não é telemetria.
+Quando um `IDomainErrorRecorder` está registrado (`AddOffsideOpenTelemetry` ou `AddOffsideApplicationInsights`), o pipeline grava segundo `RecordMode` — um evento por erro por padrão, ou só o erro que dirige o status com `PrimaryErrorOnly`. `OnProblem` não é telemetria.
 
 ## Minimal APIs
 
@@ -217,6 +217,14 @@ O host configura o recorder uma vez. `ToHttpResult`, `ToActionResult` e `SendOff
 
 Dimensões extras (nome de operação, tenant) vêm de `TelemetryProperties`. O pipeline sempre grava `HttpStatus`. As dimensões do Offside ainda vencem dentro do recorder.
 
+O `RecordMode` default é `PerError`: N campos inválidos geram N traces, eventos de span e incrementos no counter. Hosts que alertam por falha de requisição, não por cada campo, optam por:
+
+```csharp
+options.RecordMode = ProblemRecordMode.PrimaryErrorOnly;
+```
+
+Isso reusa `OffsideHttp.SelectPrimary`. `RecordTo` em worker ou handler MediatR continua um evento por erro; o modo vale só no pipeline HTTP (`ToHttpResult`, `ToActionResult`, `SendOffsideAsync`).
+
 `OnProblem` não emite telemetria. Continua sendo um gancho do host para qualquer outra coisa que deva rodar depois que o documento é montado.
 
 ## Aliases legados
@@ -228,7 +236,7 @@ builder.Services.AddOffsideAspNetCore(options =>
     options.LegacyAliases = LegacyProblemAliases.MessageReasonAndTechnicalDetail);
 ```
 
-Isso acrescenta `message` (= `detail`), por item `name` (= `field`) e `reason` (= `detail`), e `technicalDetail` quando o detalhe de diagnóstico já está sendo exposto (`debug`, ou o detalhe resolvido com `ExposeExceptionDetails`). `CustomizeProblem` fica para extensões raras.
+Isso acrescenta `message` (= `detail`), por item `reason` (= `detail`), por item `name` (= `field` quando o erro tem um, senão `LegacyGeneralErrorName`, default `"generalErrors"` — o sentinela do FastEndpoints para erros não atribuíveis a um campo), e `technicalDetail` só quando `debug` está presente (Unexpected + `ExposeExceptionDetails`). Fora isso o campo é omitido; nunca copia o `detail` de negócio. Defina `LegacyGeneralErrorName` como null ou vazio para omitir `name` em erros sem campo. O `Field` canônico continua null — o sentinela é só o alias. `CustomizeProblem` fica para extensões raras.
 
 ## Customizando o documento e observando falhas
 

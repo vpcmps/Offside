@@ -10,7 +10,7 @@ dotnet add package Offside.AspNetCore
 dotnet add package Offside.FastEndpoint
 ```
 
-Targets: `net8.0`, `net10.0`. Depends on FastEndpoints 7.x.
+Targets: `net8.0`, `net10.0`. Requires FastEndpoints `8.3` or later.
 
 ## Startup
 
@@ -64,3 +64,5 @@ Success is 204 for `Result` and 200 with the value for `Result<T>`. Failure is t
 ## FluentValidation
 
 Use `.WithErrorCode("email.required")` to set the catalog key (`Error.Code`). The screen identifier for those errors is `VALIDATION`. See [FluentValidation](fluentvalidation.md).
+
+FastEndpoints `AddError` / `ThrowError` without a DTO property set `PropertyName` to `GeneralErrorsField` (default `"GeneralErrors"`). Offside treats that as a field-less error (`field: null`). Class-level FluentValidation (empty `PropertyName`) takes the same path. With `LegacyAliases` on, `errors[].name` is `"generalErrors"`, not `"GeneralErrors"`.

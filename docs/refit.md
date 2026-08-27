@@ -140,3 +140,7 @@ The handler reads the status code only — it leaves the response body untouched
 | `InboundStatus` | `CollapseClientErrors` | Folds 4xx kinds into `ServiceUnavailable` after mapping; `Mirror` keeps the dependency's kind |
 
 Options passed to a single `CallAsync` win over the registered defaults.
+
+## Refit versions
+
+The package supports Refit `8.x` through `15.x`. The NuGet dependency range is `[8.0.0,16.0.0)`. Refit 5.x is not supported.

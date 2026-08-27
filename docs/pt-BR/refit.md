@@ -140,3 +140,7 @@ O handler lê apenas o status — ele não toca no corpo da resposta, então o q
 | `InboundStatus` | `CollapseClientErrors` | Dobra kinds 4xx em `ServiceUnavailable` depois do mapeamento; `Mirror` preserva o kind da dependência |
 
 Opções passadas a um `CallAsync` específico vencem as registradas.
+
+## Versões do Refit
+
+O pacote suporta Refit `8.x` até `15.x`. O intervalo da dependência NuGet é `[8.0.0,16.0.0)`. Refit 5.x não é suportado.

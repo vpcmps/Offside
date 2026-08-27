@@ -353,6 +353,76 @@ public sealed class OffsideProblemPipelineTests
         Assert.Equal("email", doc.RootElement.GetProperty("errors")[0].GetProperty("reason").GetString());
     }
 
+    [Fact]
+    public async Task LegacyAliases_fieldless_error_uses_generalErrors_name()
+    {
+        var options = new OffsideAspNetCoreOptions
+        {
+            LegacyAliases = LegacyProblemAliases.MessageReasonAndTechnicalDetail
+        };
+
+        var (_, body) = await ProblemHttpHarness.ExecuteRaw(
+            Result.Failure(Error.NotFound("order", 1)),
+            options);
+
+        using var doc = JsonDocument.Parse(body);
+        Assert.Equal("generalErrors", doc.RootElement.GetProperty("errors")[0].GetProperty("name").GetString());
+        Assert.False(doc.RootElement.GetProperty("errors")[0].TryGetProperty("field", out var field)
+            && field.ValueKind is JsonValueKind.String);
+    }
+
+    [Fact]
+    public async Task LegacyAliases_empty_general_error_name_omits_name_when_fieldless()
+    {
+        var options = new OffsideAspNetCoreOptions
+        {
+            LegacyAliases = LegacyProblemAliases.MessageReasonAndTechnicalDetail,
+            LegacyGeneralErrorName = ""
+        };
+
+        var (_, body) = await ProblemHttpHarness.ExecuteRaw(
+            Result.Failure(Error.Conflict("order")),
+            options);
+
+        using var doc = JsonDocument.Parse(body);
+        Assert.False(doc.RootElement.GetProperty("errors")[0].TryGetProperty("name", out _));
+    }
+
+    [Fact]
+    public async Task LegacyAliases_omit_technicalDetail_when_debug_is_absent()
+    {
+        var options = new OffsideAspNetCoreOptions
+        {
+            ExposeExceptionDetails = true,
+            LegacyAliases = LegacyProblemAliases.MessageReasonAndTechnicalDetail
+        };
+
+        var (_, body) = await ProblemHttpHarness.ExecuteRaw(
+            Result.Failure(Error.NotFound("order", 1)),
+            options);
+
+        using var doc = JsonDocument.Parse(body);
+        Assert.False(doc.RootElement.TryGetProperty("technicalDetail", out _));
+        Assert.False(doc.RootElement.TryGetProperty("debug", out _));
+    }
+
+    [Fact]
+    public async Task RecordMode_primary_error_only_records_once()
+    {
+        var recorder = new RecordingRecorder();
+        var services = new ServiceCollection().AddSingleton<IDomainErrorRecorder>(recorder).BuildServiceProvider();
+        var options = new OffsideAspNetCoreOptions { RecordMode = ProblemRecordMode.PrimaryErrorOnly };
+
+        await ProblemHttpHarness.Execute(
+            Result.Failure(Error.Validation("email"), Error.Conflict("order"), Error.Validation("name")),
+            options,
+            http => http.RequestServices = services);
+
+        var recorded = Assert.Single(recorder.Entries);
+        Assert.Equal(ErrorKind.Conflict, recorded.Error.Kind);
+        Assert.Equal("conflict", recorded.Error.Code);
+    }
+
     private sealed class RecordingRecorder : IDomainErrorRecorder
     {
         public List<(Error Error, IReadOnlyDictionary<string, string>? Properties)> Entries { get; } = [];

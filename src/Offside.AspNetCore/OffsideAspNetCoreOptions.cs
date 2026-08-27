@@ -80,6 +80,29 @@ public sealed class OffsideAspNetCoreOptions
     public LegacyProblemAliases LegacyAliases { get; set; } = LegacyProblemAliases.None;
 
     /// <summary>
+    /// Gets or sets the <c>errors[].name</c> written for a field-less error when
+    /// <see cref="LegacyAliases"/> is <see cref="LegacyProblemAliases.MessageReasonAndTechnicalDetail"/>.
+    /// Defaults to <c>generalErrors</c> — the FastEndpoints sentinel. Set to
+    /// <see langword="null"/> or empty to omit <c>name</c> when <see cref="Error.Field"/> is null.
+    /// </summary>
+    /// <remarks>
+    /// The canonical <c>field</c> stays null. Only the legacy alias carries the sentinel.
+    /// </remarks>
+    public string? LegacyGeneralErrorName { get; set; } = "generalErrors";
+
+    /// <summary>
+    /// Gets or sets how many times the HTTP problem pipeline calls
+    /// <see cref="IDomainErrorRecorder"/> for one failed result.
+    /// Defaults to <see cref="ProblemRecordMode.PerError"/>.
+    /// </summary>
+    /// <remarks>
+    /// This applies only to <c>ToHttpResult</c>, <c>ToActionResult</c>, and
+    /// <c>SendOffsideAsync</c>. <c>Result.RecordTo</c> and MediatR publication stay one
+    /// entry per error.
+    /// </remarks>
+    public ProblemRecordMode RecordMode { get; set; }
+
+    /// <summary>
     /// Gets or sets a callback that supplies the <c>traceId</c> written on the problem document.
     /// When <see langword="null"/>, Offside uses <c>Activity.Current.TraceId</c> (32 hex) and
     /// falls back to <c>HttpContext.TraceIdentifier</c>.
@@ -117,9 +140,29 @@ public enum LegacyProblemAliases
     None = 0,
 
     /// <summary>
-    /// Adds <c>message</c> (= <c>detail</c>), per-item <c>name</c> (= <c>field</c>) and
-    /// <c>reason</c> (= <c>detail</c>), and <c>technicalDetail</c> when diagnostic detail is
-    /// already being exposed.
+    /// Adds <c>message</c> (= <c>detail</c>), per-item <c>reason</c> (= <c>detail</c>),
+    /// per-item <c>name</c> (= <c>field</c>, or <see cref="OffsideAspNetCoreOptions.LegacyGeneralErrorName"/>
+    /// when the error has no field), and <c>technicalDetail</c> only when <c>debug</c> is present.
     /// </summary>
     MessageReasonAndTechnicalDetail = 1
+}
+
+/// <summary>
+/// How the HTTP problem pipeline records a failed result through
+/// <see cref="IDomainErrorRecorder"/>.
+/// </summary>
+public enum ProblemRecordMode
+{
+    /// <summary>
+    /// Records every error in the result, in result order. The default.
+    /// A validation failure on N fields produces N traces, events, and counter increments.
+    /// </summary>
+    PerError = 0,
+
+    /// <summary>
+    /// Records only the error that drives the HTTP status, chosen by
+    /// <see cref="OffsideHttp.SelectPrimary"/>. Use this when alerting on request failure
+    /// rather than on each field.
+    /// </summary>
+    PrimaryErrorOnly = 1
 }

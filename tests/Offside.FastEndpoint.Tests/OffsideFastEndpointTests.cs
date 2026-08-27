@@ -75,6 +75,51 @@ public sealed class OffsideValidationResponseTests
         Assert.Equal("validation", problem.Errors[0].Code);
     }
 
+    [Fact]
+    public void Create_maps_general_errors_sentinel_to_null_field()
+    {
+        var http = CreateHttp();
+        var failures = new List<ValidationFailure>
+        {
+            new("GeneralErrors", "locked") { ErrorCode = "account.locked" }
+        };
+
+        var problem = OffsideValidationResponse.Create(failures, http);
+
+        Assert.Null(problem.Errors[0].Field);
+        Assert.Equal("account.locked", problem.Errors[0].Code);
+        Assert.Equal("VALIDATION", problem.Errors[0].ErrorCode);
+    }
+
+    [Fact]
+    public void Create_with_aliases_emits_generalErrors_name_for_sentinel()
+    {
+        var services = new ServiceCollection();
+        services.AddOffside(options =>
+        {
+            options.AddJson(
+                CultureInfo.InvariantCulture,
+                """{ "validation": "{field}", "account.locked": "locked" }""");
+        });
+        services.AddOffsideAspNetCore(options =>
+            options.LegacyAliases = LegacyProblemAliases.MessageReasonAndTechnicalDetail);
+
+        var http = new DefaultHttpContext
+        {
+            RequestServices = services.BuildServiceProvider()
+        };
+
+        var failures = new List<ValidationFailure>
+        {
+            new("GeneralErrors", "locked") { ErrorCode = "account.locked" }
+        };
+
+        var problem = OffsideValidationResponse.Create(failures, http);
+
+        Assert.Null(problem.Errors[0].Field);
+        Assert.Equal("generalErrors", problem.Errors[0].Extensions["name"]);
+    }
+
     private static DefaultHttpContext CreateHttp()
     {
         var services = new ServiceCollection();
