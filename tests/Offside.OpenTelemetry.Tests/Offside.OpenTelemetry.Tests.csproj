@@ -9,7 +9,7 @@
     <PackageReference Include="xunit.runner.visualstudio" Version="3.0.2" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.1" />
-    <PackageReference Include="Microsoft.ApplicationInsights" Version="2.22.0" />
+    <PackageReference Include="Microsoft.ApplicationInsights" Version="3.1.2" />
     <ProjectReference Include="..\..\src\Offside.OpenTelemetry\Offside.OpenTelemetry.csproj" />
     <ProjectReference Include="..\..\src\Offside.ApplicationInsights\Offside.ApplicationInsights.csproj" />
     <ProjectReference Include="..\..\src\Offside.Testing\Offside.Testing.csproj" />
