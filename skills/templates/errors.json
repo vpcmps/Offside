@@ -11,5 +11,6 @@
   "too_many_requests": "Too many requests.",
   "unexpected": "An unexpected error occurred.",
   "service_unavailable": "The service is temporarily unavailable.",
-  "timeout": "The request timed out."
+  "timeout": "The request timed out.",
+  "order.created": "Order {id} created."
 }

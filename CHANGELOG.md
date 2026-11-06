@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+- 0.8.0 adds localized success notices and rejects duplicate JSON catalog keys.
+
 - 0.7.0 adds server-span tags. `ActivityTagPrefix` defaults to `offside.` and `HandledProblemStatus` defaults to `Unchanged`.
 
 - 0.7.0 adds opt-in exception handling. `HandleUnexpectedExceptions` defaults to true.

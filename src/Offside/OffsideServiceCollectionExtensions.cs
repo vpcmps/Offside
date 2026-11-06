@@ -43,6 +43,7 @@ public static class OffsideServiceCollectionExtensions
 
         var resolver = new JsonErrorMessageResolver(options.Catalogs);
         services.AddSingleton<IErrorMessageResolver>(resolver);
+        services.AddSingleton<INoticeMessageResolver>(resolver);
         return services;
     }
 }

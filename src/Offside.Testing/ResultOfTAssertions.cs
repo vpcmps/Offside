@@ -17,6 +17,13 @@ public static class ResultOfTAssertions
         return new SuccessAssertion<T>(result, result.Value);
     }
 
+    /// <summary>Asserts that the result succeeded with the expected notice code.</summary>
+    public static Result<T> ShouldSucceedWith<T>(this Result<T> result, string code)
+    {
+        AssertionEngine.ShouldSucceedWith(result.IsSuccess, result.Errors, result.Notice, code);
+        return result;
+    }
+
     /// <summary>Asserts that the result failed, without saying how.</summary>
     /// <typeparam name="T">The value type of the result.</typeparam>
     /// <param name="result">The result under test.</param>

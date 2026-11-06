@@ -11,3 +11,4 @@
 - **Domain notification collector** — A thread-safe scoped accumulator of notification errors. Reads return snapshots and never clear state; one dependency-injection scope should represent one logical operation.
 - **External API failure** — A failure returned by a dependency the service calls. Mapped from the dependency's HTTP status onto an `ErrorKind` that mirrors it; whether it should surface unchanged to your own caller is the calling code's decision.
 - **Domain error recorder** — A sink that writes an `Error` to telemetry. Severity comes from the `ErrorKind`; arguments are withheld by default, since telemetry outlives the request.
+- **Notice** — Optional catalog key and interpolation arguments carried by a successful result.

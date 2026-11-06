@@ -33,6 +33,7 @@ public static class OffsideAzureAppConfigurationServiceCollectionExtensions
 
         var resolver = new ConfigurationErrorMessageResolver(configuration, options.SectionName);
         services.AddSingleton<IErrorMessageResolver>(resolver);
+        services.AddSingleton<INoticeMessageResolver>(resolver);
         return services;
     }
 }

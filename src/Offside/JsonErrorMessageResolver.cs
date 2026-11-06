@@ -13,7 +13,7 @@ namespace Offside;
 /// from <see cref="Error.Arguments"/>, formatted with <see cref="CultureInfo.InvariantCulture"/>.
 /// A token with no matching argument, or a null one, is left in the text verbatim.
 /// </remarks>
-public sealed class JsonErrorMessageResolver : IErrorMessageResolver
+public sealed class JsonErrorMessageResolver : IErrorMessageResolver, INoticeMessageResolver
 {
     private readonly Dictionary<string, Dictionary<string, string>> _catalogs;
 
@@ -30,9 +30,8 @@ public sealed class JsonErrorMessageResolver : IErrorMessageResolver
 
         foreach (var catalog in catalogs)
         {
-            var messages = JsonSerializer.Deserialize<Dictionary<string, string>>(catalog.Json)
-                ?? new Dictionary<string, string>();
-            _catalogs[catalog.Culture.Name] = messages;
+            using var document = JsonDocument.Parse(catalog.Json);
+            _catalogs[catalog.Culture.Name] = CatalogJson.Read(document);
         }
 
         if (!_catalogs.ContainsKey(string.Empty))
@@ -46,12 +45,19 @@ public sealed class JsonErrorMessageResolver : IErrorMessageResolver
     /// <param name="error">The error to describe.</param>
     /// <param name="culture">The culture to resolve the message in.</param>
     /// <returns>The interpolated message, or <see cref="Error.Code"/> when no catalog defines it.</returns>
-    public string GetMessage(Error error, CultureInfo culture)
-    {
-        if (TryFindTemplate(error.Code, culture, out var template))
-            return ErrorMessageTemplate.Interpolate(template, error.Arguments);
+    public string GetMessage(Error error, CultureInfo culture) =>
+        Resolve(error.Code, error.Arguments, culture);
 
-        return error.Code;
+    /// <inheritdoc />
+    public string GetMessage(Notice notice, CultureInfo culture) =>
+        Resolve(notice.Code, notice.Arguments, culture);
+
+    private string Resolve(string code, IReadOnlyDictionary<string, object?> arguments, CultureInfo culture)
+    {
+        if (TryFindTemplate(code, culture, out var template))
+            return ErrorMessageTemplate.Interpolate(template, arguments);
+
+        return code;
     }
 
     private bool TryFindTemplate(string code, CultureInfo culture, out string template)

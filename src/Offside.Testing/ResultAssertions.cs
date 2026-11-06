@@ -19,6 +19,13 @@ public static class ResultAssertions
         return result;
     }
 
+    /// <summary>Asserts that the result succeeded with the expected notice code.</summary>
+    public static Result ShouldSucceedWith(this Result result, string code)
+    {
+        AssertionEngine.ShouldSucceedWith(result.IsSuccess, result.Errors, result.Notice, code);
+        return result;
+    }
+
     /// <summary>Asserts that the result failed, without saying how.</summary>
     /// <param name="result">The result under test.</param>
     /// <returns>The same result, so further assertions can be chained.</returns>

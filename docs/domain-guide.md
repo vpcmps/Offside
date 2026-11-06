@@ -175,3 +175,7 @@ Assert.Equal(Error.NotFound("order", "missing"), result.Errors[0]);
 ```
 
 Assert on `Code`, `ErrorCode`, and `Kind` rather than on resolved text — the text is catalog data and is expected to change without breaking anything.
+
+## Successful results with a message
+
+Return `Result.Success(Notice.Create("order.created", new { id }))` or `Result<Order>.Success(order, Notice.Create("order.created", new { id }))`. Mapping preserves the notice. Binding uses the returned notice when present and otherwise keeps the previous one on success. Combining results discards notices.

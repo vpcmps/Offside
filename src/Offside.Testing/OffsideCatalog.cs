@@ -176,7 +176,7 @@ public sealed class OffsideCatalog
         return this;
     }
 
-    /// <summary>Asserts <see cref="ShouldResolve"/> for several errors at once.</summary>
+    /// <summary>Asserts <see cref="ShouldResolve(Error)"/> for several errors at once.</summary>
     /// <param name="errors">The errors to resolve.</param>
     /// <returns>This instance, for chaining.</returns>
     /// <exception cref="OffsideAssertionException">Any error fails to resolve.</exception>
@@ -226,20 +226,36 @@ public sealed class OffsideCatalog
         throw AssertionEngine.Fail(message.ToString());
     }
 
+    /// <summary>Asserts that a notice has a template with no unfilled tokens.</summary>
+    public OffsideCatalog ShouldResolve(Notice notice)
+    {
+        if (notice is null)
+            throw new ArgumentNullException(nameof(notice));
+
+        ShouldDefine(notice.Code);
+        var message = ErrorMessageTemplate.Interpolate(_messages[notice.Code], notice.Arguments);
+        var unresolved = FindTokens(message);
+        if (unresolved.Count > 0)
+            throw AssertionEngine.Fail($"Expected catalog {Source} to resolve '{notice.Code}', but it has unfilled tokens {DescribeCodes(unresolved)}.");
+
+        return this;
+    }
+
     private static OffsideCatalog Parse(string source, string json)
     {
         Dictionary<string, string>? messages;
 
         try
         {
-            messages = JsonSerializer.Deserialize<Dictionary<string, string>>(json);
+            using var document = JsonDocument.Parse(json);
+            messages = CatalogJson.Read(document);
         }
         catch (JsonException exception)
         {
             throw new OffsideAssertionException(
                 "Expected catalog " + source + " to be a flat JSON object of \"code\": \"template\" pairs, but it could not be parsed: " +
                 exception.Message,
-                exception);
+                exception.GetType() == typeof(JsonException) ? exception : new JsonException(exception.Message, exception));
         }
 
         return new OffsideCatalog(source, messages ?? new Dictionary<string, string>());

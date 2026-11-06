@@ -152,3 +152,7 @@ builder.Services.AddSingleton<IErrorMessageResolver, ResxErrorMessageResolver>()
 ```
 
 Nesse caso não chame `AddOffside` — ele registraria o resolver JSON ao lado do seu. Devolver `error.Code` para um código desconhecido é a convenção que vale manter: degrada para algo diagnosticável em vez de uma string vazia.
+
+## Mensagens de sucesso
+
+Inclua chaves como `"order.created": "Pedido {id} criado."` no mesmo catálogo das falhas. Cada chave pode aparecer uma vez por catálogo JSON. Culturas diferentes podem traduzir a mesma chave. `INoticeMessageResolver` busca na cultura solicitada, na cultura pai e no catálogo padrão. Se nenhuma tiver a mensagem, devolve a própria chave.

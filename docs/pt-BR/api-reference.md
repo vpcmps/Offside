@@ -662,3 +662,5 @@ Registre `AddOffsideExceptionHandler()` e chame `UseOffsideExceptionHandler()` p
 ## Tags do span de servidor
 
 A Offside grava `offside.outcome` e `offside.errorCode` no span de servidor. Use `HandledProblemStatus = ActivityStatusPolicy.OkForClientErrors` para marcar como OK os 4xx renderizados pela Offside.
+
+Use `Notice.Create`, as sobrecargas de `Success`, `INoticeMessageResolver` e `ShouldSucceedWith` para carregar, resolver e verificar mensagens de sucesso.

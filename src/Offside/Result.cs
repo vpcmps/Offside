@@ -15,11 +15,15 @@ public readonly struct Result
     private readonly IReadOnlyList<Error> _errors;
     private readonly bool _failed;
 
-    private Result(bool failed, IReadOnlyList<Error> errors)
+    private Result(bool failed, IReadOnlyList<Error> errors, Notice? notice = null)
     {
         _failed = failed;
         _errors = errors;
+        Notice = notice;
     }
+
+    /// <summary>Gets the optional message carried by a success.</summary>
+    public Notice? Notice { get; }
 
     /// <summary>Gets a value indicating whether the operation succeeded.</summary>
     public bool IsSuccess => !_failed;
@@ -41,6 +45,10 @@ public readonly struct Result
     /// <summary>Creates a successful result.</summary>
     /// <returns>The result.</returns>
     public static Result Success() => new Result(false, Array.Empty<Error>());
+
+    /// <summary>Creates a success carrying a notice.</summary>
+    public static Result Success(Notice notice) =>
+        new Result(false, Array.Empty<Error>(), notice ?? throw new ArgumentNullException(nameof(notice)));
 
     /// <summary>Creates a failed result.</summary>
     /// <param name="errors">The errors, in the order they should be reported. At least one is required.</param>

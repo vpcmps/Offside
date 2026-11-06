@@ -730,3 +730,5 @@ Register `AddOffsideExceptionHandler()` and call `UseOffsideExceptionHandler()` 
 ## Server span tags
 
 Offside tags the server span with `offside.outcome` and `offside.errorCode`. Set `HandledProblemStatus` to `ActivityStatusPolicy.OkForClientErrors` to mark rendered 4xx responses as OK.
+
+Use `Notice.Create`, the `Success` overloads, `INoticeMessageResolver`, and `ShouldSucceedWith` to carry, resolve, and assert success messages.

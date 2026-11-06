@@ -26,12 +26,16 @@ public readonly struct Result<T>
     private readonly IReadOnlyList<Error> _errors;
     private readonly bool _failed;
 
-    private Result(bool failed, T value, IReadOnlyList<Error> errors)
+    private Result(bool failed, T value, IReadOnlyList<Error> errors, Notice? notice = null)
     {
         _failed = failed;
         _value = value;
         _errors = errors;
+        Notice = notice;
     }
+
+    /// <summary>Gets the optional message carried by a success.</summary>
+    public Notice? Notice { get; }
 
     /// <summary>Gets a value indicating whether the operation succeeded.</summary>
     public bool IsSuccess => !_failed;
@@ -76,19 +80,31 @@ public readonly struct Result<T>
     /// <param name="map">Applied to the value. Not invoked when the result is a failure.</param>
     /// <returns>A result carrying the transformed value, or the original errors.</returns>
     public Result<TOut> Map<TOut>(Func<T, TOut> map) =>
-        !_failed ? Result<TOut>.Success(map(Value)) : Result<TOut>.Failure(Errors);
+        !_failed ? new Result<TOut>(false, map(Value), Array.Empty<Error>(), Notice) : Result<TOut>.Failure(Errors);
 
     /// <summary>Chains another operation that can itself fail, short-circuiting on failure.</summary>
     /// <typeparam name="TOut">The value type of the next operation.</typeparam>
     /// <param name="bind">Applied to the value. Not invoked when the result is a failure.</param>
     /// <returns>The result of <paramref name="bind"/>, or a failure carrying the original errors.</returns>
-    public Result<TOut> Bind<TOut>(Func<T, Result<TOut>> bind) =>
-        !_failed ? bind(Value) : Result<TOut>.Failure(Errors);
+    public Result<TOut> Bind<TOut>(Func<T, Result<TOut>> bind)
+    {
+        if (_failed)
+            return Result<TOut>.Failure(Errors);
+
+        var result = bind(Value);
+        return result.IsSuccess && result.Notice is null && Notice is not null
+            ? Result<TOut>.Success(result.Value, Notice)
+            : result;
+    }
 
     /// <summary>Creates a successful result.</summary>
     /// <param name="value">The value produced.</param>
     /// <returns>The result.</returns>
     public static Result<T> Success(T value) => new Result<T>(false, value, Array.Empty<Error>());
+
+    /// <summary>Creates a success carrying a value and a notice.</summary>
+    public static Result<T> Success(T value, Notice notice) =>
+        new Result<T>(false, value, Array.Empty<Error>(), notice ?? throw new ArgumentNullException(nameof(notice)));
 
     /// <summary>Creates a failed result.</summary>
     /// <param name="errors">The errors, in the order they should be reported. At least one is required.</param>

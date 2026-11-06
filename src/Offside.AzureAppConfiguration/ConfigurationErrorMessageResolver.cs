@@ -11,7 +11,7 @@ namespace Offside.AzureAppConfiguration;
 /// The resolver reads configuration on every call. When the host refreshes Azure App
 /// Configuration, subsequent resolutions observe the refreshed values.
 /// </remarks>
-public sealed class ConfigurationErrorMessageResolver : IErrorMessageResolver
+public sealed class ConfigurationErrorMessageResolver : IErrorMessageResolver, INoticeMessageResolver
 {
     private const string DefaultCultureSegment = "default";
     private readonly IConfiguration _configuration;
@@ -47,12 +47,19 @@ public sealed class ConfigurationErrorMessageResolver : IErrorMessageResolver
     }
 
     /// <inheritdoc />
-    public string GetMessage(Error error, CultureInfo culture)
-    {
-        if (TryFindTemplate(error.Code, culture, out var template))
-            return ErrorMessageTemplate.Interpolate(template, error.Arguments);
+    public string GetMessage(Error error, CultureInfo culture) =>
+        Resolve(error.Code, error.Arguments, culture);
 
-        return error.Code;
+    /// <inheritdoc />
+    public string GetMessage(Notice notice, CultureInfo culture) =>
+        Resolve(notice.Code, notice.Arguments, culture);
+
+    private string Resolve(string code, IReadOnlyDictionary<string, object?> arguments, CultureInfo culture)
+    {
+        if (TryFindTemplate(code, culture, out var template))
+            return ErrorMessageTemplate.Interpolate(template, arguments);
+
+        return code;
     }
 
     private bool TryFindTemplate(string code, CultureInfo culture, out string template)

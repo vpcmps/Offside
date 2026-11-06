@@ -152,3 +152,7 @@ builder.Services.AddSingleton<IErrorMessageResolver, ResxErrorMessageResolver>()
 ```
 
 Do not call `AddOffside` in that case — it would register the JSON resolver alongside yours. Returning `error.Code` for an unknown code is the convention worth keeping: it degrades to something diagnosable instead of an empty string.
+
+## Success messages
+
+Add keys such as `"order.created": "Order {id} created."` to the same catalogs as error messages. Each JSON catalog must define a key at most once. Each culture can translate the same key. `INoticeMessageResolver` uses the requested culture, its parent, the default catalog, and then the key itself.

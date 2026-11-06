@@ -11,5 +11,6 @@
   "too_many_requests": "Demasiados pedidos.",
   "unexpected": "Ocorreu um erro inesperado.",
   "service_unavailable": "O serviço está temporariamente indisponível.",
-  "timeout": "A requisição excedeu o tempo limite."
+  "timeout": "A requisição excedeu o tempo limite.",
+  "order.created": "Pedido {id} criado."
 }
