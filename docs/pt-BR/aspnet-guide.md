@@ -286,3 +286,7 @@ Cada linha existe para `Result` e `Result<T>`, com uma exceção: **não existe 
 - Mantenha segredos fora de `Error.Arguments` — eles acabam nas mensagens, e mensagens são enviadas.
 - Faça clientes decidirem por `errorCode`, nunca por `detail`.
 - Coloque falhas operacionais de dependência em `ErrorKind.ServiceUnavailable` / `Timeout`, não em `Unexpected`. Não coloque texto de exceção em templates `{reason}`.
+
+## Handler de exceções
+
+Registre `AddOffsideExceptionHandler()` e chame `UseOffsideExceptionHandler()` para mapear exceções de domínio para o mesmo Problem Details de um resultado de falha. `HandleUnexpectedExceptions` começa em true.

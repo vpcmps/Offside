@@ -158,3 +158,7 @@ The internal [design specification](https://github.com/vpcmps/Offside/blob/maste
 ## Community and security
 
 Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request. For help, see [SUPPORT.md](SUPPORT.md). Report vulnerabilities privately according to [SECURITY.md](SECURITY.md).
+
+## Exception handling
+
+Register `AddOffsideExceptionHandler()` and call `UseOffsideExceptionHandler()` to map thrown domain errors to the same Problem Details as a failed result. `HandleUnexpectedExceptions` defaults to true.

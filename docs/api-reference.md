@@ -722,3 +722,7 @@ public sealed class SkillInstaller
 ```
 
 `Install` returns every path written, in write order. Throws `DirectoryNotFoundException` when the skills source or an expected skill folder is missing. See the [CLI page](cli.md).
+
+## Exception handling
+
+Register `AddOffsideExceptionHandler()` and call `UseOffsideExceptionHandler()` to map thrown domain errors to the same Problem Details as a failed result. `HandleUnexpectedExceptions` defaults to true.

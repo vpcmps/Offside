@@ -28,7 +28,8 @@ internal static class OffsideProblemPipeline
         IErrorMessageResolver resolver,
         HttpContext httpContext,
         OffsideAspNetCoreOptions options,
-        CultureInfo? culture = null)
+        CultureInfo? culture = null,
+        bool skipUnexpectedLog = false)
     {
         ArgumentNullException.ThrowIfNull(errors);
         ArgumentNullException.ThrowIfNull(resolver);
@@ -63,7 +64,7 @@ internal static class OffsideProblemPipeline
         StripReservedKeys(problem);
 
         var recorder = httpContext.RequestServices?.GetService<IDomainErrorRecorder>();
-        if (options.ShouldLogUnexpected(recorder is not null))
+        if (!skipUnexpectedLog && options.ShouldLogUnexpected(recorder is not null))
             TryLogUnexpected(httpContext, errors, traceId);
 
         return problem;

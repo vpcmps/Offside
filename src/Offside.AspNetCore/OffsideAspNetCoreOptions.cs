@@ -8,6 +8,9 @@ namespace Offside.AspNetCore;
 /// </summary>
 public sealed class OffsideAspNetCoreOptions
 {
+    /// <summary>Whether the handler handles exceptions other than DomainException.</summary>
+    public bool HandleUnexpectedExceptions { get; set; } = true;
+
     private bool _logUnexpected = true;
     private bool _logUnexpectedSpecified;
 

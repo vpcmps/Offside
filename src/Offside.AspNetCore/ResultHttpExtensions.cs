@@ -1,5 +1,4 @@
 using System.Globalization;
-using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
@@ -28,11 +27,6 @@ namespace Offside.AspNetCore;
 /// </remarks>
 public static class ResultHttpExtensions
 {
-    private static readonly JsonSerializerOptions SerializerOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-    };
-
     /// <summary>Converts the result into an <see cref="IResult"/>, resolving messages in <c>CultureInfo.CurrentUICulture</c>.</summary>
     /// <param name="result">The result to convert.</param>
     /// <param name="resolver">Resolves error messages.</param>
@@ -291,41 +285,4 @@ public static class ResultHttpExtensions
         httpContext.RequestServices.GetService<OffsideAspNetCoreOptions>()
         ?? throw new InvalidOperationException(
             "OffsideAspNetCoreOptions is not registered. Call AddOffsideAspNetCore at startup.");
-
-    private sealed class OffsideProblemResult : IResult, IActionResult
-    {
-        private readonly IReadOnlyList<Error> _errors;
-        private readonly IErrorMessageResolver _resolver;
-        private readonly CultureInfo? _culture;
-        private readonly OffsideAspNetCoreOptions _options;
-
-        public OffsideProblemResult(
-            IReadOnlyList<Error> errors,
-            IErrorMessageResolver resolver,
-            CultureInfo? culture,
-            OffsideAspNetCoreOptions options)
-        {
-            _errors = errors;
-            _resolver = resolver;
-            _culture = culture;
-            _options = options;
-        }
-
-        public Task ExecuteResultAsync(ActionContext context) =>
-            ExecuteAsync(context.HttpContext);
-
-        public async Task ExecuteAsync(HttpContext httpContext)
-        {
-            var problem = OffsideProblemPipeline.Render(
-                _errors,
-                _resolver,
-                httpContext,
-                _options,
-                _culture);
-
-            httpContext.Response.StatusCode = problem.Status;
-            httpContext.Response.ContentType = "application/problem+json";
-            await JsonSerializer.SerializeAsync(httpContext.Response.Body, problem, SerializerOptions);
-        }
-    }
 }

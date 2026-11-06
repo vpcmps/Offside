@@ -97,3 +97,5 @@ Exceções são fluxo de controle para o *inesperado*. Um pedido inexistente, um
 - Nada desempilha a stack por causa de uma regra de negócio.
 
 `ErrorKind.Unexpected` continua existindo para falhas genuínas — e é o único kind cujo detalhe nunca é mostrado ao cliente. Veja [tratamento de 500](aspnet-guide.md#erros-inesperados-e-500).
+
+O handler opcional do ASP.NET Core renderiza `DomainException` como Problem Details.

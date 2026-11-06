@@ -286,3 +286,7 @@ Each row exists for both `Result` and `Result<T>`, with one exception: **there i
 - Keep secrets out of `Error.Arguments` — they end up in messages, and messages ship.
 - Branch clients on `errorCode`, never on `detail`.
 - Put operational dependency failures in `ErrorKind.ServiceUnavailable` / `Timeout`, not `Unexpected`. Do not put exception text in `{reason}` templates.
+
+## Exception handling
+
+Register `AddOffsideExceptionHandler()` and call `UseOffsideExceptionHandler()` to map thrown domain errors to the same Problem Details as a failed result. `HandleUnexpectedExceptions` defaults to true.

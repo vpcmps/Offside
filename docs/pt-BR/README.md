@@ -22,6 +22,7 @@ Erros de domínio como `Result`, não como exceções. O domínio devolve um `Er
 | [Conceitos](concepts.md) | `Error`, `ErrorCode`, `ErrorKind`, `Result`, erro primário, catálogos, escape hatch |
 | [Guia de domínio](domain-guide.md) | Escrever código de domínio com `Result<T>`: factories, `Custom`, `Bind`/`Map`/`Combine` |
 | [Guia ASP.NET Core](aspnet-guide.md) | `ToHttpResult` / `ToActionResult`, escolha do status, formato da resposta, tratamento de 500 |
+| [Migração de exceções](migrating-from-exceptions.md) | Adote o handler de exceções e migre os chamadores para Result |
 | [FluentValidation](fluentvalidation.md) | Mapear falhas do FluentValidation para `Error` / `Result` do Offside |
 | [FastEndpoints](fastendpoints.md) | `UseOffside`, `SendOffsideAsync`, erros esperados no OpenAPI |
 | [Integração com MediatR](mediatr-guide.md) | Publicar erros de resultados como notificações, coletá-los por scope e tratar retries com segurança |
