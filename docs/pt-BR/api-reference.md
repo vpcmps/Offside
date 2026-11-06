@@ -655,12 +655,9 @@ public sealed class SkillInstaller
 
 `Install` devolve todo caminho escrito, na ordem de escrita. Lança `DirectoryNotFoundException` quando a origem das skills ou uma pasta de skill esperada está faltando. Veja a [página do CLI](cli.md).
 
-## Handler de exceções
+## Handler de exceções e notices
 
-Registre `AddOffsideExceptionHandler()` e chame `UseOffsideExceptionHandler()` para mapear exceções de domínio para o mesmo Problem Details de um resultado de falha. `HandleUnexpectedExceptions` começa em true.
-
-## Tags do span de servidor
-
-A Offside grava `offside.outcome` e `offside.errorCode` no span de servidor. Use `HandledProblemStatus = ActivityStatusPolicy.OkForClientErrors` para marcar como OK os 4xx renderizados pela Offside.
-
-Use `Notice.Create`, as sobrecargas de `Success`, `INoticeMessageResolver` e `ShouldSucceedWith` para carregar, resolver e verificar mensagens de sucesso.
+- `AddOffsideExceptionHandler()` e `UseOffsideExceptionHandler()` habilitam Problem Details para exceções. `HandleUnexpectedExceptions` começa em true.
+- `ActivityTagPrefix` tem padrão `offside.`. `HandledProblemStatus` começa em `ActivityStatusPolicy.Unchanged`.
+- `Notice.Create(code, arguments)`, `Result.Success(notice)` e `Result<T>.Success(value, notice)` carregam a mensagem. `INoticeMessageResolver` resolve o texto e `ShouldSucceedWith(code)` verifica o código.
+- `SuccessEnvelope` começa em false. `OffsideSuccessEnvelopeAttribute(bool enabled)` sobrescreve essa opção por endpoint. `CustomizeSuccess` adiciona campos e `ToHttpResult(http, onSuccess)` entrega a mensagem resolvida ao callback.

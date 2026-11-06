@@ -9,7 +9,7 @@ namespace Offside.FastEndpoint;
 public static class OffsideResultSendExtensions
 {
     /// <summary>
-    /// Writes 204 on success, or an Offside problem document on failure.
+    /// Writes the configured unit success response or an Offside problem document.
     /// </summary>
     /// <param name="result">The domain result.</param>
     /// <param name="httpContext">The current request.</param>
@@ -27,7 +27,7 @@ public static class OffsideResultSendExtensions
     }
 
     /// <summary>
-    /// Writes 200 with the value on success, or an Offside problem document on failure.
+    /// Writes the configured typed success response or an Offside problem document.
     /// </summary>
     /// <typeparam name="T">The result value type.</typeparam>
     /// <param name="result">The domain result.</param>

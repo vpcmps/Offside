@@ -17,6 +17,12 @@ public sealed class OffsideAspNetCoreOptions
     /// <summary>Controls whether a rendered problem changes the server activity status.</summary>
     public ActivityStatusPolicy HandledProblemStatus { get; set; }
 
+    /// <summary>Whether successful results use an HTTP envelope by default.</summary>
+    public bool SuccessEnvelope { get; set; }
+
+    /// <summary>Adds custom fields to the success envelope.</summary>
+    public Action<IDictionary<string, object?>, Notice?, HttpContext>? CustomizeSuccess { get; set; }
+
     private bool _logUnexpected = true;
     private bool _logUnexpectedSpecified;
 

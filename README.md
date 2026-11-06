@@ -159,12 +159,10 @@ The internal [design specification](https://github.com/vpcmps/Offside/blob/maste
 
 Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request. For help, see [SUPPORT.md](SUPPORT.md). Report vulnerabilities privately according to [SECURITY.md](SECURITY.md).
 
-## Exception handling
+## Optional exception handling and success messages
 
-Register `AddOffsideExceptionHandler()` and call `UseOffsideExceptionHandler()` to map thrown domain errors to the same Problem Details as a failed result. `HandleUnexpectedExceptions` defaults to true.
+Register `AddOffsideExceptionHandler()` alongside `AddOffside` and `AddOffsideAspNetCore`, then call `app.UseOffsideExceptionHandler()` before your endpoints. This maps `Error.NotFound("order", id).ToException()` to the same Problem Details as a failed result. See the [exception migration guide](docs/migrating-from-exceptions.md).
 
-## Server span tags
+Offside writes the primary error kind and code to the HTTP server span. See [ASP.NET Core integration](docs/aspnet-guide.md) for tag configuration and the optional 4xx status policy.
 
-Offside tags the server span with `offside.outcome` and `offside.errorCode`. Set `HandledProblemStatus` to `ActivityStatusPolicy.OkForClientErrors` to mark rendered 4xx responses as OK.
-
-Use `Notice.Create(code, arguments)` to carry a localized message on a successful result.
+Return `Result<Order>.Success(order, Notice.Create("order.created", new { id = order.Id }))` to carry a localized success message. Enable `SuccessEnvelope` in `AddOffsideAspNetCore` to expose it in the HTTP response.

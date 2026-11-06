@@ -287,10 +287,10 @@ Each row exists for both `Result` and `Result<T>`, with one exception: **there i
 - Branch clients on `errorCode`, never on `detail`.
 - Put operational dependency failures in `ErrorKind.ServiceUnavailable` / `Timeout`, not `Unexpected`. Do not put exception text in `{reason}` templates.
 
-## Exception handling
+## Exception handling, spans, and success
 
-Register `AddOffsideExceptionHandler()` and call `UseOffsideExceptionHandler()` to map thrown domain errors to the same Problem Details as a failed result. `HandleUnexpectedExceptions` defaults to true.
+Call `services.AddOffsideExceptionHandler()` and `app.UseOffsideExceptionHandler()` before your endpoints, in addition to the usual Offside registrations. `HandleUnexpectedExceptions` defaults to true. Set it to false to let another handler process ordinary exceptions. ASP.NET Core 10 suppresses native diagnostics for handled domain exceptions through the Offside middleware extension. ASP.NET Core 8 retains its native exception logging.
 
-## Server span tags
+Offside tags the server span with `offside.outcome` and `offside.errorCode`. Change the prefix with `ActivityTagPrefix`. Set `HandledProblemStatus` to `ActivityStatusPolicy.OkForClientErrors` to mark rendered 4xx responses as OK. The default is `Unchanged`.
 
-Offside tags the server span with `offside.outcome` and `offside.errorCode`. Set `HandledProblemStatus` to `ActivityStatusPolicy.OkForClientErrors` to mark rendered 4xx responses as OK.
+Enable `SuccessEnvelope` globally or use `WithMetadata(new OffsideSuccessEnvelopeAttribute(true))` for Minimal APIs or `[OffsideSuccessEnvelope(true)]` for MVC. Endpoint metadata overrides the global setting in either direction. Enveloped responses carry `traceId`, `data` for a typed result, and `message` and `code` when a notice exists. A unit success without a notice still returns 204. Use `CustomizeSuccess` to add fields and `ToHttpResult(http, onSuccess: (value, message) => Results.Created("/orders", new { value, message }))` to choose your own status and body.

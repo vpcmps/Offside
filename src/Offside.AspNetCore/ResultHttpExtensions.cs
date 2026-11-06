@@ -13,7 +13,8 @@ namespace Offside.AspNetCore;
 /// <para>
 /// Use the <c>ToHttpResult</c> overloads from Minimal APIs and the <c>ToActionResult</c> overloads
 /// from MVC controllers. Success maps to <c>204 No Content</c> for a unit <see cref="Result"/> and
-/// to <c>200 OK</c> carrying the value for a <see cref="Result{T}"/>.
+/// to <c>200 OK</c> carrying the value for a <see cref="Result{T}"/> by default.
+/// Enable <see cref="OffsideAspNetCoreOptions.SuccessEnvelope"/> to include success notices.
 /// </para>
 /// <para>
 /// On failure the status code comes from the most severe <see cref="ErrorKind"/> present, with ties
@@ -71,7 +72,12 @@ public static class ResultHttpExtensions
         ArgumentNullException.ThrowIfNull(resolver);
         ArgumentNullException.ThrowIfNull(options);
         if (result.IsSuccess)
-            return Results.NoContent();
+        {
+            var fallback = Results.NoContent();
+            return result.Notice is null
+                ? fallback
+                : new OffsideSuccessResult(null, false, result.Notice, resolver, culture, options, httpFallback: fallback);
+        }
 
         return new OffsideProblemResult(result.Errors, resolver, culture, options);
     }
@@ -148,7 +154,8 @@ public static class ResultHttpExtensions
         ArgumentNullException.ThrowIfNull(resolver);
         ArgumentNullException.ThrowIfNull(options);
         if (result.IsSuccess)
-            return Results.Ok(result.Value);
+            return new OffsideSuccessResult(
+                result.Value, true, result.Notice, resolver, culture, options, httpFallback: Results.Ok(result.Value));
 
         return new OffsideProblemResult(result.Errors, resolver, culture, options);
     }
@@ -215,7 +222,12 @@ public static class ResultHttpExtensions
         ArgumentNullException.ThrowIfNull(resolver);
         ArgumentNullException.ThrowIfNull(options);
         if (result.IsSuccess)
-            return new NoContentResult();
+        {
+            var fallback = new NoContentResult();
+            return result.Notice is null
+                ? fallback
+                : new OffsideSuccessResult(null, false, result.Notice, resolver, culture, options, mvcFallback: fallback);
+        }
 
         return new OffsideProblemResult(result.Errors, resolver, culture, options);
     }
@@ -273,9 +285,24 @@ public static class ResultHttpExtensions
         ArgumentNullException.ThrowIfNull(resolver);
         ArgumentNullException.ThrowIfNull(options);
         if (result.IsSuccess)
-            return new OkObjectResult(result.Value);
+            return new OffsideSuccessResult(
+                result.Value, true, result.Notice, resolver, culture, options, mvcFallback: new OkObjectResult(result.Value));
 
         return new OffsideProblemResult(result.Errors, resolver, culture, options);
+    }
+
+    /// <summary>Uses a custom HTTP response on success, with the resolved notice message if present.</summary>
+    public static IResult ToHttpResult<T>(
+        this Result<T> result, HttpContext httpContext, Func<T, string?, IResult> onSuccess)
+    {
+        ArgumentNullException.ThrowIfNull(httpContext);
+        ArgumentNullException.ThrowIfNull(onSuccess);
+
+        if (result.IsFailure)
+            return result.ToHttpResult(httpContext);
+
+        var resolver = httpContext.RequestServices.GetService<IErrorMessageResolver>();
+        return onSuccess(result.Value, OffsideSuccessResult.ResolveMessage(result.Notice, resolver, null, httpContext));
     }
 
     private static OffsideAspNetCoreOptions Options(bool exposeExceptionDetails) =>

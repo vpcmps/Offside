@@ -1,5 +1,6 @@
 using System.Globalization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Routing;
@@ -132,7 +133,7 @@ public sealed class ProblemDetailsTests
     }
 
     [Fact]
-    public void ToActionResultT_returns_Ok_on_success()
+    public async Task ToActionResultT_returns_Ok_on_success()
     {
         var result = Result<int>.Success(42);
         var action = result.ToActionResult(
@@ -140,7 +141,18 @@ public sealed class ProblemDetailsTests
             CultureInfo.InvariantCulture,
             new OffsideAspNetCoreOptions());
 
-        var ok = Assert.IsType<OkObjectResult>(action);
-        Assert.Equal(42, ok.Value);
+        var http = new DefaultHttpContext();
+        var services = new Microsoft.Extensions.DependencyInjection.ServiceCollection();
+        services.AddLogging();
+        services.AddMvcCore();
+        using var provider = services.BuildServiceProvider();
+        http.RequestServices = provider;
+        using var body = new MemoryStream();
+        http.Response.Body = body;
+
+        await action.ExecuteResultAsync(new ActionContext(http, new RouteData(), new ActionDescriptor()));
+
+        Assert.Equal(200, http.Response.StatusCode);
+        Assert.Equal("42", System.Text.Encoding.UTF8.GetString(body.ToArray()));
     }
 }

@@ -27,3 +27,7 @@ Stop and request a decision if preserving behavior conflicts with correct Offsid
 ## Verify each slice
 
 Run focused characterization and behavior tests after each coherent slice, then build and run the relevant suite. When the project uses `Offside.Testing`, use `offside-testing` to assert migrated results and to keep catalog coverage honest as codes move. Compare before/after public behavior and report remaining legacy paths separately from completed migration work.
+
+## Exceptions and success notices
+
+During incremental migration, map existing business throws to `Error.ToException()` and register the Offside exception middleware. Preserve the catalog key when moving a success confirmation into `Notice`.

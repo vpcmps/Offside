@@ -66,3 +66,7 @@ Sucesso é 204 para `Result` e 200 com o valor para `Result<T>`. Falha é o docu
 Use `.WithErrorCode("email.required")` para a chave do catálogo (`Error.Code`). O identificador de tela desses erros é `VALIDATION`. Ver [FluentValidation](fluentvalidation.md).
 
 `AddError` / `ThrowError` sem propriedade no FastEndpoints definem `PropertyName` como `GeneralErrorsField` (default `"GeneralErrors"`). O Offside trata isso como erro sem campo (`field: null`). Validação de classe do FluentValidation (`PropertyName` vazio) segue o mesmo caminho. Com `LegacyAliases` ligado, `errors[].name` é `"generalErrors"`, não `"GeneralErrors"`.
+
+## Envelope de sucesso
+
+`SendOffsideAsync` usa o mesmo envelope, localização e metadata de `ToHttpResult`. Adicione `OffsideSuccessEnvelopeAttribute` à metadata do endpoint para sobrescrever o padrão do host.

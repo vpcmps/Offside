@@ -89,3 +89,7 @@ Use `offside-mediatr` when MediatR domain notifications were selected. Configure
 ## Verify
 
 Build the affected projects and run relevant tests. Confirm there is exactly one `IErrorMessageResolver`, HTTP types remain in the host, and the selected source resolves the invariant/default catalog.
+
+## Exceptions and success notices
+
+Register the exception handler with `AddOffsideExceptionHandler` and `UseOffsideExceptionHandler` when migrating an exception-based host. Keep success envelopes opt-in through `SuccessEnvelope` or endpoint metadata.

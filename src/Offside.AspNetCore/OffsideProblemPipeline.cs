@@ -211,7 +211,7 @@ internal static class OffsideProblemPipeline
         return properties;
     }
 
-    private static void InvokeHook(HttpContext httpContext, string traceId, string hook, Action action)
+    internal static void InvokeHook(HttpContext httpContext, string traceId, string hook, Action action)
     {
         try
         {
