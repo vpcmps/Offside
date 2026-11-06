@@ -67,7 +67,9 @@ internal sealed class OffsideExceptionHandler : IExceptionHandler
         {
             await result.ExecuteAsync(httpContext);
         }
-        catch (OperationCanceledException) when (httpContext.RequestAborted.IsCancellationRequested)
+        catch (Exception writeError) when (
+            writeError is OperationCanceledException or IOException
+            && httpContext.RequestAborted.IsCancellationRequested)
         {
             if (!httpContext.Response.HasStarted)
             {

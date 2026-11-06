@@ -138,6 +138,38 @@ public sealed class OffsideExceptionHandlerTests
         Assert.Equal(0, body.Length);
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task Response_stream_io_failure_is_handled_only_if_request_aborted(bool aborted)
+    {
+        using var cancellation = new CancellationTokenSource();
+        using var services = new ServiceCollection()
+            .AddSingleton<IErrorMessageResolver>(ProblemHttpHarness.Resolver)
+            .AddSingleton(new OffsideAspNetCoreOptions())
+            .BuildServiceProvider();
+        using var body = new FailingResponseStream(aborted ? cancellation.Cancel : null);
+        var http = new DefaultHttpContext
+        {
+            RequestServices = services,
+            RequestAborted = cancellation.Token
+        };
+        http.Response.Body = body;
+
+        var handler = new OffsideExceptionHandler();
+        if (!aborted)
+        {
+            await Assert.ThrowsAsync<IOException>(async () =>
+                await handler.TryHandleAsync(http, new InvalidOperationException(), cancellation.Token));
+            return;
+        }
+
+        Assert.True(await handler.TryHandleAsync(
+            http, new InvalidOperationException(), cancellation.Token));
+        Assert.Equal(499, http.Response.StatusCode);
+        Assert.Null(http.Response.ContentType);
+    }
+
     [Fact]
     public async Task Started_response_is_skipped()
     {
@@ -173,6 +205,16 @@ public sealed class OffsideExceptionHandlerTests
     private sealed class StartedResponse : HttpResponseFeature
     {
         public override bool HasStarted => true;
+    }
+
+    private sealed class FailingResponseStream(Action? onWrite) : MemoryStream
+    {
+        public override ValueTask WriteAsync(
+            ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
+        {
+            onWrite?.Invoke();
+            return ValueTask.FromException(new IOException("Response write failed."));
+        }
     }
 
     private sealed class NextHandler : IExceptionHandler
