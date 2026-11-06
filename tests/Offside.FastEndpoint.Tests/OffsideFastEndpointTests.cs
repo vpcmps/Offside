@@ -142,6 +142,34 @@ public sealed class OffsideValidationResponseTests
 public sealed class OffsideResultSendTests
 {
     [Fact]
+    public async Task SendOffsideAsync_matches_the_minimal_api_success_envelope()
+    {
+        var services = new ServiceCollection();
+        services.AddOffside(options => options.AddJson(CultureInfo.InvariantCulture,
+            """{"order.created":"Order {id} created."}"""));
+        services.AddOffsideAspNetCore(options =>
+        {
+            options.SuccessEnvelope = true;
+            options.ResolveTraceId = _ => "test-trace";
+        });
+        using var provider = services.BuildServiceProvider();
+        using var fastBody = new MemoryStream();
+        using var minimalBody = new MemoryStream();
+        var fast = new DefaultHttpContext { RequestServices = provider };
+        var minimal = new DefaultHttpContext { RequestServices = provider };
+        fast.Response.Body = fastBody;
+        minimal.Response.Body = minimalBody;
+
+        var result = Result<int>.Success(42, Notice.Create("order.created", new { id = 42 }));
+        await result.SendOffsideAsync(fast);
+        await result.ToHttpResult(minimal).ExecuteAsync(minimal);
+
+        Assert.Equal(200, fast.Response.StatusCode);
+        Assert.Equal(minimal.Response.StatusCode, fast.Response.StatusCode);
+        Assert.Equal(minimalBody.ToArray(), fastBody.ToArray());
+    }
+
+    [Fact]
     public async Task SendOffsideAsync_writes_problem_json_on_failure()
     {
         var http = CreateHttp();

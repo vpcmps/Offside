@@ -1,5 +1,4 @@
 using System.Globalization;
-using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,7 +13,8 @@ namespace Offside.AspNetCore;
 /// <para>
 /// Use the <c>ToHttpResult</c> overloads from Minimal APIs and the <c>ToActionResult</c> overloads
 /// from MVC controllers. Success maps to <c>204 No Content</c> for a unit <see cref="Result"/> and
-/// to <c>200 OK</c> carrying the value for a <see cref="Result{T}"/>.
+/// to <c>200 OK</c> carrying the value for a <see cref="Result{T}"/> by default.
+/// Enable <see cref="OffsideAspNetCoreOptions.SuccessEnvelope"/> to include success notices.
 /// </para>
 /// <para>
 /// On failure the status code comes from the most severe <see cref="ErrorKind"/> present, with ties
@@ -28,11 +28,6 @@ namespace Offside.AspNetCore;
 /// </remarks>
 public static class ResultHttpExtensions
 {
-    private static readonly JsonSerializerOptions SerializerOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-    };
-
     /// <summary>Converts the result into an <see cref="IResult"/>, resolving messages in <c>CultureInfo.CurrentUICulture</c>.</summary>
     /// <param name="result">The result to convert.</param>
     /// <param name="resolver">Resolves error messages.</param>
@@ -77,7 +72,12 @@ public static class ResultHttpExtensions
         ArgumentNullException.ThrowIfNull(resolver);
         ArgumentNullException.ThrowIfNull(options);
         if (result.IsSuccess)
-            return Results.NoContent();
+        {
+            var fallback = Results.NoContent();
+            return result.Notice is null
+                ? fallback
+                : new OffsideSuccessResult(null, false, result.Notice, resolver, culture, options, httpFallback: fallback);
+        }
 
         return new OffsideProblemResult(result.Errors, resolver, culture, options);
     }
@@ -154,7 +154,8 @@ public static class ResultHttpExtensions
         ArgumentNullException.ThrowIfNull(resolver);
         ArgumentNullException.ThrowIfNull(options);
         if (result.IsSuccess)
-            return Results.Ok(result.Value);
+            return new OffsideSuccessResult(
+                result.Value, true, result.Notice, resolver, culture, options, httpFallback: Results.Ok(result.Value));
 
         return new OffsideProblemResult(result.Errors, resolver, culture, options);
     }
@@ -221,7 +222,12 @@ public static class ResultHttpExtensions
         ArgumentNullException.ThrowIfNull(resolver);
         ArgumentNullException.ThrowIfNull(options);
         if (result.IsSuccess)
-            return new NoContentResult();
+        {
+            var fallback = new NoContentResult();
+            return result.Notice is null
+                ? fallback
+                : new OffsideSuccessResult(null, false, result.Notice, resolver, culture, options, mvcFallback: fallback);
+        }
 
         return new OffsideProblemResult(result.Errors, resolver, culture, options);
     }
@@ -279,9 +285,24 @@ public static class ResultHttpExtensions
         ArgumentNullException.ThrowIfNull(resolver);
         ArgumentNullException.ThrowIfNull(options);
         if (result.IsSuccess)
-            return new OkObjectResult(result.Value);
+            return new OffsideSuccessResult(
+                result.Value, true, result.Notice, resolver, culture, options, mvcFallback: new OkObjectResult(result.Value));
 
         return new OffsideProblemResult(result.Errors, resolver, culture, options);
+    }
+
+    /// <summary>Uses a custom HTTP response on success, with the resolved notice message if present.</summary>
+    public static IResult ToHttpResult<T>(
+        this Result<T> result, HttpContext httpContext, Func<T, string?, IResult> onSuccess)
+    {
+        ArgumentNullException.ThrowIfNull(httpContext);
+        ArgumentNullException.ThrowIfNull(onSuccess);
+
+        if (result.IsFailure)
+            return result.ToHttpResult(httpContext);
+
+        var resolver = httpContext.RequestServices.GetService<IErrorMessageResolver>();
+        return onSuccess(result.Value, OffsideSuccessResult.ResolveMessage(result.Notice, resolver, null, httpContext));
     }
 
     private static OffsideAspNetCoreOptions Options(bool exposeExceptionDetails) =>
@@ -291,41 +312,4 @@ public static class ResultHttpExtensions
         httpContext.RequestServices.GetService<OffsideAspNetCoreOptions>()
         ?? throw new InvalidOperationException(
             "OffsideAspNetCoreOptions is not registered. Call AddOffsideAspNetCore at startup.");
-
-    private sealed class OffsideProblemResult : IResult, IActionResult
-    {
-        private readonly IReadOnlyList<Error> _errors;
-        private readonly IErrorMessageResolver _resolver;
-        private readonly CultureInfo? _culture;
-        private readonly OffsideAspNetCoreOptions _options;
-
-        public OffsideProblemResult(
-            IReadOnlyList<Error> errors,
-            IErrorMessageResolver resolver,
-            CultureInfo? culture,
-            OffsideAspNetCoreOptions options)
-        {
-            _errors = errors;
-            _resolver = resolver;
-            _culture = culture;
-            _options = options;
-        }
-
-        public Task ExecuteResultAsync(ActionContext context) =>
-            ExecuteAsync(context.HttpContext);
-
-        public async Task ExecuteAsync(HttpContext httpContext)
-        {
-            var problem = OffsideProblemPipeline.Render(
-                _errors,
-                _resolver,
-                httpContext,
-                _options,
-                _culture);
-
-            httpContext.Response.StatusCode = problem.Status;
-            httpContext.Response.ContentType = "application/problem+json";
-            await JsonSerializer.SerializeAsync(httpContext.Response.Body, problem, SerializerOptions);
-        }
-    }
 }

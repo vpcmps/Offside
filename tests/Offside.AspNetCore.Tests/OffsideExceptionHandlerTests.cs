@@ -1,0 +1,244 @@
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Xunit;
+
+namespace Offside.AspNetCore.Tests;
+
+public sealed class OffsideExceptionHandlerTests
+{
+    [Fact]
+    public async Task Domain_exception_uses_same_response_as_result()
+    {
+        var error = Error.NotFound("order", 42);
+        await using var app = await Start(new OffsideAspNetCoreOptions(), a =>
+        {
+            a.MapGet("/throw", (HttpContext _) => Throw(error.ToException()));
+            a.MapGet("/result", (HttpContext http) => Result.Failure(error).ToHttpResult(http));
+        });
+        using var client = app.GetTestClient();
+        using var thrown = await client.GetAsync("/throw");
+        using var returned = await client.GetAsync("/result");
+        Assert.Equal(404, (int)thrown.StatusCode);
+        Assert.Equal(returned.Content.Headers.ContentType, thrown.Content.Headers.ContentType);
+        Assert.Equal(await returned.Content.ReadAsStringAsync(), await thrown.Content.ReadAsStringAsync());
+    }
+
+    [Fact]
+    public async Task Multiple_errors_use_the_same_primary_as_a_failed_result()
+    {
+        Error[] errors = [Error.Validation("order"), Error.ServiceUnavailable("inventory")];
+        await using var app = await Start(new OffsideAspNetCoreOptions(), a =>
+            a.MapGet("/", (HttpContext _) => Throw(new DomainException(errors))));
+        using var client = app.GetTestClient();
+        using var response = await client.GetAsync("/");
+        Assert.Equal(503, (int)response.StatusCode);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Unexpected_exceptions_expose_details_only_in_debug(bool expose)
+    {
+        var log = new ExceptionLog();
+        var options = new OffsideAspNetCoreOptions { ExposeExceptionDetails = expose };
+        await using var app = await Start(options, a =>
+        {
+            a.MapGet("/throw", (HttpContext _) => Throw(new InvalidOperationException("private detail")));
+            a.MapGet("/domain", (HttpContext _) => Throw(Error.NotFound("order", 42).ToException()));
+        }, logging: log);
+        using var client = app.GetTestClient();
+        using var response = await client.GetAsync("/throw");
+        using var payload = System.Text.Json.JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal(500, (int)response.StatusCode);
+        Assert.DoesNotContain("private detail", payload.RootElement.GetProperty("detail").GetString()!);
+        Assert.Equal(expose, payload.RootElement.TryGetProperty("debug", out var debug) && debug.ValueKind != System.Text.Json.JsonValueKind.Null);
+        if (expose)
+            Assert.Contains(nameof(Throw), debug.GetString()!);
+
+        using var domainResponse = await client.GetAsync("/domain");
+        Assert.Equal(404, (int)domainResponse.StatusCode);
+        Assert.Contains(log.Exceptions, e => e is InvalidOperationException);
+#if NET10_0_OR_GREATER
+        Assert.DoesNotContain(log.Exceptions, e => e is DomainException);
+#else
+        Assert.Contains(log.Exceptions, e => e is DomainException);
+#endif
+    }
+
+    [Fact]
+    public async Task Disabled_unexpected_handling_passes_to_next_handler()
+    {
+        await using var app = await Start(
+            new OffsideAspNetCoreOptions { HandleUnexpectedExceptions = false },
+            a => a.MapGet("/", (HttpContext _) => Throw(new InvalidOperationException())),
+            s => s.AddExceptionHandler<NextHandler>());
+        using var client = app.GetTestClient();
+        using var response = await client.GetAsync("/");
+        Assert.Equal(418, (int)response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Disconnected_client_uses_native_abort_response()
+    {
+        await using var app = await Start(new OffsideAspNetCoreOptions(), a =>
+            a.MapGet("/", (HttpContext http) =>
+            {
+                http.RequestAborted = new CancellationToken(canceled: true);
+                return Throw(new OperationCanceledException(http.RequestAborted));
+            }));
+        using var client = app.GetTestClient();
+        using var response = await client.GetAsync("/");
+        Assert.Equal(499, (int)response.StatusCode);
+        Assert.Empty(await response.Content.ReadAsStringAsync());
+    }
+
+    [Theory]
+    [InlineData(400)]
+    [InlineData(413)]
+    public async Task Bad_request_preserves_framework_status(int status)
+    {
+        await using var app = await Start(new OffsideAspNetCoreOptions(), a =>
+            a.MapGet("/", (HttpContext _) => Throw(new BadHttpRequestException("private detail", status))));
+        using var client = app.GetTestClient();
+        using var response = await client.GetAsync("/");
+        Assert.Equal(status, (int)response.StatusCode);
+        Assert.Empty(await response.Content.ReadAsStringAsync());
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Request_cancellation_skips_or_interrupts_problem_write(bool canceledBeforeHandling)
+    {
+        using var cancellation = new CancellationTokenSource();
+        var options = new OffsideAspNetCoreOptions { OnProblem = (_, _, _) => cancellation.Cancel() };
+        using var services = new ServiceCollection()
+            .AddSingleton<IErrorMessageResolver>(ProblemHttpHarness.Resolver)
+            .AddSingleton(options)
+            .BuildServiceProvider();
+        using var body = new MemoryStream();
+        var http = new DefaultHttpContext
+        {
+            RequestServices = services,
+            RequestAborted = cancellation.Token
+        };
+        http.Response.Body = body;
+        if (canceledBeforeHandling)
+            cancellation.Cancel();
+
+        Assert.True(await new OffsideExceptionHandler().TryHandleAsync(
+            http, new InvalidOperationException(), cancellation.Token));
+        Assert.Equal(499, http.Response.StatusCode);
+        Assert.Null(http.Response.ContentType);
+        Assert.Equal(0, body.Length);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task Response_stream_io_failure_is_handled_only_if_request_aborted(bool aborted)
+    {
+        using var cancellation = new CancellationTokenSource();
+        using var services = new ServiceCollection()
+            .AddSingleton<IErrorMessageResolver>(ProblemHttpHarness.Resolver)
+            .AddSingleton(new OffsideAspNetCoreOptions())
+            .BuildServiceProvider();
+        using var body = new FailingResponseStream(aborted ? cancellation.Cancel : null);
+        var http = new DefaultHttpContext
+        {
+            RequestServices = services,
+            RequestAborted = cancellation.Token
+        };
+        http.Response.Body = body;
+
+        var handler = new OffsideExceptionHandler();
+        if (!aborted)
+        {
+            await Assert.ThrowsAsync<IOException>(async () =>
+                await handler.TryHandleAsync(http, new InvalidOperationException(), cancellation.Token));
+            return;
+        }
+
+        Assert.True(await handler.TryHandleAsync(
+            http, new InvalidOperationException(), cancellation.Token));
+        Assert.Equal(499, http.Response.StatusCode);
+        Assert.Null(http.Response.ContentType);
+    }
+
+    [Fact]
+    public async Task Started_response_is_skipped()
+    {
+        var http = new DefaultHttpContext();
+        http.Features.Set<IHttpResponseFeature>(new StartedResponse());
+        Assert.False(await new OffsideExceptionHandler().TryHandleAsync(
+            http, new InvalidOperationException(), CancellationToken.None));
+    }
+
+    private static IResult Throw(Exception exception) => throw exception;
+
+    private static async Task<WebApplication> Start(
+        OffsideAspNetCoreOptions options, Action<WebApplication> endpoints,
+        Action<IServiceCollection>? configure = null, ILoggerProvider? logging = null)
+    {
+        var builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseTestServer();
+        builder.Services.AddSingleton<IErrorMessageResolver>(ProblemHttpHarness.Resolver);
+        options.ResolveTraceId = _ => "test-trace";
+        builder.Services.AddSingleton(options);
+        builder.Services.AddOffsideExceptionHandler();
+        configure?.Invoke(builder.Services);
+        if (logging is not null)
+            builder.Logging.AddProvider(logging);
+
+        var app = builder.Build();
+        app.UseOffsideExceptionHandler();
+        endpoints(app);
+        await app.StartAsync();
+        return app;
+    }
+
+    private sealed class StartedResponse : HttpResponseFeature
+    {
+        public override bool HasStarted => true;
+    }
+
+    private sealed class FailingResponseStream(Action? onWrite) : MemoryStream
+    {
+        public override ValueTask WriteAsync(
+            ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
+        {
+            onWrite?.Invoke();
+            return ValueTask.FromException(new IOException("Response write failed."));
+        }
+    }
+
+    private sealed class NextHandler : IExceptionHandler
+    {
+        public ValueTask<bool> TryHandleAsync(HttpContext http, Exception exception, CancellationToken ct)
+        {
+            http.Response.StatusCode = 418;
+            return ValueTask.FromResult(true);
+        }
+    }
+
+    private sealed class ExceptionLog : ILoggerProvider, ILogger
+    {
+        public System.Collections.Concurrent.ConcurrentQueue<Exception> Exceptions { get; } = new();
+        public ILogger CreateLogger(string categoryName) => this;
+        public void Dispose() { }
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+        public bool IsEnabled(LogLevel logLevel) => true;
+
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception,
+            Func<TState, Exception?, string> formatter)
+        {
+            if (exception is not null)
+                Exceptions.Enqueue(exception);
+        }
+    }
+}

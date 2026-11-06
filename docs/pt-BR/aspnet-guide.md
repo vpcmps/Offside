@@ -286,3 +286,11 @@ Cada linha existe para `Result` e `Result<T>`, com uma exceção: **não existe 
 - Mantenha segredos fora de `Error.Arguments` — eles acabam nas mensagens, e mensagens são enviadas.
 - Faça clientes decidirem por `errorCode`, nunca por `detail`.
 - Coloque falhas operacionais de dependência em `ErrorKind.ServiceUnavailable` / `Timeout`, não em `Unexpected`. Não coloque texto de exceção em templates `{reason}`.
+
+## Exceções, spans e sucesso
+
+Registre `services.AddOffsideExceptionHandler()` e chame `app.UseOffsideExceptionHandler()` antes dos endpoints, além dos registros usuais. `HandleUnexpectedExceptions` começa em true. Use false para deixar exceções comuns com o próximo handler. No ASP.NET Core 10, a extensão suprime o diagnóstico nativo das exceções de domínio tratadas. No ASP.NET Core 8, vale o log nativo do middleware. Rejeições do framework (`BadHttpRequestException`) mantêm o status original, com corpo de resposta vazio. Uma requisição já cancelada pula a escrita do corpo de erro da Offside.
+
+A Offside grava `offside.outcome` e `offside.errorCode` no span de servidor. Mude o prefixo com `ActivityTagPrefix`. Configure `HandledProblemStatus = ActivityStatusPolicy.OkForClientErrors` para marcar como OK os 4xx renderizados pela Offside. O padrão é `Unchanged`.
+
+Ligue `SuccessEnvelope` globalmente ou use `WithMetadata(new OffsideSuccessEnvelopeAttribute(true))` em Minimal APIs e `[OffsideSuccessEnvelope(true)]` no MVC. A metadata sobrescreve a opção global nos dois sentidos. O envelope traz `traceId`, `data` para resultados tipados e `message` e `code` quando há Notice. Sucesso sem valor e sem Notice continua retornando 204. Use `CustomizeSuccess` para adicionar campos e `ToHttpResult(http, onSuccess)` para escolher o status e o corpo.

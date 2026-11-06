@@ -8,6 +8,21 @@ namespace Offside.AspNetCore;
 /// </summary>
 public sealed class OffsideAspNetCoreOptions
 {
+    /// <summary>Whether the handler handles exceptions other than DomainException.</summary>
+    public bool HandleUnexpectedExceptions { get; set; } = true;
+
+    /// <summary>Prefix for outcome and errorCode tags on the server activity.</summary>
+    public string ActivityTagPrefix { get; set; } = "offside.";
+
+    /// <summary>Controls whether a rendered problem changes the server activity status.</summary>
+    public ActivityStatusPolicy HandledProblemStatus { get; set; }
+
+    /// <summary>Whether successful results use an HTTP envelope by default.</summary>
+    public bool SuccessEnvelope { get; set; }
+
+    /// <summary>Adds custom fields to the success envelope.</summary>
+    public Action<IDictionary<string, object?>, Notice?, HttpContext>? CustomizeSuccess { get; set; }
+
     private bool _logUnexpected = true;
     private bool _logUnexpectedSpecified;
 
@@ -165,4 +180,14 @@ public enum ProblemRecordMode
     /// rather than on each field.
     /// </summary>
     PrimaryErrorOnly = 1
+}
+
+/// <summary>How an Offside problem affects server activity status.</summary>
+public enum ActivityStatusPolicy
+{
+    /// <summary>Preserve the current status.</summary>
+    Unchanged,
+
+    /// <summary>Mark rendered 4xx responses as OK.</summary>
+    OkForClientErrors
 }

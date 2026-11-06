@@ -175,3 +175,7 @@ Assert.Equal(Error.NotFound("order", "missing"), result.Errors[0]);
 ```
 
 Faça asserção sobre `Code`, `ErrorCode` e `Kind`, não sobre o texto resolvido — o texto é dado de catálogo e deve poder mudar sem quebrar nada.
+
+## Resultados de sucesso com mensagem
+
+Retorne `Result.Success(Notice.Create("order.created", new { id }))` ou `Result<Order>.Success(order, Notice.Create("order.created", new { id }))`. `Map` preserva a mensagem. Se o resultado de `Bind` for um sucesso, vale seu Notice ou, na ausência dele, o anterior. `Combine` descarta os Notices.

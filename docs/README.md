@@ -22,6 +22,7 @@ Domain errors as `Result`, not exceptions. The domain returns an `Error`; ASP.NE
 | [Concepts](concepts.md) | `Error`, `ErrorCode`, `ErrorKind`, `Result`, primary error, catalogs, the escape hatch |
 | [Domain guide](domain-guide.md) | Writing domain code with `Result<T>`: factories, `Custom`, `Bind`/`Map`/`Combine` |
 | [ASP.NET Core guide](aspnet-guide.md) | `ToHttpResult` / `ToActionResult`, status selection, the response shape, 500 handling |
+| [Migrating from exceptions](migrating-from-exceptions.md) | Adopt the exception handler and migrate callers to results |
 | [FluentValidation](fluentvalidation.md) | Map FluentValidation failures to Offside `Error` / `Result` |
 | [FastEndpoints](fastendpoints.md) | `UseOffside`, `SendOffsideAsync`, OpenAPI expected errors |
 | [MediatR integration](mediatr-guide.md) | Publish result errors as notifications, collect them per scope, and handle retries safely |

@@ -722,3 +722,10 @@ public sealed class SkillInstaller
 ```
 
 `Install` returns every path written, in write order. Throws `DirectoryNotFoundException` when the skills source or an expected skill folder is missing. See the [CLI page](cli.md).
+
+## Exception handling and success notices
+
+- `AddOffsideExceptionHandler()` and `UseOffsideExceptionHandler()` enable Problem Details for exceptions. `HandleUnexpectedExceptions` defaults to true. Framework request rejections retain their status with an empty response body.
+- `ActivityTagPrefix` defaults to `offside.`. `HandledProblemStatus` defaults to `ActivityStatusPolicy.Unchanged`.
+- `Notice.Create(code, arguments)`, `Result.Success(notice)`, and `Result<T>.Success(value, notice)` carry a catalog message. `INoticeMessageResolver` resolves it and `ShouldSucceedWith(code)` asserts it.
+- `SuccessEnvelope` defaults to false. `OffsideSuccessEnvelopeAttribute(bool enabled)` overrides it per endpoint. `CustomizeSuccess` adds fields and `ToHttpResult(http, onSuccess)` supplies the resolved message to a custom success response.

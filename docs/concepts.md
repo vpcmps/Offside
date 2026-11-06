@@ -97,3 +97,7 @@ Exceptions are control flow for the *unexpected*. A missing order, a duplicate e
 - Nothing unwinds the stack for a business rule.
 
 `ErrorKind.Unexpected` still exists for genuine faults — and it is the one kind whose detail is never shown to the client. See [500 handling](aspnet-guide.md#unexpected-errors-and-500s).
+
+## Domain exceptions and notices
+
+The opt-in ASP.NET Core handler translates a `DomainException` into the same Problem Details as a failed result. A `Notice` carries a catalog key and interpolation arguments on a successful result.

@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Planned for 0.8.0
+
+- Add success notices, localized catalog resolution, and test assertions. Reject duplicate keys within a JSON message catalog.
+- Add success envelopes for Minimal APIs, MVC, and FastEndpoints. `SuccessEnvelope` defaults to false and endpoint metadata can override it.
+
+### Planned for 0.7.0
+
+- Add opt-in exception handling. `HandleUnexpectedExceptions` defaults to true when registered.
+- Add server-span outcome and error code tags. `ActivityTagPrefix` defaults to `offside.` and `HandledProblemStatus` defaults to `Unchanged`.
+
 ## [0.6.0] - 2026-08-27
 
 ### Added

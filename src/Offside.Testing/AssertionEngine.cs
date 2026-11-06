@@ -145,4 +145,15 @@ internal static class AssertionEngine
         text.Append(']');
         return text.ToString();
     }
+
+    internal static void ShouldSucceedWith(
+        bool succeeded, IReadOnlyList<Error> errors, Notice? notice, string code)
+    {
+        if (code is null)
+            throw new ArgumentNullException(nameof(code));
+
+        ShouldBeSuccess(succeeded, errors);
+        if (!string.Equals(notice?.Code, code, StringComparison.Ordinal))
+            throw Fail($"Expected success with notice '{code}', but found '{notice?.Code ?? "(none)"}'.");
+    }
 }
