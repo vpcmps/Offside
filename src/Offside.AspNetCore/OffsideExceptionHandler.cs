@@ -44,6 +44,18 @@ internal sealed class OffsideExceptionHandler : IExceptionHandler
         if (exception is not DomainException && !options.HandleUnexpectedExceptions)
             return false;
 
+        if (cancellationToken.IsCancellationRequested || httpContext.RequestAborted.IsCancellationRequested)
+        {
+            httpContext.Response.StatusCode = StatusCodes.Status499ClientClosedRequest;
+            return true;
+        }
+
+        if (exception is BadHttpRequestException badRequest)
+        {
+            httpContext.Response.StatusCode = badRequest.StatusCode;
+            return true;
+        }
+
         IReadOnlyList<Error> errors = exception is DomainException domain
             ? domain.Errors
             : [Error.Unexpected(exception.ToString())];
@@ -51,7 +63,18 @@ internal sealed class OffsideExceptionHandler : IExceptionHandler
         var resolver = httpContext.RequestServices.GetRequiredService<IErrorMessageResolver>();
         var result = new OffsideProblemResult(
             errors, resolver, culture: null, options, skipUnexpectedLog: exception is not DomainException);
-        await result.ExecuteAsync(httpContext);
+        try
+        {
+            await result.ExecuteAsync(httpContext);
+        }
+        catch (OperationCanceledException) when (httpContext.RequestAborted.IsCancellationRequested)
+        {
+            if (!httpContext.Response.HasStarted)
+            {
+                httpContext.Response.Clear();
+                httpContext.Response.StatusCode = StatusCodes.Status499ClientClosedRequest;
+            }
+        }
         return true;
     }
 }

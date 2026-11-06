@@ -83,6 +83,62 @@ public sealed class OffsideExceptionHandlerTests
     }
 
     [Fact]
+    public async Task Disconnected_client_uses_native_abort_response()
+    {
+        await using var app = await Start(new OffsideAspNetCoreOptions(), a =>
+            a.MapGet("/", (HttpContext http) =>
+            {
+                http.RequestAborted = new CancellationToken(canceled: true);
+                return Throw(new OperationCanceledException(http.RequestAborted));
+            }));
+        using var client = app.GetTestClient();
+        using var response = await client.GetAsync("/");
+        Assert.Equal(499, (int)response.StatusCode);
+        Assert.Empty(await response.Content.ReadAsStringAsync());
+    }
+
+    [Theory]
+    [InlineData(400)]
+    [InlineData(413)]
+    public async Task Bad_request_preserves_framework_status(int status)
+    {
+        await using var app = await Start(new OffsideAspNetCoreOptions(), a =>
+            a.MapGet("/", (HttpContext _) => Throw(new BadHttpRequestException("private detail", status))));
+        using var client = app.GetTestClient();
+        using var response = await client.GetAsync("/");
+        Assert.Equal(status, (int)response.StatusCode);
+        Assert.Empty(await response.Content.ReadAsStringAsync());
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Request_cancellation_skips_or_interrupts_problem_write(bool canceledBeforeHandling)
+    {
+        using var cancellation = new CancellationTokenSource();
+        var options = new OffsideAspNetCoreOptions { OnProblem = (_, _, _) => cancellation.Cancel() };
+        using var services = new ServiceCollection()
+            .AddSingleton<IErrorMessageResolver>(ProblemHttpHarness.Resolver)
+            .AddSingleton(options)
+            .BuildServiceProvider();
+        using var body = new MemoryStream();
+        var http = new DefaultHttpContext
+        {
+            RequestServices = services,
+            RequestAborted = cancellation.Token
+        };
+        http.Response.Body = body;
+        if (canceledBeforeHandling)
+            cancellation.Cancel();
+
+        Assert.True(await new OffsideExceptionHandler().TryHandleAsync(
+            http, new InvalidOperationException(), cancellation.Token));
+        Assert.Equal(499, http.Response.StatusCode);
+        Assert.Null(http.Response.ContentType);
+        Assert.Equal(0, body.Length);
+    }
+
+    [Fact]
     public async Task Started_response_is_skipped()
     {
         var http = new DefaultHttpContext();

@@ -289,7 +289,7 @@ Each row exists for both `Result` and `Result<T>`, with one exception: **there i
 
 ## Exception handling, spans, and success
 
-Call `services.AddOffsideExceptionHandler()` and `app.UseOffsideExceptionHandler()` before your endpoints, in addition to the usual Offside registrations. `HandleUnexpectedExceptions` defaults to true. Set it to false to let another handler process ordinary exceptions. ASP.NET Core 10 suppresses native diagnostics for handled domain exceptions through the Offside middleware extension. ASP.NET Core 8 retains its native exception logging.
+Call `services.AddOffsideExceptionHandler()` and `app.UseOffsideExceptionHandler()` before your endpoints, in addition to the usual Offside registrations. `HandleUnexpectedExceptions` defaults to true. Set it to false to let another handler process ordinary exceptions. ASP.NET Core 10 suppresses native diagnostics for handled domain exceptions through the Offside middleware extension. ASP.NET Core 8 retains its native exception logging. Framework request rejections (`BadHttpRequestException`) retain their status with an empty response body. A request that is already aborted skips the Offside error body.
 
 Offside tags the server span with `offside.outcome` and `offside.errorCode`. Change the prefix with `ActivityTagPrefix`. Set `HandledProblemStatus` to `ActivityStatusPolicy.OkForClientErrors` to mark rendered 4xx responses as OK. The default is `Unchanged`.
 

@@ -657,7 +657,7 @@ public sealed class SkillInstaller
 
 ## Handler de exceções e notices
 
-- `AddOffsideExceptionHandler()` e `UseOffsideExceptionHandler()` habilitam Problem Details para exceções. `HandleUnexpectedExceptions` começa em true.
+- `AddOffsideExceptionHandler()` e `UseOffsideExceptionHandler()` habilitam Problem Details para exceções. `HandleUnexpectedExceptions` começa em true. Rejeições do framework mantêm o status original, com corpo de resposta vazio.
 - `ActivityTagPrefix` tem padrão `offside.`. `HandledProblemStatus` começa em `ActivityStatusPolicy.Unchanged`.
 - `Notice.Create(code, arguments)`, `Result.Success(notice)` e `Result<T>.Success(value, notice)` carregam a mensagem. `INoticeMessageResolver` resolve o texto e `ShouldSucceedWith(code)` verifica o código.
 - `SuccessEnvelope` começa em false. `OffsideSuccessEnvelopeAttribute(bool enabled)` sobrescreve essa opção por endpoint. `CustomizeSuccess` adiciona campos e `ToHttpResult(http, onSuccess)` entrega a mensagem resolvida ao callback.

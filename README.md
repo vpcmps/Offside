@@ -161,7 +161,7 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request. For help,
 
 ## Optional exception handling and success messages
 
-Register `AddOffsideExceptionHandler()` alongside `AddOffside` and `AddOffsideAspNetCore`, then call `app.UseOffsideExceptionHandler()` before your endpoints. This maps `Error.NotFound("order", id).ToException()` to the same Problem Details as a failed result. See the [exception migration guide](docs/migrating-from-exceptions.md).
+Register `AddOffsideExceptionHandler()` alongside `AddOffside` and `AddOffsideAspNetCore`, then call `app.UseOffsideExceptionHandler()` before your endpoints. This maps `Error.NotFound("order", id).ToException()` to the same Problem Details as a failed result. See the [exception migration guide](docs/migrating-from-exceptions.md). Framework request rejections retain their HTTP status, and aborted requests skip the Offside error body.
 
 Offside writes the primary error kind and code to the HTTP server span. See [ASP.NET Core integration](docs/aspnet-guide.md) for tag configuration and the optional 4xx status policy.
 
