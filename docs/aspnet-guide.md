@@ -290,3 +290,7 @@ Each row exists for both `Result` and `Result<T>`, with one exception: **there i
 ## Exception handling
 
 Register `AddOffsideExceptionHandler()` and call `UseOffsideExceptionHandler()` to map thrown domain errors to the same Problem Details as a failed result. `HandleUnexpectedExceptions` defaults to true.
+
+## Server span tags
+
+Offside tags the server span with `offside.outcome` and `offside.errorCode`. Set `HandledProblemStatus` to `ActivityStatusPolicy.OkForClientErrors` to mark rendered 4xx responses as OK.

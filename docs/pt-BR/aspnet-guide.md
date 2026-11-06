@@ -290,3 +290,7 @@ Cada linha existe para `Result` e `Result<T>`, com uma exceção: **não existe 
 ## Handler de exceções
 
 Registre `AddOffsideExceptionHandler()` e chame `UseOffsideExceptionHandler()` para mapear exceções de domínio para o mesmo Problem Details de um resultado de falha. `HandleUnexpectedExceptions` começa em true.
+
+## Tags do span de servidor
+
+A Offside grava `offside.outcome` e `offside.errorCode` no span de servidor. Use `HandledProblemStatus = ActivityStatusPolicy.OkForClientErrors` para marcar como OK os 4xx renderizados pela Offside.

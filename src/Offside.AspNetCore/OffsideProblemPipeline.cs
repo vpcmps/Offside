@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Globalization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -63,11 +64,30 @@ internal static class OffsideProblemPipeline
             () => options.OnProblem?.Invoke(problem, errors, httpContext));
         StripReservedKeys(problem);
 
+        TagServerActivity(httpContext, problem, errors, options);
+
         var recorder = httpContext.RequestServices?.GetService<IDomainErrorRecorder>();
         if (!skipUnexpectedLog && options.ShouldLogUnexpected(recorder is not null))
             TryLogUnexpected(httpContext, errors, traceId);
 
         return problem;
+    }
+
+    private static void TagServerActivity(
+        HttpContext httpContext, OffsideProblem problem, IReadOnlyList<Error> errors,
+        OffsideAspNetCoreOptions options)
+    {
+        var activity = httpContext.Features.Get<IHttpActivityFeature>()?.Activity;
+        if (activity is null)
+            return;
+
+        var primary = OffsideHttp.SelectPrimary(errors);
+        activity.SetTag(options.ActivityTagPrefix + "outcome", primary.Kind.ToString());
+        activity.SetTag(options.ActivityTagPrefix + "errorCode", primary.ErrorCode);
+
+        if (options.HandledProblemStatus == ActivityStatusPolicy.OkForClientErrors
+            && problem.Status is >= 400 and < 500)
+            activity.SetStatus(ActivityStatusCode.Ok);
     }
 
     internal static string ResolveTraceId(HttpContext httpContext, OffsideAspNetCoreOptions options)
